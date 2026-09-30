@@ -1,0 +1,17 @@
+      {viewQuestionKey && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setViewQuestionKey(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col fade-in scale-in" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="font-bold text-lg text-slate-800">{viewQuestionKey}</h3>
+              <button onClick={() => setViewQuestionKey(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <div className="text-slate-700 leading-relaxed whitespace-pre-wrap text-base">
+                {texts[viewQuestionKey] || "Chưa có dữ liệu nội dung câu hỏi."}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
