@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "rm -f dist\\\\* 2>/dev/null || true && bun run server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "export-data": "node scripts/export-data.cjs",
+    "build:static": "npm run export-data && vite build",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",

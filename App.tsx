@@ -12,9 +12,25 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+
+    const fetchJson = async (apiPath: string, staticPath: string) => {
+      try {
+        const res = await fetch(apiPath);
+        if (res.ok && (res.headers.get('content-type') || '').includes('application/json')) {
+          return await res.json();
+        }
+      } catch {
+        // API không khả dụng (vd: GitHub Pages) -> đọc file JSON tĩnh
+      }
+      const res = await fetch(`${base}${staticPath}`);
+      if (!res.ok) throw new Error(`Không tải được ${staticPath}`);
+      return res.json();
+    };
+
     Promise.all([
-      fetch('/api/questions').then(res => res.json()),
-      fetch('/api/students').then(res => res.json())
+      fetchJson('/api/questions', 'data/questions.json'),
+      fetchJson('/api/students', 'data/students.json')
     ]).then(([questions, students]) => {
       setData(questions);
       setStudentData(students);
