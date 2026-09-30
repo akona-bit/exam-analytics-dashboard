@@ -105,6 +105,15 @@ Quá trình build sẽ:
 2. Đóng gói backend `server.ts` bằng esbuild thành file `dist/server.cjs`.
 Lệnh start sẽ chạy ứng dụng dưới dạng một service độc lập.
 
+### Deploy tĩnh (Cloudflare Pages / GitHub Pages)
+```bash
+npm run build:static   # sinh public/data/*.json rồi build dist/
+```
+- `export-data` đọc 3 file CSV rồi ghi `public/data/students.json` + `questions.json`, nên bản tĩnh không cần backend Express (App.tsx tự fallback sang file JSON khi `/api/*` không có).
+- `vite.config.ts` dùng `base: './'` để chạy được ở cả domain gốc lẫn sub-path.
+- **Cloudflare Pages:** Build command `npm run build:static` · Output dir `dist` · kết nối repo GitHub (private) để auto-deploy mỗi push lên `main`.
+- **GitHub Pages:** workflow `.github/workflows/deploy.yml` sẵn sàng nhưng chỉ chạy `workflow_dispatch` — Pages không hỗ trợ repo Private trên gói Free.
+
 ## 📝 Cấu Trúc Dữ Liệu Đầu Vào
 
 1. **`raw_students.csv`**: File chứa thông tin tổng quan của học sinh (STT, Tên, Email, và các cột điểm Thô, IRT, Thưởng phạt của Toán và TDKH).
