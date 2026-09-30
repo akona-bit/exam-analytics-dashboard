@@ -1,8 +1,9 @@
 name: Deploy to GitHub Pages
 
+# GitHub Pages không hỗ trợ repo Private trên gói Free,
+# nên chỉ chạy thủ công (workflow_dispatch) — hoặc bật lại
+# sau khi đổi sang host khác / nâng gói.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
