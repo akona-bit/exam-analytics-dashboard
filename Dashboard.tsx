@@ -340,7 +340,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       )}
       <button 
         onClick={() => setSelectedStudent(null)}
-        className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-medium transition-colors w-fit px-3 py-1.5 -ml-3 rounded-lg hover:bg-indigo-50"
+        className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 bg-white/80 hover:bg-white backdrop-blur-md shadow-sm font-semibold transition-all w-fit px-4 py-2.5 rounded-xl border border-slate-200/60 mb-5 relative z-10"
       >
         <ChevronLeft className="w-5 h-5" />
         Quay lại tìm kiếm
@@ -349,53 +349,75 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       {/* Single Student Profile */}
       <section className="card p-4 sm:p-5 md:p-8 border-2 border-indigo-100 bg-white shadow-sm relative overflow-hidden">
         
-        {studentRankInfo && (studentRankInfo.rankTho === 1 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 1 || studentRankInfo.rankIrt === 2 || studentRankInfo.rankTp === 1 || studentRankInfo.rankTp === 2) && (
-          <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 text-amber-800 font-bold px-6 py-4 rounded-xl mb-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm shrink-0">
-                🏆
+        {(() => {
+          if (!studentRankInfo) return null;
+          const isTop1 = studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1;
+          const isTop2 = !isTop1 && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2);
+          
+          if (isTop1) {
+            return (
+              <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 border-2 border-yellow-300 text-white font-bold px-6 py-5 rounded-2xl mb-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transform hover:scale-[1.01] transition-transform">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-3xl shadow-inner shrink-0 border border-white/40">
+                    👑
+                  </div>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-black drop-shadow-md">Tuyệt vời, {selectedStudent.name}!</h3>
+                    <p className="font-semibold text-yellow-50/90 text-sm sm:text-base mt-1">Xuất sắc đạt danh hiệu <span className="uppercase font-black text-white bg-black/10 px-2 py-0.5 rounded ml-1">Thủ Khoa</span> trong đợt thi này!</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg">Chúc mừng {selectedStudent.name}!</h3>
-                <p className="font-medium text-amber-700/80 text-sm">Thí sinh đạt thành tích xuất sắc (Top 2) trong đợt thi này.</p>
+            );
+          }
+          if (isTop2) {
+            return (
+              <div className="relative overflow-hidden bg-gradient-to-r from-slate-300 via-gray-300 to-slate-400 border-2 border-slate-300 text-slate-800 font-bold px-6 py-5 rounded-2xl mb-6 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 transform hover:scale-[1.01] transition-transform">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="w-14 h-14 bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-3xl shadow-inner shrink-0 border border-white/50">
+                    👑
+                  </div>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-black drop-shadow-sm">Chúc mừng, {selectedStudent.name}!</h3>
+                    <p className="font-semibold text-slate-700 text-sm sm:text-base mt-1">Xuất sắc đạt danh hiệu <span className="uppercase font-black text-slate-900 bg-white/30 px-2 py-0.5 rounded ml-1">Á Khoa</span> trong đợt thi này!</p>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:text-right">
-              {studentRankInfo.rankTho && studentRankInfo.rankTho <= 2 && (
-                <div className="bg-white/50 px-3 py-1.5 rounded-lg flex-1 sm:flex-none">
-                  <div className="text-[10px] font-bold text-amber-600/70 uppercase tracking-widest mb-0.5">Hạng Thô</div>
-                  <div className="text-xl font-black text-amber-500">#{studentRankInfo.rankTho}</div>
-                </div>
-              )}
-              {studentRankInfo.rankIrt && studentRankInfo.rankIrt <= 2 && (
-                <div className="bg-white/50 px-3 py-1.5 rounded-lg flex-1 sm:flex-none">
-                  <div className="text-[10px] font-bold text-amber-600/70 uppercase tracking-widest mb-0.5">Hạng IRT</div>
-                  <div className="text-xl font-black text-amber-500">#{studentRankInfo.rankIrt}</div>
-                </div>
-              )}
-              {studentRankInfo.rankTp && studentRankInfo.rankTp <= 2 && (
-                <div className="bg-white/50 px-3 py-1.5 rounded-lg flex-1 sm:flex-none">
-                  <div className="text-[10px] font-bold text-amber-600/70 uppercase tracking-widest mb-0.5">Hạng T.Phạt</div>
-                  <div className="text-xl font-black text-amber-500">#{studentRankInfo.rankTp}</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+            );
+          }
+          return null;
+        })()}
+        
         <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-slate-100 pb-5 mb-5 mt-4 sm:mt-0">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-sm border-2 border-white bg-slate-100 flex items-center justify-center">
-            <img 
-              src="/avatar.jpg" 
-              alt="Avatar" 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                // Fallback to initial if image is not found
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerText = selectedStudent.name.charAt(0);
-                e.currentTarget.parentElement!.className = "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-indigo-100 to-sky-100 text-indigo-600 flex items-center justify-center font-bold text-2xl sm:text-3xl shrink-0 shadow-sm border border-white";
-              }}
-            />
-          </div>
+          {(() => {
+            const isTop1 = studentRankInfo && (studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1);
+            const isTop2 = !isTop1 && studentRankInfo && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2);
+            
+            if (isTop1) {
+              return (
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-md border-4 border-yellow-400 bg-yellow-50 text-4xl flex items-center justify-center">
+                  👑
+                </div>
+              );
+            }
+            if (isTop2) {
+              return (
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-md border-4 border-slate-300 bg-slate-50 text-4xl flex items-center justify-center">
+                  👑
+                </div>
+              );
+            }
+            return (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-sm border-2 border-indigo-100 bg-indigo-50/50 flex items-center justify-center">
+                <img 
+                  src={`https://robohash.org/${encodeURIComponent(selectedStudent.name)}?set=set4&bgset=bg1`}
+                  alt="Avatar" 
+                  className="w-full h-full object-cover scale-110"
+                />
+              </div>
+            );
+          })()}
           <div className="flex-1">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800">{selectedStudent.name}</h2>
           </div>
