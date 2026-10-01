@@ -8,6 +8,7 @@ import {
 import * as XLSX from 'xlsx';
 import defaultQuestionTexts from './question_texts.json';
 import { defaultTopicMap } from './KnowledgeMatrix';
+import { ABILITY_BANDS, MAX_TOTAL_SCORE } from './analytics';
 
 /* ──────────── CSV Parser ──────────── */
 function parseCSVLine(text: string): string[] {
@@ -132,6 +133,8 @@ async function uploadToSupabase(table: string, data: any[]) {
 }
 
 /* ──────────── Helper: fetch stats ──────────── */
+const GIOI_MIN = ABILITY_BANDS.find(b => b.short === 'Giỏi')?.min ?? MAX_TOTAL_SCORE * 0.6;
+
 async function fetchStats() {
   if (!supabase) return null;
   const [{ count: studentCount }, { count: questionCount }, { count: responseCount }] = await Promise.all([
@@ -139,25 +142,35 @@ async function fetchStats() {
     supabase.from('questions').select('*', { count: 'exact', head: true }),
     supabase.from('student_responses').select('*', { count: 'exact', head: true }),
   ]);
-  
-  // Advanced Stats
+
+  // Thống kê nâng cao đợt thi này — không dùng ngưỡng/cột nào hardcode
   let avgToan = 0, avgTdkh = 0, highScores = 0, hardestQ = '';
   try {
-    const { data: studentsData } = await supabase.from('students').select('tho_toan, tho_tdkh');
+    const { data: studentsData } = await supabase.from('students').select('stt, name, email, tho_toan, tho_tdkh');
     if (studentsData && studentsData.length > 0) {
-      let sumT = 0, sumD = 0;
-      studentsData.forEach(s => {
-        sumT += s.tho_toan || 0;
-        sumD += s.tho_tdkh || 0;
-        if ((s.tho_toan || 0) + (s.tho_tdkh || 0) >= 80) highScores++; // Assume 80 is high score
-      });
-      avgToan = sumT / studentsData.length;
-      avgTdkh = sumD / studentsData.length;
+      // Chỉ tính lần thi mới nhất của từng thí sinh (giống dashboard)
+      const latest = new Map<string, { stt: number; toan: number; tdkh: number }>();
+      for (const s of studentsData) {
+        const key = s.email || s.name;
+        const prev = latest.get(key);
+        if (!prev || (s.stt || 0) > prev.stt) {
+          latest.set(key, { stt: s.stt || 0, toan: s.tho_toan || 0, tdkh: s.tho_tdkh || 0 });
+        }
+      }
+      const rows = Array.from(latest.values());
+      avgToan = rows.reduce((sum, r) => sum + r.toan, 0) / rows.length;
+      avgTdkh = rows.reduce((sum, r) => sum + r.tdkh, 0) / rows.length;
+      // Xếp loại Giỏi lấy theo ABILITY_BANDS (thang tổng MAX_TOTAL_SCORE), không hardcode 80đ
+      highScores = rows.filter(r => r.toan + r.tdkh >= GIOI_MIN).length;
     }
-    
-    const { data: questionsData } = await supabase.from('questions').select('question_id, incorrect').order('incorrect', { ascending: false }).limit(1);
+
+    // Câu sai nhiều nhất: bỏ câu lỗi đề (is_error) và câu không có số liệu
+    const { data: questionsData } = await supabase.from('questions').select('question_id, incorrect, is_error');
     if (questionsData && questionsData.length > 0) {
-      hardestQ = `${questionsData[0].question_id} (${questionsData[0].incorrect} bạn sai)`;
+      const hardest = questionsData
+        .filter(q => !q.is_error && q.incorrect !== null && q.incorrect !== undefined && Number.isFinite(Number(q.incorrect)))
+        .sort((a, b) => Number(b.incorrect) - Number(a.incorrect))[0];
+      if (hardest) hardestQ = `${hardest.question_id} (${hardest.incorrect} bạn sai)`;
     }
   } catch {}
 
@@ -669,7 +682,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
                 <p className="text-xl font-bold text-sky-600">{stats.avgTdkh?.toFixed(1) || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase font-semibold">Điểm Giỏi (≥80đ)</p>
+                <p className="text-xs text-slate-500 uppercase font-semibold">Điểm Giỏi (≥{GIOI_MIN}/{MAX_TOTAL_SCORE}đ)</p>
                 <p className="text-xl font-bold text-emerald-600">{stats.highScores || 0} bạn</p>
               </div>
               <div>

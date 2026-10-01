@@ -101,40 +101,53 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return { type: 'empty', data: [] };
-    const lowerName = searchQuery.toLowerCase();
+    const lowerName = searchQuery.toLowerCase().trim();
     const lowerSbd = searchSbd.toLowerCase().trim();
-    
-    const nameMatches = students.filter(s => s.name.toLowerCase().includes(lowerName) || (s.email && s.email.toLowerCase().includes(lowerName)));
-    
-    if (nameMatches.length === 0) {
-      return { type: 'not_found', data: [] };
+    if (!lowerName && !lowerSbd) return { type: 'empty', data: [] };
+
+    const requiredSbdOf = (s: StudentData) => (sbdMap?.[s.name] || '').trim().toLowerCase();
+
+    const pickLatest = (rows: StudentData[]) => {
+      // Group by email/name and pick the latest attempt
+      const latestMap = new Map<string, StudentData>();
+      for (const m of rows) {
+        const key = m.email || m.name;
+        const ex = latestMap.get(key);
+        if (!ex || m.stt > ex.stt) latestMap.set(key, m);
+      }
+      return { type: 'success', data: Array.from(latestMap.values()).slice(0, 5) };
+    };
+
+    // Tra cứu bằng số báo danh (không nhập tên)
+    if (!lowerName) {
+      const bySbd = students.filter(s => {
+        const req = requiredSbdOf(s);
+        return req !== '' && req === lowerSbd;
+      });
+      return bySbd.length ? pickLatest(bySbd) : { type: 'not_found', data: [] };
     }
 
-    const matches = nameMatches.filter(s => {
-      const requiredSbd = sbdMap?.[s.name];
-      if (requiredSbd) {
-        return lowerSbd === requiredSbd.toLowerCase();
-      }
-      return true; // No SBD required for this student
-    });
+    const matches: StudentData[] = [];
+    let hasNameCandidate = false;
+    for (const s of students) {
+      const req = requiredSbdOf(s);
+      const byName = s.name.toLowerCase().includes(lowerName)
+        || (!!s.email && s.email.toLowerCase().includes(lowerName))
+        || (req !== '' && req === lowerName); // nhập SBD vào ô họ tên
+      if (!byName) continue;
+      hasNameCandidate = true;
+      if (req === '') { matches.push(s); continue; }      // thí sinh không yêu cầu SBD
+      if (req === lowerSbd) { matches.push(s); continue; }// khớp SBD
+      if (req === lowerName && !lowerSbd) { matches.push(s); continue; } // SBD đã nhập ở ô tên
+    }
 
     if (matches.length === 0) {
+      if (!hasNameCandidate) return { type: 'not_found', data: [] };
       if (!lowerSbd) return { type: 'missing_sbd', data: [] };
       return { type: 'wrong_sbd', data: [] };
     }
 
-    // Group by email/name and pick the latest attempt
-    const latestMap = new Map<string, StudentData>();
-    for (const m of matches) {
-      const key = m.email || m.name;
-      const ex = latestMap.get(key);
-      if (!ex || m.stt > ex.stt) {
-        latestMap.set(key, m);
-      }
-    }
-    
-    return { type: 'success', data: Array.from(latestMap.values()).slice(0, 5) };
+    return pickLatest(matches);
   }, [students, searchQuery, searchSbd, sbdMap]);
 
   const classProgressData = useMemo(() => {
@@ -255,7 +268,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() && !searchSbd.trim()) return;
     
     if (searchResults.type === 'success' && searchResults.data.length > 0) {
       setSelectedStudent(searchResults.data[0]);
@@ -297,7 +310,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             
             <div className="mt-8 text-center">
               <p className="inline-block px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-lg text-sm sm:text-base text-slate-700 dark:text-slate-200 font-bold text-center border border-white/50 dark:border-slate-700/50">
-                Nhập họ tên và số báo danh bên dưới để tra cứu
+                Nhập họ tên hoặc số báo danh bên dưới để tra cứu
               </p>
             </div>
           </div>
