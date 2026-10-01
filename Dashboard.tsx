@@ -371,6 +371,39 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           </div>
         </div>
         
+        {/* Student Ability Chart */}
+        <div className="mt-6 sm:mt-8 bg-slate-50 rounded-2xl border border-slate-100 p-4 sm:p-5">
+          <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2 mb-4">
+            <BarChartIcon className="w-5 h-5 text-indigo-500" />
+            Đánh Giá Năng Lực Của Bạn So Với Lớp
+          </h3>
+          <div className="h-[250px] sm:h-[300px] w-full -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  { name: 'Thô (Toán)', 'Điểm của bạn': selectedStudent.tho.toan || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })() },
+                  { name: 'Thô (TDKH)', 'Điểm của bạn': selectedStudent.tho.tdkh || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })() },
+                  { name: 'IRT (Toán)', 'Điểm của bạn': selectedStudent.irt.toan || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })() },
+                  { name: 'IRT (TDKH)', 'Điểm của bạn': selectedStudent.irt.tdkh || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })() },
+                ]}
+                margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }} 
+                  cursor={{ fill: '#f8fafc' }}
+                  formatter={(value: number) => value.toFixed(2)}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                <Bar dataKey="Điểm của bạn" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="Trung bình lớp" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        
         <div className="mt-6 sm:mt-8 bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
           <button
             onClick={() => setShowWrongDetail(!showWrongDetail)}
@@ -400,14 +433,14 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           
           {showWrongDetail && (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse min-w-[700px]">
+            <table className="w-full text-sm text-left border-collapse min-w-full sm:min-w-[700px]">
               <thead className="text-xs text-slate-500 bg-slate-100/50 uppercase font-semibold">
                 <tr>
-                  <th className="px-4 py-3 border-b border-slate-200">Câu Hỏi / Nội dung</th>
-                  <th className="px-4 py-3 border-b border-slate-200 w-24">Trạng thái</th>
-                  <th className="px-4 py-3 border-b border-slate-200 text-right w-24">TS đúng</th>
-                  <th className="px-4 py-3 border-b border-slate-200 text-right w-24 text-rose-500">TS sai</th>
-                  <th className="px-4 py-3 border-b border-slate-200 text-right w-24 text-amber-600">Phạt</th>
+                  <th className="px-3 sm:px-4 py-3 border-b border-slate-200">Câu Hỏi / Nội dung</th>
+                  <th className="px-3 sm:px-4 py-3 border-b border-slate-200 w-20 sm:w-24">Trạng thái</th>
+                  <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-200 text-right w-24">TS đúng</th>
+                  <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-200 text-right w-24 text-rose-500">TS sai</th>
+                  <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-200 text-right w-24 text-amber-600">Phạt</th>
                 </tr>
               </thead>
               <tbody>
@@ -416,18 +449,18 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                   const qData = questions.find(q => q.id === qKey);
                   return (
                     <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setViewQuestionKey(qKey)}>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3">
                         <div className="font-bold text-slate-800 mb-1">{qKey} <span className="text-xs font-normal text-slate-500 ml-2 bg-slate-200/50 px-1.5 py-0.5 rounded">{qData?.subject || ''}</span></div>
-                        <div className="text-slate-600 text-xs line-clamp-2">{currentTexts[qKey] || "Chưa có dữ liệu nội dung câu hỏi."}</div>
+                        <div className="text-slate-600 text-[11px] sm:text-xs line-clamp-2">{currentTexts[qKey] || "Chưa có dữ liệu nội dung câu hỏi."}</div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-[11px] font-bold ${r.status === 'wrong' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+                      <td className="px-3 sm:px-4 py-3">
+                        <span className={`px-2 py-1 rounded text-[10px] sm:text-[11px] font-bold whitespace-nowrap ${r.status === 'wrong' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
                           {r.status === 'wrong' ? 'Làm Sai' : 'Bỏ Trống'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-emerald-600 font-medium">{qData?.correct ?? '-'}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-rose-500 font-bold">{qData?.incorrect ?? '-'}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-amber-600 font-semibold bg-amber-50/10">
+                      <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-emerald-600 font-medium">{qData?.correct ?? '-'}</td>
+                      <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-rose-500 font-bold">{qData?.incorrect ?? '-'}</td>
+                      <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-amber-600 font-semibold bg-amber-50/10">
                         {qData?.penaltyScore !== null && qData?.penaltyScore !== undefined ? qData.penaltyScore.toFixed(4) : '-'}
                       </td>
                     </tr>
