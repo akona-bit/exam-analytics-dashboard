@@ -212,8 +212,17 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-screen bg-[#f8fafc]">
-      <main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
+    <div 
+      className="min-h-[100dvh] w-screen relative bg-slate-50 overflow-x-hidden"
+      style={{
+        backgroundImage: 'url("/bg.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-none"></div>
+      <main className="relative z-10 p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-[80vh] gap-3">
             <div className="w-10 h-10 border-3 border-indigo-200 border-t-indigo-500 rounded-full animate-spin"></div>

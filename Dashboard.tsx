@@ -215,15 +215,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
   if (!selectedStudent) {
     return (
-      <div 
-        className="flex flex-col items-center justify-center min-h-[70vh] fade-in relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white mx-2 sm:mx-4"
-        style={{
-          backgroundImage: 'url(/bg.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/30 to-white/60"></div>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] fade-in relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/50 mx-2 sm:mx-4 bg-white/40 backdrop-blur-md">
         
         <div className="relative z-10 w-full flex flex-col items-center p-6 sm:p-12">
           {/* Exam name header */}
