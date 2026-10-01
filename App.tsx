@@ -215,7 +215,7 @@ export default function App() {
     <div 
       className="min-h-[100dvh] w-screen relative bg-slate-50 overflow-x-hidden"
       style={{
-        backgroundImage: 'url("/bg.jpg")',
+        backgroundImage: 'url("/bg.png")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed'
