@@ -27,10 +27,14 @@ export default defineConfig(() => {
           main: path.resolve(__dirname, 'index.html')
         },
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'recharts': ['recharts'],
-            'icons': ['lucide-react']
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('recharts') || id.includes('d3-')) return 'recharts';
+              if (id.includes('lucide')) return 'icons';
+              if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler')) return 'react-vendor';
+              if (id.includes('@supabase')) return 'supabase';
+              return 'vendor'; // all other deps
+            }
           }
         }
       }
