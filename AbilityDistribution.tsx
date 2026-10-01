@@ -111,7 +111,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
 
   return (
     <section className="w-full max-w-6xl mx-auto flex flex-col gap-4 sm:gap-5">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 pb-3">
+      <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
             <span className="icon-box bg-indigo-50 text-indigo-600"><BarChartIcon className="w-[18px] h-[18px]" /></span>

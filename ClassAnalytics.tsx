@@ -144,7 +144,7 @@ export function ClassAnalytics({ students, questions, metric, onSelectStudent }:
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <section id="xu-huong" className="flex flex-col gap-4 sm:gap-5">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
               <span className="icon-box bg-emerald-50 text-emerald-600"><TrendingUp className="w-[18px] h-[18px]" /></span>
@@ -210,7 +210,7 @@ export function ClassAnalytics({ students, questions, metric, onSelectStudent }:
       </section>
 
       <section id="top-ten" className="flex flex-col gap-4 sm:gap-5">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
               <span className="icon-box bg-amber-50 text-amber-600"><Trophy className="w-[18px] h-[18px]" /></span>
@@ -227,7 +227,7 @@ export function ClassAnalytics({ students, questions, metric, onSelectStudent }:
       </section>
 
       <section id="cau-hoi" className="flex flex-col gap-4 sm:gap-5">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
               <span className="icon-box bg-rose-50 text-rose-500"><ListFilter className="w-[18px] h-[18px]" /></span>
