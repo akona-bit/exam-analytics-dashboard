@@ -257,14 +257,16 @@ export default function App() {
           </div>
         )}
       </main>
-      {/* Floating Admin Login Button */}
-      <button
-        onClick={() => { window.location.hash = '#admin'; }}
-        className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full font-bold text-indigo-600 border border-indigo-100 shadow-sm hover:bg-indigo-50 hover:shadow transition-all flex items-center gap-2 text-sm"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        Đăng nhập
-      </button>
+      {/* Hidden Admin Login Button */}
+      {!isAdmin && (
+        <button
+          onClick={() => { window.location.hash = '#admin'; }}
+          className="fixed top-0 right-0 w-12 h-12 z-50 opacity-0 cursor-default"
+          aria-hidden="true"
+          tabIndex={-1}
+          title="Admin Access"
+        />
+      )}
 
       {/* Floating QR Code */}
       {examUrl && !isAdmin && (
