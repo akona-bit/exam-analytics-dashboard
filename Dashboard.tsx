@@ -323,8 +323,18 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           </div>
         )}
         <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-slate-100 pb-5 mb-5 mt-4 sm:mt-0">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-indigo-100 to-sky-100 text-indigo-600 flex items-center justify-center font-bold text-2xl sm:text-3xl shrink-0 shadow-sm border border-white">
-            {selectedStudent.name.charAt(0)}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-sm border-2 border-white bg-slate-100 flex items-center justify-center">
+            <img 
+              src="/avatar.png" 
+              alt="Avatar" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to initial if image is not found
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement!.innerText = selectedStudent.name.charAt(0);
+                e.currentTarget.parentElement!.className = "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-indigo-100 to-sky-100 text-indigo-600 flex items-center justify-center font-bold text-2xl sm:text-3xl shrink-0 shadow-sm border border-white";
+              }}
+            />
           </div>
           <div className="flex-1">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800">{selectedStudent.name}</h2>
