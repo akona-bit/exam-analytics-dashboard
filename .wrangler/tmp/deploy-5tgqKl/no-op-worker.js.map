@@ -1,8 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../node_modules/wrangler/templates/no-op-worker.js"],
-  "sourceRoot": "D:\\k\u1EBFt-qu\u1EA3-kh\u1EA3o-s\u00E1t\\.wrangler\\tmp\\deploy-5tgqKl",
-  "sourcesContent": ["export default {\n\tfetch() {\n\t\treturn new Response(\"Not found\", {\n\t\t\tstatus: 404,\n\t\t\theaders: {\n\t\t\t\t\"Content-Type\": \"text/html\",\n\t\t\t},\n\t\t});\n\t},\n};\n"],
-  "mappings": ";AAAA,IAAO,uBAAQ;AAAA,EACd,QAAQ;AACP,WAAO,IAAI,SAAS,aAAa;AAAA,MAChC,QAAQ;AAAA,MACR,SAAS;AAAA,QACR,gBAAgB;AAAA,MACjB;AAAA,IACD,CAAC;AAAA,EACF;AACD;",
-  "names": []
-}
