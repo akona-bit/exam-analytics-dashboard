@@ -245,6 +245,15 @@ export default function App() {
             sbdMap={sbdMap}
           />
         )}
+
+        {/* Footer */}
+        {!isLoading && (
+          <div className="mt-auto pt-8 pb-4 w-full text-center flex-shrink-0">
+            <p className="text-sm font-medium text-slate-700 bg-white/70 backdrop-blur-md inline-block px-5 py-2.5 rounded-full shadow-sm border border-white/50">
+              Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua Discord: <span className="font-bold text-indigo-700">734403880208564235</span>
+            </p>
+          </div>
+        )}
       </main>
       {/* Hidden admin access button */}
       <button
