@@ -118,7 +118,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       });
     });
     return Array.from(am.entries()).sort((a, b) => a[0] - b[0]).map(([n, d]) => ({
-      name: `Lần ${n}`, 'TB Lớp Toán': d.c ? +(d.vT/d.c).toFixed(2) : 0, 'TB Lớp TDKH': d.c ? +(d.vD/d.c).toFixed(2) : 0,
+      name: `Lần ${n}`, 'TB Chung Toán': d.c ? +(d.vT/d.c).toFixed(2) : 0, 'TB Chung TDKH': d.c ? +(d.vD/d.c).toFixed(2) : 0,
     }));
   }, [students, progressMetric]);
 
@@ -137,8 +137,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         name: `Lần ${n}`,
         Toán: s[mk].toan || 0,
         TDKH: s[mk].tdkh || 0,
-        'TB Lớp Toán': cd ? cd['TB Lớp Toán'] : 0,
-        'TB Lớp TDKH': cd ? cd['TB Lớp TDKH'] : 0,
+        'TB Chung Toán': cd ? cd['TB Chung Toán'] : 0,
+        'TB Chung TDKH': cd ? cd['TB Chung TDKH'] : 0,
       };
     });
   }, [studentHistory, progressMetric, classProgressData]);
@@ -462,16 +462,16 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         <div className="mt-6 sm:mt-8 bg-slate-50 rounded-2xl border border-slate-100 p-4 sm:p-5">
           <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2 mb-4">
             <BarChartIcon className="w-5 h-5 text-indigo-500" />
-            Đánh Giá Năng Lực Của Bạn So Với Lớp
+            Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
           </h3>
           <div className="h-[250px] sm:h-[300px] w-full -ml-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
-                  { name: 'Thô (Toán)', 'Điểm của bạn': selectedStudent.tho.toan || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })() },
-                  { name: 'Thô (TDKH)', 'Điểm của bạn': selectedStudent.tho.tdkh || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })() },
-                  { name: 'IRT (Toán)', 'Điểm của bạn': selectedStudent.irt.toan || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })() },
-                  { name: 'IRT (TDKH)', 'Điểm của bạn': selectedStudent.irt.tdkh || 0, 'Trung bình lớp': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })() },
+                  { name: 'Thô (Toán)', 'Điểm của bạn': selectedStudent.tho.toan || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })() },
+                  { name: 'Thô (TDKH)', 'Điểm của bạn': selectedStudent.tho.tdkh || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })() },
+                  { name: 'IRT (Toán)', 'Điểm của bạn': selectedStudent.irt.toan || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })() },
+                  { name: 'IRT (TDKH)', 'Điểm của bạn': selectedStudent.irt.tdkh || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })() },
                 ]}
                 margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
               >
@@ -485,7 +485,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                 <Bar dataKey="Điểm của bạn" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="Trung bình lớp" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="Trung bình chung" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -669,8 +669,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 />
                 <Line 
                   type="monotone" 
-                  name={`Trung bình lớp ${progressSubject}`} 
-                  dataKey={`TB Lớp ${progressSubject}`} 
+                  name={`Trung bình chung ${progressSubject}`} 
+                  dataKey={`TB Chung ${progressSubject}`} 
                   stroke="#94a3b8" 
                   strokeDasharray="5 5" 
                   strokeWidth={2} 

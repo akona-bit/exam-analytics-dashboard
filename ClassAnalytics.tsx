@@ -148,7 +148,7 @@ export function ClassAnalytics({ students, questions, metric, onSelectStudent }:
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
               <span className="icon-box bg-emerald-50 text-emerald-600"><TrendingUp className="w-[18px] h-[18px]" /></span>
-              Xu Hướng & Thống Kê Lớp Học
+              Xu Hướng & Thống Kê Chung
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 ml-11">
               Toàn bộ số liệu theo {METRIC_LABEL[metric]} · trung bình qua từng đợt thi và cơ cấu thí sinh
