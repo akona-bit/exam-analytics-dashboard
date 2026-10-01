@@ -295,8 +295,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-[3px] bg-blue-400 rounded-full transform -rotate-1 opacity-80"></div>
             </div>
             
-            <div className="mt-8">
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-semibold text-center">
+            <div className="mt-8 text-center">
+              <p className="inline-block px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-lg text-sm sm:text-base text-slate-700 dark:text-slate-200 font-bold text-center border border-white/50 dark:border-slate-700/50">
                 Nhập họ tên và số báo danh bên dưới để tra cứu
               </p>
             </div>
