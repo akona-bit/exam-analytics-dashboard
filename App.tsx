@@ -229,7 +229,7 @@ export default function App() {
       <div 
         className="fixed inset-0 w-full h-full pointer-events-none"
         style={{
-          backgroundImage: 'url("/bg.jpg")',
+          backgroundImage: 'url("/bg.jpg?v=3")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           filter: 'contrast(1.08) saturate(1.15) brightness(1.02)',
