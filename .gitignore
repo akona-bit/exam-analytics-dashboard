@@ -7,3 +7,9 @@ public/data/
 *.log
 .env*
 !.env.example
+*.csv
+response.json
+api_data.json
+question_texts.json
+*.pdf
+.wrangler/
