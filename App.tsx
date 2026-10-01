@@ -250,7 +250,7 @@ export default function App() {
         {!isLoading && (
           <div className="mt-auto pt-8 pb-4 w-full text-center flex-shrink-0 relative z-20">
             <p className="text-sm font-medium text-slate-700 bg-white/80 backdrop-blur-md inline-block px-5 py-2.5 rounded-full shadow-sm border border-white/50">
-              Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua Discord: <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors">734403880208564235</a>
+              Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua Discord: <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors">https://discordapp.com/users/734403880208564235</a>
             </p>
           </div>
         )}
