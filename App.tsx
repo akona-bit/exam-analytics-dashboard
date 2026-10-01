@@ -212,15 +212,21 @@ export default function App() {
   }
 
   return (
-    <div 
-      className="min-h-[100dvh] w-screen relative bg-slate-50 overflow-x-hidden"
-      style={{
-        backgroundImage: 'url("/bg.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
-    >
+    <div className="min-h-[100dvh] w-screen relative bg-slate-50 overflow-x-hidden">
+      {/* Background Image Layer with Sharpness/Contrast Filters */}
+      <div 
+        className="fixed inset-0 w-full h-full pointer-events-none"
+        style={{
+          backgroundImage: 'url("/bg.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'contrast(1.08) saturate(1.15) brightness(1.02)',
+          imageRendering: 'crisp-edges',
+          zIndex: 0
+        }}
+      />
+      
+      {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-[80vh] gap-3">
