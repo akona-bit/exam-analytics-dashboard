@@ -122,6 +122,7 @@ export default function App() {
   const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(defaultQuestionTexts as Record<string, string>);
   const [answerLink, setAnswerLink] = useState('');
   const [nextExamDate, setNextExamDate] = useState('');
+  const [examUrl, setExamUrl] = useState('');
   const [sbdMap, setSbdMap] = useState<Record<string, string>>({});
 
   // Hash-based routing for hidden admin access
@@ -143,6 +144,7 @@ export default function App() {
         if (row.key === 'question_texts') try { setQuestionTexts(JSON.parse(row.value)); } catch {}
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
+        if (row.key === 'exam_url' && row.value) setExamUrl(row.value);
         if (row.key === 'sbd_map') try { setSbdMap(JSON.parse(row.value)); } catch {}
       }
     });
@@ -250,18 +252,27 @@ export default function App() {
         {!isLoading && (
           <div className="mt-auto pt-8 pb-4 w-full text-center flex-shrink-0 relative z-20">
             <p className="text-sm font-medium text-slate-700 bg-white/80 backdrop-blur-md inline-block px-5 py-2.5 rounded-full shadow-sm border border-white/50">
-              Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua Discord: <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors">https://discordapp.com/users/734403880208564235</a>
+              Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center translate-y-1.5 ml-2 hover:scale-110 transition-transform"><img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" className="h-6 w-auto" /></a>
             </p>
           </div>
         )}
       </main>
-      {/* Hidden admin access button */}
+      {/* Floating Admin Login Button */}
       <button
         onClick={() => { window.location.hash = '#admin'; }}
-        className="fixed bottom-3 right-3 w-3 h-3 rounded-full bg-slate-400 opacity-[0.05] hover:opacity-[0.15] transition-opacity cursor-default z-10"
-        aria-hidden="true"
-        tabIndex={-1}
-      />
+        className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full font-bold text-indigo-600 border border-indigo-100 shadow-sm hover:bg-indigo-50 hover:shadow transition-all flex items-center gap-2 text-sm"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        Đăng nhập
+      </button>
+
+      {/* Floating QR Code */}
+      {examUrl && !isAdmin && (
+        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="fixed bottom-4 right-4 z-40 bg-white p-2.5 rounded-2xl shadow-xl border-2 border-indigo-100 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
+          <p className="text-[10px] sm:text-xs font-black text-indigo-600 uppercase tracking-wide group-hover:text-indigo-700">Mã làm bài thi</p>
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(examUrl)}`} alt="QR Code" className="w-[80px] h-[80px] sm:w-[120px] sm:h-[120px]" />
+        </a>
+      )}
     </div>
   );
 }

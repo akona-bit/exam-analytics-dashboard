@@ -172,6 +172,10 @@ export function AdminPage({ onExit }: AdminPageProps) {
   const [nextExamDateSaving, setNextExamDateSaving] = useState(false);
   const [nextExamDateStatus, setNextExamDateStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  const [examUrl, setExamUrl] = useState('');
+  const [examUrlSaving, setExamUrlSaving] = useState(false);
+  const [examUrlStatus, setExamUrlStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
   // SBD Mapping
   const [sbdMapStr, setSbdMapStr] = useState('');
   const [sbdMapSaving, setSbdMapSaving] = useState(false);
@@ -195,6 +199,7 @@ export function AdminPage({ onExit }: AdminPageProps) {
         if (row.key === 'question_texts' && row.value) setQuestionTextsStr(row.value);
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
+        if (row.key === 'exam_url' && row.value) setExamUrl(row.value);
         if (row.key === 'sbd_map' && row.value) {
           try {
             const map = JSON.parse(row.value);
@@ -256,6 +261,24 @@ export function AdminPage({ onExit }: AdminPageProps) {
       setAnswerLinkStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
     }
     setAnswerLinkSaving(false);
+  };
+
+  const handleSaveExamUrl = async () => {
+    if (!supabase) return;
+    setExamUrlSaving(true);
+    setExamUrlStatus(null);
+    try {
+      const { error } = await supabase.from('exam_settings').upsert(
+        { key: 'exam_url', value: examUrl.trim(), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      setExamUrlStatus({ type: 'success', msg: 'Đã lưu link mã QR thành công!' });
+      setTimeout(() => setExamUrlStatus(null), 3000);
+    } catch (err: any) {
+      setExamUrlStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setExamUrlSaving(false);
   };
 
   const handleSaveNextExamDate = async () => {
@@ -593,6 +616,33 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
             >
               {nextExamDateSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Lưu dự kiến đợt thi
+            </button>
+          </div>
+          <hr className="border-slate-100" />
+
+          {/* Exam URL / QR Code */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700">Link đến kì thi (để tạo QR ở trang chủ)</label>
+            <input
+              type="text"
+              value={examUrl}
+              onChange={e => setExamUrl(e.target.value)}
+              placeholder="VD: https://docs.google.com/forms/..."
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white"
+            />
+            {examUrlStatus && (
+              <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg mt-1 w-fit ${examUrlStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                {examUrlStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                {examUrlStatus.msg}
+              </div>
+            )}
+            <button
+              onClick={handleSaveExamUrl}
+              disabled={examUrlSaving}
+              className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2 mt-1"
+            >
+              {examUrlSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Lưu link kì thi
             </button>
           </div>
         </div>
