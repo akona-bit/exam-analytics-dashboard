@@ -18,6 +18,8 @@ interface Props {
   examName: string; 
   topicMap?: Record<string, number[]> | null;
   questionTexts?: Record<string, string>;
+  answerLink?: string;
+  nextExamDate?: string;
 }
 
 function LazyFallback() {
@@ -44,7 +46,7 @@ const maskEmail = (email: string | null | undefined) => {
   return `${maskedName}@${maskedDomain}.${dExt}`;
 };
 
-export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts }: Props) {
+export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts, answerLink, nextExamDate }: Props) {
   const currentTexts = propQuestionTexts || texts;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
@@ -668,6 +670,29 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           />
         </Suspense>
       </div>
+
+      {/* Info Section */}
+      {(answerLink || nextExamDate) && (
+        <div className="mt-8 sm:mt-12 bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+          {nextExamDate && (
+            <div className="flex items-center gap-3 text-slate-700">
+              <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Dự kiến đợt thi tiếp theo</p>
+                <p className="font-bold text-slate-800 sm:text-lg">{nextExamDate}</p>
+              </div>
+            </div>
+          )}
+          {answerLink && (
+            <a href={answerLink} target="_blank" rel="noopener noreferrer" className="px-6 py-3.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-sm w-full sm:w-auto text-center flex items-center justify-center gap-2 shrink-0">
+              <BookOpen className="w-5 h-5" />
+              Xem Đáp Án Chi Tiết
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }

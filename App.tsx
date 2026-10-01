@@ -120,6 +120,8 @@ export default function App() {
   const [examName, setExamName] = useState('Kì Thi Khảo Sát');
   const [topicMap, setTopicMap] = useState<Record<string, number[]> | null>(null);
   const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(defaultQuestionTexts as Record<string, string>);
+  const [answerLink, setAnswerLink] = useState('');
+  const [nextExamDate, setNextExamDate] = useState('');
 
   // Hash-based routing for hidden admin access
   useEffect(() => {
@@ -138,6 +140,8 @@ export default function App() {
         if (row.key === 'exam_name' && row.value) setExamName(row.value);
         if (row.key === 'topic_map') try { setTopicMap(JSON.parse(row.value)); } catch {}
         if (row.key === 'question_texts') try { setQuestionTexts(JSON.parse(row.value)); } catch {}
+        if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
+        if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
       }
     });
   }, []);
@@ -214,7 +218,15 @@ export default function App() {
             <p className="text-slate-500 font-medium">Đang tải dữ liệu...</p>
           </div>
         ) : (
-          <Dashboard questions={data} students={studentData} examName={examName} topicMap={topicMap} questionTexts={questionTexts} />
+          <Dashboard 
+            questions={data} 
+            students={studentData} 
+            examName={examName} 
+            topicMap={topicMap} 
+            questionTexts={questionTexts} 
+            answerLink={answerLink} 
+            nextExamDate={nextExamDate} 
+          />
         )}
       </main>
       {/* Hidden admin access button */}

@@ -163,6 +163,15 @@ export function AdminPage({ onExit }: AdminPageProps) {
   const [questionTextsSaving, setQuestionTextsSaving] = useState(false);
   const [questionTextsStatus, setQuestionTextsStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  // Additional Info
+  const [answerLink, setAnswerLink] = useState('');
+  const [answerLinkSaving, setAnswerLinkSaving] = useState(false);
+  const [answerLinkStatus, setAnswerLinkStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  const [nextExamDate, setNextExamDate] = useState('');
+  const [nextExamDateSaving, setNextExamDateSaving] = useState(false);
+  const [nextExamDateStatus, setNextExamDateStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
   const refreshStats = useCallback(async () => {
     try { setStats(await fetchStats()); } catch { /* ignore */ }
   }, []);
@@ -179,6 +188,8 @@ export function AdminPage({ onExit }: AdminPageProps) {
         if (row.key === 'exam_name' && row.value) setExamName(row.value);
         if (row.key === 'topic_map' && row.value) setTopicMapStr(row.value);
         if (row.key === 'question_texts' && row.value) setQuestionTextsStr(row.value);
+        if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
+        if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
       }
     });
   }, [refreshStats]);
@@ -214,6 +225,42 @@ export function AdminPage({ onExit }: AdminPageProps) {
       setExamNameStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
     }
     setExamNameSaving(false);
+  };
+
+  const handleSaveAnswerLink = async () => {
+    if (!supabase) return;
+    setAnswerLinkSaving(true);
+    setAnswerLinkStatus(null);
+    try {
+      const { error } = await supabase.from('exam_settings').upsert(
+        { key: 'answer_link', value: answerLink.trim(), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      setAnswerLinkStatus({ type: 'success', msg: 'Đã lưu link đáp án thành công!' });
+      setTimeout(() => setAnswerLinkStatus(null), 3000);
+    } catch (err: any) {
+      setAnswerLinkStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setAnswerLinkSaving(false);
+  };
+
+  const handleSaveNextExamDate = async () => {
+    if (!supabase) return;
+    setNextExamDateSaving(true);
+    setNextExamDateStatus(null);
+    try {
+      const { error } = await supabase.from('exam_settings').upsert(
+        { key: 'next_exam_date', value: nextExamDate.trim(), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      setNextExamDateStatus({ type: 'success', msg: 'Đã lưu thời gian đợt thi thành công!' });
+      setTimeout(() => setNextExamDateStatus(null), 3000);
+    } catch (err: any) {
+      setNextExamDateStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setNextExamDateSaving(false);
   };
 
   const handleSaveTopicMap = async () => {
@@ -444,6 +491,70 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
             {examNameSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Lưu thay đổi
           </button>
+        </div>
+      </div>
+
+      {/* Additional Settings */}
+      <div className="card p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+          <BookOpen className="w-5 h-5 text-indigo-500" />
+          Cài đặt hiển thị phụ
+        </h2>
+        
+        <div className="flex flex-col gap-5">
+          {/* Answer Link */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700">Link đáp án chi tiết (Hiển thị cho thí sinh)</label>
+            <input
+              type="text"
+              value={answerLink}
+              onChange={e => setAnswerLink(e.target.value)}
+              placeholder="VD: https://docs.google.com/..."
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white"
+            />
+            {answerLinkStatus && (
+              <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg mt-1 w-fit ${answerLinkStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                {answerLinkStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                {answerLinkStatus.msg}
+              </div>
+            )}
+            <button
+              onClick={handleSaveAnswerLink}
+              disabled={answerLinkSaving}
+              className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2 mt-1"
+            >
+              {answerLinkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Lưu link đáp án
+            </button>
+          </div>
+
+          <hr className="border-slate-100" />
+
+          {/* Next Exam Date */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700">Dự kiến đợt thi tiếp theo (Văn bản ngắn)</label>
+            <input
+              type="text"
+              value={nextExamDate}
+              onChange={e => setNextExamDate(e.target.value)}
+              placeholder="VD: Chủ Nhật tuần sau, 20h00"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white"
+            />
+            {nextExamDateStatus && (
+              <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg mt-1 w-fit ${nextExamDateStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                {nextExamDateStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                {nextExamDateStatus.msg}
+              </div>
+            )}
+            <button
+              onClick={handleSaveNextExamDate}
+              disabled={nextExamDateSaving}
+              className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2 mt-1"
+            >
+              {nextExamDateSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Lưu dự kiến đợt thi
+            </button>
+          </div>
         </div>
       </div>
 
