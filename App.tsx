@@ -1,3 +1,4 @@
+import { Moon, Sun } from 'lucide-react';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -124,6 +125,12 @@ export default function App() {
   const [nextExamDate, setNextExamDate] = useState('');
   const [examUrl, setExamUrl] = useState('');
   const [sbdMap, setSbdMap] = useState<Record<string, string>>({});
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  useEffect(() => {
+    if (isDark) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
+    else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
+  }, [isDark]);
+
 
   // Hash-based routing for hidden admin access
   useEffect(() => {
@@ -183,7 +190,10 @@ export default function App() {
   // Admin route
   if (isAdmin) {
     return (
-      <div className="min-h-[100dvh] w-screen bg-[#f8fafc]">
+      <div className="min-h-[100dvh] w-screen bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300">
+        <button onClick={() => setIsDark(!isDark)} className="fixed top-4 left-4 z-50 p-2.5 rounded-full bg-white dark:bg-slate-800 shadow-md text-slate-700 dark:text-slate-200 hover:scale-110 transition-all">
+          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
         <main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
           <AdminPage onExit={() => { window.location.hash = ''; setIsAdmin(false); }} />
         </main>
@@ -200,8 +210,8 @@ export default function App() {
           </svg>
         </div>
         <div>
-          <h2 className="text-lg font-bold text-slate-800 mb-1">Không tải được dữ liệu</h2>
-          <p className="text-sm text-slate-500 max-w-md">{loadError}</p>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Không tải được dữ liệu</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 max-w-md">{loadError}</p>
         </div>
         <button
           onClick={() => window.location.reload()}
@@ -214,7 +224,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-screen relative bg-slate-50 overflow-x-hidden">
+    <div className="min-h-[100dvh] w-screen relative bg-slate-50 dark:bg-slate-900/50 overflow-x-hidden">
       {/* Background Image Layer with Sharpness/Contrast Filters */}
       <div 
         className="fixed inset-0 w-full h-full pointer-events-none"
@@ -233,7 +243,7 @@ export default function App() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-[80vh] gap-3">
             <div className="w-10 h-10 border-3 border-indigo-200 border-t-indigo-500 rounded-full animate-spin"></div>
-            <p className="text-slate-500 font-medium">Đang tải dữ liệu...</p>
+            <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Đang tải dữ liệu...</p>
           </div>
         ) : (
           <Dashboard 
@@ -251,7 +261,7 @@ export default function App() {
         {/* Footer */}
         {!isLoading && (
           <div className="mt-auto pt-8 pb-4 w-full text-center flex-shrink-0 relative z-20">
-            <p className="text-sm font-medium text-slate-700 bg-white/80 backdrop-blur-md inline-block px-5 py-2.5 rounded-full shadow-sm border border-white/50">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800/80 backdrop-blur-md inline-block px-5 py-2.5 rounded-full shadow-sm border border-white/50">
               Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center translate-y-1.5 ml-2 hover:scale-110 transition-transform"><img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" className="h-6 w-auto" /></a>
             </p>
           </div>
@@ -270,7 +280,7 @@ export default function App() {
 
       {/* Floating QR Code */}
       {examUrl && !isAdmin && (
-        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="fixed bottom-4 right-4 z-40 bg-white p-2.5 rounded-2xl shadow-xl border-2 border-indigo-100 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
+        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="fixed bottom-4 right-4 z-40 bg-white dark:bg-slate-800 p-2.5 rounded-2xl shadow-xl border-2 border-indigo-100 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
           <p className="text-[10px] sm:text-xs font-black text-indigo-600 uppercase tracking-wide group-hover:text-indigo-700">Mã làm bài thi</p>
           <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(examUrl)}`} alt="QR Code" className="w-[80px] h-[80px] sm:w-[120px] sm:h-[120px]" />
         </a>
