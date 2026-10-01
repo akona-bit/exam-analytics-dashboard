@@ -215,30 +215,59 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
   if (!selectedStudent) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] fade-in">
-        {/* Exam name header */}
-        <div className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 mb-4">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-            <span className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Tra cứu điểm thi</span>
+      <div 
+        className="flex flex-col items-center justify-center min-h-[70vh] fade-in relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white mx-2 sm:mx-4"
+        style={{
+          backgroundImage: 'url(/bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/30 to-white/60"></div>
+        
+        <div className="relative z-10 w-full flex flex-col items-center p-6 sm:p-12">
+          {/* Exam name header */}
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/70 backdrop-blur-md border border-white/50 mb-6 shadow-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+              <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Tra cứu điểm thi</span>
+            </div>
+            
+            <div className="relative inline-block">
+              <h1 
+                className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight px-4 text-blue-600 z-10 relative"
+                style={{
+                  fontFamily: "'Mali', cursive",
+                  transform: "rotate(-2deg)",
+                  WebkitTextStroke: "1px white",
+                  textShadow: "2px 2px 0px white, -2px -2px 0px white, 2px -2px 0px white, -2px 2px 0px white, 0px 8px 20px rgba(37, 99, 235, 0.3)"
+                }}
+              >
+                {examName}
+              </h1>
+              {/* Decorative squiggles (CSS-based to match the image vibe) */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-3 bg-blue-400/30 rounded-full blur-[2px] transform -rotate-1"></div>
+            </div>
+            
+            <div className="mt-8">
+              <p className="text-sm sm:text-base text-slate-700 font-semibold bg-white/60 backdrop-blur-md px-6 py-2.5 rounded-full inline-block shadow-sm border border-white/50">
+                Nhập họ tên và số báo danh bên dưới để tra cứu
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold gradient-header leading-tight px-4">
-            {examName}
-          </h1>
-          <p className="text-sm sm:text-base text-slate-400 mt-3 font-medium">Nhập họ tên và số báo danh bên dưới để tra cứu</p>
-        </div>
-        <div className="relative w-full max-w-3xl px-1">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Họ và tên..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-                className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
-              />
+          
+          <div className="relative w-full max-w-3xl px-1">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 group-focus-within:text-blue-600 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Họ và tên..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                  className="w-full pl-14 pr-12 py-4 sm:py-5 rounded-3xl border-2 border-white/80 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-slate-700 font-bold text-lg transition-all shadow-xl bg-white/80 backdrop-blur-xl hover:bg-white/95 focus:bg-white"
+                />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
@@ -249,15 +278,15 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 </button>
               )}
             </div>
-            <div className="relative flex-1">
-              <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Số báo danh..."
-                value={searchSbd}
-                onChange={(e) => setSearchSbd(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
-              />
+              <div className="relative flex-1 group">
+                <Key className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 group-focus-within:text-blue-600 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Số báo danh..."
+                  value={searchSbd}
+                  onChange={(e) => setSearchSbd(e.target.value)}
+                  className="w-full pl-14 pr-12 py-4 sm:py-5 rounded-3xl border-2 border-white/80 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-slate-700 font-bold text-lg transition-all shadow-xl bg-white/80 backdrop-blur-xl hover:bg-white/95 focus:bg-white"
+                />
               {searchSbd && (
                 <button
                   onClick={() => setSearchSbd('')}
