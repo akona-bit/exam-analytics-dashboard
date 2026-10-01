@@ -220,11 +220,6 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         <div className="relative z-10 w-full flex flex-col items-center px-4">
           {/* Exam name header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 mb-4 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Tra cứu điểm thi</span>
-            </div>
-            
             <div className="relative inline-block mt-1">
               <h1 
                 className="text-5xl sm:text-7xl md:text-8xl font-black leading-tight px-4 text-blue-600 z-10 relative"
