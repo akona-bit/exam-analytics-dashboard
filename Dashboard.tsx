@@ -12,7 +12,13 @@ const ClassAnalytics = lazy(() => import('./ClassAnalytics').then(m => ({ defaul
 type QuestionTextsType = { [key: string]: string };
 const texts = questionTexts as QuestionTextsType;
 
-interface Props { questions: QuestionData[]; students: StudentData[]; examName: string; }
+interface Props { 
+  questions: QuestionData[]; 
+  students: StudentData[]; 
+  examName: string; 
+  topicMap?: Record<string, number[]> | null;
+  questionTexts?: Record<string, string>;
+}
 
 function LazyFallback() {
   return (
@@ -38,7 +44,8 @@ const maskEmail = (email: string | null | undefined) => {
   return `${maskedName}@${maskedDomain}.${dExt}`;
 };
 
-export function Dashboard({ questions, students, examName }: Props) {
+export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts }: Props) {
+  const currentTexts = propQuestionTexts || texts;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [viewQuestionKey, setViewQuestionKey] = useState<string | null>(null);
@@ -257,7 +264,7 @@ export function Dashboard({ questions, students, examName }: Props) {
             </div>
             <div className="p-6 overflow-y-auto">
               <div className="text-slate-700 leading-relaxed whitespace-pre-wrap text-base">
-                {texts[viewQuestionKey] || "Chưa có dữ liệu nội dung câu hỏi."}
+                {currentTexts[viewQuestionKey] || "Chưa có dữ liệu nội dung câu hỏi."}
               </div>
             </div>
           </div>
@@ -411,7 +418,7 @@ export function Dashboard({ questions, students, examName }: Props) {
                     <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setViewQuestionKey(qKey)}>
                       <td className="px-4 py-3">
                         <div className="font-bold text-slate-800 mb-1">{qKey} <span className="text-xs font-normal text-slate-500 ml-2 bg-slate-200/50 px-1.5 py-0.5 rounded">{qData?.subject || ''}</span></div>
-                        <div className="text-slate-600 text-xs line-clamp-2">{texts[qKey] || "Chưa có dữ liệu nội dung câu hỏi."}</div>
+                        <div className="text-slate-600 text-xs line-clamp-2">{currentTexts[qKey] || "Chưa có dữ liệu nội dung câu hỏi."}</div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded text-[11px] font-bold ${r.status === 'wrong' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
@@ -453,7 +460,8 @@ export function Dashboard({ questions, students, examName }: Props) {
               <Suspense fallback={<div className="h-48 flex items-center justify-center text-slate-400 text-sm">Đang tải ma trận kiến thức...</div>}>
                 <KnowledgeMatrix 
                   wrongQuestions={selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []} 
-                  missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []} 
+                  missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []}
+                  topicMap={topicMap || undefined}
                 />
               </Suspense>
             </div>

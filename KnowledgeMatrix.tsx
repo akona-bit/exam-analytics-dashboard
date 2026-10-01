@@ -4,30 +4,33 @@ interface Props {
   onQuestionClick?: (qNum: number) => void;
   wrongQuestions?: number[];
   missingQuestions?: number[];
+  topicMap?: Record<string, number[]>;
 }
 
-export function KnowledgeMatrix({ wrongQuestions = [], missingQuestions = [], onQuestionClick }: Props) {
+export const defaultTopicMap: Record<string, number[]> = {
+  'Hệ bất phương trình bậc nhất 2 ẩn': [7, 16, 17],
+  'Hàm số bậc 2': [6, 14],
+  'Lượng giác': [3, 13],
+  'Dãy số': [1, 18, 19],
+  'Giới hạn & Hàm số liên tục': [2, 4, 8],
+  'Số mũ & Logarit': [9, 11],
+  'Đạo hàm': [12],
+  'Xác suất & Tổ hợp': [5, 28, 29, 30],
+  'Hệ thức lượng trong tam giác & Vecto': [10, 15],
+  'Toạ độ Oxy': [24, 25, 26, 27],
+  'Hình học không gian': [20, 21, 22, 23],
+  'Logic sắp xếp': [31, 32, 33, 34],
+  'Logic phân nhóm': [35, 36, 37, 38],
+  'Dữ liệu bảng': [39, 40, 41, 42],
+  'Dữ liệu biểu đồ cột': [43, 44, 45, 46],
+  'Dữ liệu biểu đồ tròn': [47, 48, 49, 50],
+  'Đọc hiểu KHTN': [51, 52, 53, 54, 55, 56],
+  'Đọc hiểu KHXH': [57, 58, 59, 60],
+};
+
+export function KnowledgeMatrix({ wrongQuestions = [], missingQuestions = [], onQuestionClick, topicMap: propTopicMap }: Props) {
   // Mapping of question numbers to topics (example mapping)
-  const topicMap: Record<string, number[]> = {
-    'Hệ bất phương trình bậc nhất 2 ẩn': [7, 16, 17],
-    'Hàm số bậc 2': [6, 14],
-    'Lượng giác': [3, 13],
-    'Dãy số': [1, 18, 19],
-    'Giới hạn & Hàm số liên tục': [2, 4, 8],
-    'Số mũ & Logarit': [9, 11],
-    'Đạo hàm': [12],
-    'Xác suất & Tổ hợp': [5, 28, 29, 30],
-    'Hệ thức lượng trong tam giác & Vecto': [10, 15],
-    'Toạ độ Oxy': [24, 25, 26, 27],
-    'Hình học không gian': [20, 21, 22, 23],
-    'Logic sắp xếp': [31, 32, 33, 34],
-    'Logic phân nhóm': [35, 36, 37, 38],
-    'Dữ liệu bảng': [39, 40, 41, 42],
-    'Dữ liệu biểu đồ cột': [43, 44, 45, 46],
-    'Dữ liệu biểu đồ tròn': [47, 48, 49, 50],
-    'Đọc hiểu KHTN': [51, 52, 53, 54, 55, 56],
-    'Đọc hiểu KHXH': [57, 58, 59, 60],
-  };
+  const topicMap = propTopicMap || defaultTopicMap;
 
   const checkTopic = (topic: string) => {
     const qList = topicMap[topic] || [];

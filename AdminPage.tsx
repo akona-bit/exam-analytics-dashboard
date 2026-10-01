@@ -5,6 +5,8 @@ import {
   Upload, LogOut, Database, Trash2, CheckCircle2, AlertCircle,
   FileSpreadsheet, Users, BookOpen, ChevronLeft, Loader2, Settings, Save,
 } from 'lucide-react';
+import defaultQuestionTexts from './question_texts.json';
+import { defaultTopicMap } from './KnowledgeMatrix';
 
 /* ──────────── CSV Parser ──────────── */
 function parseCSVLine(text: string): string[] {
@@ -151,6 +153,16 @@ export function AdminPage({ onExit }: AdminPageProps) {
   const [examNameSaving, setExamNameSaving] = useState(false);
   const [examNameStatus, setExamNameStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  // Settings: Topic Map
+  const [topicMapStr, setTopicMapStr] = useState(JSON.stringify(defaultTopicMap, null, 2));
+  const [topicMapSaving, setTopicMapSaving] = useState(false);
+  const [topicMapStatus, setTopicMapStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  // Settings: Question Texts
+  const [questionTextsStr, setQuestionTextsStr] = useState(JSON.stringify(defaultQuestionTexts, null, 2));
+  const [questionTextsSaving, setQuestionTextsSaving] = useState(false);
+  const [questionTextsStatus, setQuestionTextsStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
   const refreshStats = useCallback(async () => {
     try { setStats(await fetchStats()); } catch { /* ignore */ }
   }, []);
@@ -160,9 +172,15 @@ export function AdminPage({ onExit }: AdminPageProps) {
     supabase?.auth.getSession().then(({ data }) => {
       if (data.session) { setAuthed(true); refreshStats(); }
     });
-    // Fetch exam name
-    supabase?.from('exam_settings').select('value').eq('key', 'exam_name').single()
-      .then(({ data }) => { if (data?.value) setExamName(data.value); });
+    // Fetch exam settings
+    supabase?.from('exam_settings').select('key, value').then(({ data }) => {
+      if (!data) return;
+      for (const row of data) {
+        if (row.key === 'exam_name' && row.value) setExamName(row.value);
+        if (row.key === 'topic_map' && row.value) setTopicMapStr(row.value);
+        if (row.key === 'question_texts' && row.value) setQuestionTextsStr(row.value);
+      }
+    });
   }, [refreshStats]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -196,6 +214,54 @@ export function AdminPage({ onExit }: AdminPageProps) {
       setExamNameStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
     }
     setExamNameSaving(false);
+  };
+
+  const handleSaveTopicMap = async () => {
+    if (!supabase || !topicMapStr.trim()) return;
+    try {
+      JSON.parse(topicMapStr);
+    } catch {
+      setTopicMapStatus({ type: 'error', msg: 'Lỗi: Chuỗi JSON không hợp lệ!' });
+      return;
+    }
+    setTopicMapSaving(true);
+    setTopicMapStatus(null);
+    try {
+      const { error } = await supabase.from('exam_settings').upsert(
+        { key: 'topic_map', value: topicMapStr.trim(), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      setTopicMapStatus({ type: 'success', msg: 'Đã lưu ma trận kiến thức thành công!' });
+      setTimeout(() => setTopicMapStatus(null), 3000);
+    } catch (err: any) {
+      setTopicMapStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setTopicMapSaving(false);
+  };
+
+  const handleSaveQuestionTexts = async () => {
+    if (!supabase || !questionTextsStr.trim()) return;
+    try {
+      JSON.parse(questionTextsStr);
+    } catch {
+      setQuestionTextsStatus({ type: 'error', msg: 'Lỗi: Chuỗi JSON không hợp lệ!' });
+      return;
+    }
+    setQuestionTextsSaving(true);
+    setQuestionTextsStatus(null);
+    try {
+      const { error } = await supabase.from('exam_settings').upsert(
+        { key: 'question_texts', value: questionTextsStr.trim(), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      setQuestionTextsStatus({ type: 'success', msg: 'Đã lưu nội dung câu hỏi thành công!' });
+      setTimeout(() => setQuestionTextsStatus(null), 3000);
+    } catch (err: any) {
+      setQuestionTextsStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setQuestionTextsSaving(false);
   };
 
   // ── Upload handler ──
@@ -377,6 +443,70 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           >
             {examNameSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Lưu thay đổi
+          </button>
+        </div>
+      </div>
+
+      {/* Topic Map Settings */}
+      <div className="card p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+          <Settings className="w-5 h-5 text-indigo-500" />
+          Ma trận kiến thức (JSON)
+        </h2>
+        <div className="flex flex-col gap-3">
+          <div>
+            <textarea
+              value={topicMapStr}
+              onChange={e => setTopicMapStr(e.target.value)}
+              placeholder='Ví dụ: { "Hàm số bậc 2": [6, 14] }'
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white h-48 font-mono text-xs"
+            />
+          </div>
+          {topicMapStatus && (
+            <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg ${topicMapStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+              {topicMapStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+              {topicMapStatus.msg}
+            </div>
+          )}
+          <button
+            onClick={handleSaveTopicMap}
+            disabled={topicMapSaving || !topicMapStr.trim()}
+            className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2"
+          >
+            {topicMapSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Lưu ma trận
+          </button>
+        </div>
+      </div>
+
+      {/* Question Texts Settings */}
+      <div className="card p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+          <Settings className="w-5 h-5 text-indigo-500" />
+          Nội dung câu hỏi (JSON)
+        </h2>
+        <div className="flex flex-col gap-3">
+          <div>
+            <textarea
+              value={questionTextsStr}
+              onChange={e => setQuestionTextsStr(e.target.value)}
+              placeholder='Ví dụ: { "Câu 1": "Nội dung câu 1" }'
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white h-48 font-mono text-xs"
+            />
+          </div>
+          {questionTextsStatus && (
+            <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg ${questionTextsStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+              {questionTextsStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+              {questionTextsStatus.msg}
+            </div>
+          )}
+          <button
+            onClick={handleSaveQuestionTexts}
+            disabled={questionTextsSaving || !questionTextsStr.trim()}
+            className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2"
+          >
+            {questionTextsSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Lưu nội dung câu hỏi
           </button>
         </div>
       </div>

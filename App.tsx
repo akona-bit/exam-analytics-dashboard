@@ -6,6 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Dashboard } from './Dashboard';
 import { AdminPage } from './AdminPage';
 import { QuestionData, StudentData } from './types';
+import defaultQuestionTexts from './question_texts.json';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 /* ──────────── Supabase → App type mapping ──────────── */
@@ -117,6 +118,8 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [examName, setExamName] = useState('Kì Thi Khảo Sát');
+  const [topicMap, setTopicMap] = useState<Record<string, number[]> | null>(null);
+  const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(defaultQuestionTexts as Record<string, string>);
 
   // Hash-based routing for hidden admin access
   useEffect(() => {
@@ -126,11 +129,17 @@ export default function App() {
     return () => window.removeEventListener('hashchange', checkHash);
   }, []);
 
-  // Fetch exam name from Supabase
+  // Fetch exam settings from Supabase (name, topic map, question texts)
   useEffect(() => {
     if (!supabase) return;
-    supabase.from('exam_settings').select('value').eq('key', 'exam_name').single()
-      .then(({ data }) => { if (data?.value) setExamName(data.value); });
+    supabase.from('exam_settings').select('key, value').then(({ data }) => {
+      if (!data) return;
+      for (const row of data) {
+        if (row.key === 'exam_name' && row.value) setExamName(row.value);
+        if (row.key === 'topic_map') try { setTopicMap(JSON.parse(row.value)); } catch {}
+        if (row.key === 'question_texts') try { setQuestionTexts(JSON.parse(row.value)); } catch {}
+      }
+    });
   }, []);
 
   const loadData = useCallback(async () => {
@@ -205,7 +214,7 @@ export default function App() {
             <p className="text-slate-500 font-medium">Đang tải dữ liệu...</p>
           </div>
         ) : (
-          <Dashboard questions={data} students={studentData} examName={examName} />
+          <Dashboard questions={data} students={studentData} examName={examName} topicMap={topicMap} questionTexts={questionTexts} />
         )}
       </main>
       {/* Hidden admin access button */}
