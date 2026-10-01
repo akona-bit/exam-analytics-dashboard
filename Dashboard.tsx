@@ -286,7 +286,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                     >
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden shrink-0 shadow-sm border border-slate-200 bg-slate-100 flex items-center justify-center group-hover:border-indigo-300 transition-colors">
                         <img 
-                          src="/avatar.png" 
+                          src="/avatar.jpg" 
                           alt="Avatar" 
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -400,7 +400,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-slate-100 pb-5 mb-5 mt-4 sm:mt-0">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-sm border-2 border-white bg-slate-100 flex items-center justify-center">
             <img 
-              src="/avatar.png" 
+              src="/avatar.jpg" 
               alt="Avatar" 
               className="w-full h-full object-cover"
               onError={(e) => {
