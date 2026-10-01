@@ -19,9 +19,19 @@ export default defineConfig(() => {
     },
     build: {
       emptyOutDir: false,
+      target: 'esnext',
+      minify: 'esbuild',
+      cssCodeSplit: true,
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html')
+        },
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'recharts': ['recharts'],
+            'icons': ['lucide-react']
+          }
         }
       }
     },
