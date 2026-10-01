@@ -213,12 +213,36 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
   const tooltipStyle = { borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '13px' };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    if (searchResults.type === 'success' && searchResults.data.length > 0) {
+      setSelectedStudent(searchResults.data[0]);
+      setSearchQuery('');
+      setSearchSbd('');
+    } else if (searchResults.type === 'missing_sbd') {
+      alert("Vui lòng nhập Số báo danh để tra cứu.");
+    } else if (searchResults.type === 'wrong_sbd') {
+      alert("Số báo danh không đúng. Vui lòng kiểm tra lại!");
+    } else {
+      alert("Không tìm thấy thí sinh nào phù hợp.");
+    }
+  };
+
   if (!selectedStudent) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[75vh] fade-in relative w-full">
         
         <div className="relative z-10 w-full flex flex-col items-center px-4">
-          {/* Exam name header */}
+          
+          {/* BADGE */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 mb-4 shadow-sm border border-slate-100">
+            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Tra cứu điểm thi</span>
+          </div>
+
+          {/* TITLE & DESCRIPTION */}
           <div className="text-center mb-8">
             <div className="relative inline-block mt-1">
               <h1 
@@ -227,24 +251,27 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                   fontFamily: "'Mali', cursive",
                   transform: "rotate(-1.5deg)",
                   WebkitTextStroke: "1px white",
-                  textShadow: "2px 2px 0px white, -2px -2px 0px white, 2px -2px 0px white, -2px 2px 0px white, 0px 4px 15px rgba(37, 99, 235, 0.15)"
+                  textShadow: "2px 2px 0px white, -2px -2px 0px white, 2px -2px 0px white, -2px 2px 0px white"
                 }}
               >
                 {examName}
               </h1>
-              {/* Decorative squiggles (CSS-based to match the image vibe) */}
+              {/* Decorative underline */}
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-[3px] bg-blue-400 rounded-full transform -rotate-1 opacity-80"></div>
             </div>
             
             <div className="mt-8">
-              <p className="text-sm sm:text-base text-slate-500 font-medium">
-                Nhập họ tên và số báo danh bên dưới để xem kết quả chi tiết
+              <p className="text-sm sm:text-base text-slate-600 font-semibold text-center">
+                Nhập họ tên và số báo danh bên dưới để tra cứu
               </p>
             </div>
           </div>
           
-          <div className="relative w-full max-w-2xl px-2">
-            <div className="flex flex-col sm:flex-row gap-3">
+          {/* FORM */}
+          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-6">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              
+              {/* Input 1 */}
               <div className="relative flex-1 group">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
@@ -253,18 +280,11 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full pl-14 pr-12 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
+                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
                 />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                  aria-label="Clear search"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              )}
-            </div>
+              </div>
+
+              {/* Input 2 */}
               <div className="relative flex-1 group">
                 <Key className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
@@ -272,72 +292,20 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                   placeholder="Số báo danh..."
                   value={searchSbd}
                   onChange={(e) => setSearchSbd(e.target.value)}
-                  className="w-full pl-14 pr-12 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
+                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
                 />
-              {searchSbd && (
-                <button
-                  onClick={() => setSearchSbd('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                  aria-label="Clear SBD"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              )}
+              </div>
             </div>
-            </div>
-          </div>
 
-          {searchQuery.trim().length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 transform origin-top transition-all">
-              {searchResults.type === 'success' ? (
-                <ul className="py-2 max-h-[300px] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
-                  {searchResults.data.map((s, idx) => (
-                    <li
-                      key={idx}
-                      onClick={() => {
-                        setSelectedStudent(s);
-                        setSearchQuery('');
-                        setSearchSbd('');
-                      }}
-                      className="px-4 py-3 sm:px-6 hover:bg-indigo-50 cursor-pointer flex items-center gap-4 transition-colors border-b border-slate-50 last:border-0 group"
-                    >
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden shrink-0 shadow-sm border border-slate-200 bg-slate-100 flex items-center justify-center group-hover:border-indigo-300 transition-colors">
-                        <img 
-                          src="/avatar.jpg" 
-                          alt="Avatar" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.parentElement!.innerText = s.name.charAt(0);
-                            e.currentTarget.parentElement!.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-100 to-sky-100 text-indigo-600 flex items-center justify-center font-bold text-sm sm:text-base shrink-0 shadow-sm border border-white";
-                          }}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-slate-700 sm:text-lg group-hover:text-indigo-700 transition-colors">{s.name}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">Nhấn để xem kết quả</div>
-                      </div>
-                      <div className="text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : searchResults.type === 'missing_sbd' ? (
-                <div className="p-6 text-center text-amber-600 font-medium">
-                  Vui lòng nhập <span className="font-bold">Số báo danh</span> để tra cứu.
-                </div>
-              ) : searchResults.type === 'wrong_sbd' ? (
-                <div className="p-6 text-center text-rose-500 font-medium">
-                  Số báo danh không đúng. Vui lòng kiểm tra lại!
-                </div>
-              ) : (
-                <div className="p-6 text-center text-slate-500">
-                  Không tìm thấy thí sinh nào trùng tên.
-                </div>
-              )}
-            </div>
-          )}
+            {/* BUTTON */}
+            <button 
+              type="submit"
+              className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 text-sm sm:text-base tracking-wide"
+            >
+              TRA CỨU KẾT QUẢ
+            </button>
+          </form>
+
         </div>
       </div>
     );
