@@ -3,8 +3,9 @@ import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { QuestionData, StudentData } from './types';
 import {
   Upload, LogOut, Database, Trash2, CheckCircle2, AlertCircle,
-  FileSpreadsheet, Users, BookOpen, ChevronLeft, Loader2, Settings, Save,
+  FileSpreadsheet, Users, BookOpen, ChevronLeft, Loader2, Settings, Save, Download
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import defaultQuestionTexts from './question_texts.json';
 import { defaultTopicMap } from './KnowledgeMatrix';
 
@@ -187,6 +188,38 @@ export function AdminPage({ onExit }: AdminPageProps) {
   const [studentsFile, setStudentsFile] = useState<File | null>(null);
   const [responsesFile, setResponsesFile] = useState<File | null>(null);
   const [questionsFile, setQuestionsFile] = useState<File | null>(null);
+
+  const handleExportExcel = async () => {
+    if (!supabase) return;
+    try {
+      setLoading(true);
+      const { data: studentsData } = await supabase.from('students').select('*').order('stt');
+      if (!studentsData || studentsData.length === 0) {
+        alert('Không có dữ liệu!'); return;
+      }
+      
+      const ws = XLSX.utils.json_to_sheet(studentsData.map(s => ({
+        'STT': s.stt,
+        'Họ và tên': s.name,
+        'SBD / Email': s.email || '',
+        'Toán (Thô)': s.tho_toan || 0,
+        'TDKH (Thô)': s.tho_tdkh || 0,
+        'Toán (IRT)': s.irt_toan || 0,
+        'TDKH (IRT)': s.irt_tdkh || 0,
+        'Toán (Thưởng phạt)': s.tp_toan || 0,
+        'TDKH (Thưởng phạt)': s.tp_tdkh || 0
+      })));
+      
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "DiemThi");
+      XLSX.writeFile(wb, "BaoCao_DiemThi.xlsx");
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi xuất báo cáo Excel');
+    } finally {
+      setLoading(false);
+    }
+  };
   const [uploadStatus, setUploadStatus] = useState<{ type: 'success' | 'error' | 'info'; msg: string } | null>(null);
   const [uploadProgress, setUploadProgress] = useState('');
 
@@ -478,7 +511,7 @@ export function AdminPage({ onExit }: AdminPageProps) {
   };
 
   // ── Upload handler ──
-  const handleUpload = async () => {
+  const handleUploadOld = async () => {
     if (!supabase) return;
     if (!studentsFile || !responsesFile || !questionsFile) {
       setUploadStatus({ type: 'error', msg: 'Vui lòng chọn đủ 3 file CSV.' });
@@ -649,6 +682,23 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
       )}
 
       
+      {/* Export Section */}
+      <div className="card p-5 sm:p-6 mb-6 border border-indigo-200 bg-indigo-50/30">
+        <h2 className="text-lg font-bold text-slate-800 flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <Download className="w-5 h-5 text-indigo-600" />
+            Tải Báo Cáo Excel
+          </div>
+          <button 
+            onClick={handleExportExcel}
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2 text-sm"
+          >
+            <Download className="w-4 h-4" /> Xuất File (.xlsx)
+          </button>
+        </h2>
+        <p className="text-sm text-slate-600">Tải toàn bộ bảng điểm của học sinh (đã phân loại các cột Thô, IRT, Thưởng Phạt) ra định dạng Excel chuẩn để làm báo cáo.</p>
+      </div>
+
       {/* Upload Data Section */}
       <div className="card p-5 sm:p-6 mb-6 border border-emerald-200 bg-emerald-50/30">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">

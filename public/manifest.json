@@ -1,0 +1,21 @@
+{
+  "name": "Tra Cứu Điểm Khảo Sát",
+  "short_name": "Điểm Khảo Sát",
+  "description": "Hệ thống tra cứu điểm thi và phân tích kết quả khảo sát Toán & Tư Duy Khoa Học",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

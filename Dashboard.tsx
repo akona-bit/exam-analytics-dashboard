@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { MetricKey, QuestionData, StudentData } from './types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -224,7 +224,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     };
   }, [students]);
 
-  const studentRankInfo = useMemo(() => {
+  const studentRankInfoOld = useMemo(() => {
     if (!selectedStudent) return null;
     const key = selectedStudent.email || selectedStudent.name;
     const rankTho = rankData.tho.findIndex(s => (s.email || s.name) === key) + 1;
@@ -356,6 +356,43 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               TRA CỨU KẾT QUẢ
             </button>
           </form>
+          {/* Leaderboard */}
+          <div className="w-full max-w-2xl mt-12 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl shadow-xl border border-indigo-100 dark:border-slate-700 overflow-hidden fade-in" style={{animationDelay: '0.2s'}}>
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Target className="w-5 h-5 text-yellow-300" />
+                Bảng Vàng Vinh Danh - Top 10 IRT
+              </h3>
+            </div>
+            <div className="p-0">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+                    <th className="px-6 py-3 font-bold">Hạng</th>
+                    <th className="px-6 py-3 font-bold">Thí sinh</th>
+                    <th className="px-6 py-3 font-bold text-right">Điểm IRT</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                  {rankData.irt.slice(0, 10).map((s, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                      <td className="px-6 py-3 font-bold text-slate-700 dark:text-slate-200">
+                        {idx === 0 ? '🥇 1' : idx === 1 ? '🥈 2' : idx === 2 ? '🥉 3' : idx + 1}
+                      </td>
+                      <td className="px-6 py-3 font-medium text-slate-800 dark:text-slate-100">
+                        {/* Mask name: Nguyen Van A -> Nguyen V** A */}
+                        {s.name.split(' ').map((word, i, arr) => i === arr.length - 2 && word.length > 1 ? word[0] + '*'.repeat(word.length - 1) : word).join(' ')}
+                      </td>
+                      <td className="px-6 py-3 font-bold text-indigo-600 dark:text-indigo-400 text-right">
+                        {s.totalIrt.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
 
         </div>
       </div>
