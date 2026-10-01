@@ -215,50 +215,50 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
   if (!selectedStudent) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] fade-in relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/50 mx-2 sm:mx-4 bg-white/40 backdrop-blur-md">
+      <div className="flex flex-col items-center justify-center min-h-[75vh] fade-in relative w-full">
         
-        <div className="relative z-10 w-full flex flex-col items-center p-6 sm:p-12">
+        <div className="relative z-10 w-full flex flex-col items-center px-4">
           {/* Exam name header */}
-          <div className="text-center mb-8 sm:mb-12">
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/70 backdrop-blur-md border border-white/50 mb-6 shadow-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Tra cứu điểm thi</span>
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 mb-4 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Tra cứu điểm thi</span>
             </div>
             
-            <div className="relative inline-block">
+            <div className="relative inline-block mt-1">
               <h1 
-                className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight px-4 text-blue-600 z-10 relative"
+                className="text-5xl sm:text-7xl md:text-8xl font-black leading-tight px-4 text-blue-600 z-10 relative"
                 style={{
                   fontFamily: "'Mali', cursive",
-                  transform: "rotate(-2deg)",
+                  transform: "rotate(-1.5deg)",
                   WebkitTextStroke: "1px white",
-                  textShadow: "2px 2px 0px white, -2px -2px 0px white, 2px -2px 0px white, -2px 2px 0px white, 0px 8px 20px rgba(37, 99, 235, 0.3)"
+                  textShadow: "2px 2px 0px white, -2px -2px 0px white, 2px -2px 0px white, -2px 2px 0px white, 0px 4px 15px rgba(37, 99, 235, 0.15)"
                 }}
               >
                 {examName}
               </h1>
               {/* Decorative squiggles (CSS-based to match the image vibe) */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-3 bg-blue-400/30 rounded-full blur-[2px] transform -rotate-1"></div>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-[3px] bg-blue-400 rounded-full transform -rotate-1 opacity-80"></div>
             </div>
             
             <div className="mt-8">
-              <p className="text-sm sm:text-base text-slate-700 font-semibold bg-white/60 backdrop-blur-md px-6 py-2.5 rounded-full inline-block shadow-sm border border-white/50">
-                Nhập họ tên và số báo danh bên dưới để tra cứu
+              <p className="text-sm sm:text-base text-slate-500 font-medium">
+                Nhập họ tên và số báo danh bên dưới để xem kết quả chi tiết
               </p>
             </div>
           </div>
           
-          <div className="relative w-full max-w-3xl px-1">
-            <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative w-full max-w-2xl px-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 group-focus-within:text-blue-600 transition-colors" />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Họ và tên..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full pl-14 pr-12 py-4 sm:py-5 rounded-3xl border-2 border-white/80 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-slate-700 font-bold text-lg transition-all shadow-xl bg-white/80 backdrop-blur-xl hover:bg-white/95 focus:bg-white"
+                  className="w-full pl-14 pr-12 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
                 />
               {searchQuery && (
                 <button
@@ -271,13 +271,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               )}
             </div>
               <div className="relative flex-1 group">
-                <Key className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 group-focus-within:text-blue-600 transition-colors" />
+                <Key className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Số báo danh..."
                   value={searchSbd}
                   onChange={(e) => setSearchSbd(e.target.value)}
-                  className="w-full pl-14 pr-12 py-4 sm:py-5 rounded-3xl border-2 border-white/80 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-slate-700 font-bold text-lg transition-all shadow-xl bg-white/80 backdrop-blur-xl hover:bg-white/95 focus:bg-white"
+                  className="w-full pl-14 pr-12 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
                 />
               {searchSbd && (
                 <button
