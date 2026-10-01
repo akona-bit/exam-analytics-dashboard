@@ -18,6 +18,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
+      emptyOutDir: false,
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html')

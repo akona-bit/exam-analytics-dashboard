@@ -1,18 +1,27 @@
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { MetricKey, QuestionData, StudentData } from './types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
-import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, UserCircle2, AlertCircle, BookOpen, FileSpreadsheet, Users, Award, Repeat } from 'lucide-react';
-import { KnowledgeMatrix } from './KnowledgeMatrix';
-import { AbilityDistribution } from './AbilityDistribution';
-import { ClassAnalytics } from './ClassAnalytics';
+import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet } from 'lucide-react';
 import { CelebrationOverlay } from './CelebrationOverlay';
-import { latestAttempts, mean, subjectScore } from './analytics';
 import questionTexts from './question_texts.json';
+
+const KnowledgeMatrix = lazy(() => import('./KnowledgeMatrix').then(m => ({ default: m.KnowledgeMatrix })));
+const AbilityDistribution = lazy(() => import('./AbilityDistribution').then(m => ({ default: m.AbilityDistribution })));
+const ClassAnalytics = lazy(() => import('./ClassAnalytics').then(m => ({ default: m.ClassAnalytics })));
 
 type QuestionTextsType = { [key: string]: string };
 const texts = questionTexts as QuestionTextsType;
 
-interface Props { questions: QuestionData[]; students: StudentData[]; }
+interface Props { questions: QuestionData[]; students: StudentData[]; examName: string; }
+
+function LazyFallback() {
+  return (
+    <div className="h-64 flex flex-col items-center justify-center gap-3 text-slate-400">
+      <div className="w-8 h-8 border-2 border-slate-200 border-t-indigo-400 rounded-full animate-spin" />
+      <p className="text-sm font-medium">Đang tải...</p>
+    </div>
+  );
+}
 
 const maskEmail = (email: string | null | undefined) => {
   if (!email) return '';
@@ -29,41 +38,16 @@ const maskEmail = (email: string | null | undefined) => {
   return `${maskedName}@${maskedDomain}.${dExt}`;
 };
 
-export function Dashboard({ questions, students }: Props) {
+export function Dashboard({ questions, students, examName }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [viewQuestionKey, setViewQuestionKey] = useState<string | null>(null);
   const [progressMetric, setProgressMetric] = useState<'tho' | 'irt' | 'tp'>('tho');
   const [progressSubject, setProgressSubject] = useState<'Toán' | 'TDKH'>('Toán');
   const [showCelebration, setShowCelebration] = useState(false);
-  const [landingView, setLandingView] = useState<'lookup' | 'analytics'>('lookup');
   const [classMetric, setClassMetric] = useState<MetricKey>('tho');
+  const [showWrongDetail, setShowWrongDetail] = useState(false);
   const celebratedRef = React.useRef<Set<string>>(new Set());
-
-  const summaryStats = useMemo(() => {
-    if (!students || students.length === 0) return { totalStudents: 0, avgAttempts: 0, avgScore: 0 };
-    
-    const uniqueStudents = new Set(students.map(s => s.email || s.name));
-    const totalStudents = uniqueStudents.size;
-    const avgAttempts = (students.length / totalStudents).toFixed(1);
-    
-    const totalScoreAll = students.reduce((sum, s) => sum + (s.thuongPhat.toan || 0) + (s.thuongPhat.tdkh || 0), 0);
-    const avgScore = (totalScoreAll / students.length).toFixed(2);
-
-    return { totalStudents, avgAttempts, avgScore };
-  }, [students]);
-
-  const heroStats = useMemo(() => {
-    const uniq = latestAttempts(students);
-    const toan = uniq.map(s => subjectScore(s, classMetric, 'toan')).filter((v): v is number => v !== null);
-    const tdkh = uniq.map(s => subjectScore(s, classMetric, 'tdkh')).filter((v): v is number => v !== null);
-    return {
-      total: uniq.length,
-      avgToan: mean(toan),
-      avgTdkh: mean(tdkh),
-      avgAttempts: uniq.length ? (students.length / uniq.length).toFixed(1) : '0',
-    };
-  }, [students, classMetric]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -200,127 +184,68 @@ export function Dashboard({ questions, students }: Props) {
   const tooltipStyle = { borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '13px' };
 
   if (!selectedStudent) {
-    const heroChips = [
-      { label: 'Tổng thí sinh', value: String(heroStats.total), note: 'lần thi mới nhất' },
-      { label: 'Điểm TB Toán', value: heroStats.avgToan.toFixed(2), note: 'trên thang 25' },
-      { label: 'Điểm TB TDKH', value: heroStats.avgTdkh.toFixed(2), note: 'trên thang 25' },
-      { label: 'Số lần thi TB', value: heroStats.avgAttempts, note: 'lần / thí sinh' },
-    ];
-
     return (
-      <div className="flex flex-col gap-6 sm:gap-8 fade-in">
-        <nav className="flex justify-center">
-          <div className="inline-flex bg-white border border-slate-200 rounded-2xl p-1 shadow-sm">
-            <button
-              onClick={() => setLandingView('lookup')}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${landingView === 'lookup' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <Search className="w-4 h-4" />
-              Tra Cứu Điểm
-            </button>
-            <button
-              onClick={() => setLandingView('analytics')}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${landingView === 'analytics' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <BarChartIcon className="w-4 h-4" />
-              Thống Kê & Phân Tích
-            </button>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] fade-in">
+        {/* Exam name header */}
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 mb-4">
+            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+            <span className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Tra cứu điểm thi</span>
           </div>
-        </nav>
-
-        {landingView === 'analytics' ? (
-          <div className="flex flex-col gap-8 sm:gap-10">
-            <AbilityDistribution students={students} metric={classMetric} onMetricChange={setClassMetric} />
-            <ClassAnalytics
-              students={students}
-              questions={questions}
-              metric={classMetric}
-              onSelectStudent={s => setSelectedStudent(s)}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold gradient-header leading-tight px-4">
+            {examName}
+          </h1>
+          <p className="text-sm sm:text-base text-slate-400 mt-3 font-medium">Nhập họ tên bên dưới để xem kết quả chi tiết</p>
+        </div>
+        <div className="relative w-full max-w-2xl px-1">
+          <div className="relative flex items-center">
+            <Search className="absolute left-4 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Nhập họ tên để tra cứu điểm thi..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
             />
           </div>
-        ) : (
-          <>
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-sky-500 text-white px-5 sm:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24 shadow-xl shadow-indigo-500/20 mx-auto w-full max-w-5xl">
-              <div className="absolute -top-24 -right-16 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-              <div className="absolute -bottom-32 -left-12 w-80 h-80 bg-sky-300/25 rounded-full blur-3xl" />
-              <div className="relative z-10 flex flex-col items-center text-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur flex items-center justify-center shadow-sm">
-                  <UserCircle2 className="w-7 h-7" />
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Tra Cứu Điểm Thi</h1>
-                <p className="text-indigo-100 text-sm sm:text-base">Nhập họ tên của bạn để xem kết quả chi tiết</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full max-w-2xl mt-3">
-                  {heroChips.map(chip => (
-                    <div key={chip.label} className="bg-white/12 border border-white/20 backdrop-blur-sm rounded-2xl px-3 py-2.5 text-left">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-100 mb-0.5">{chip.label}</p>
-                      <p className="text-xl font-extrabold leading-none">{chip.value}</p>
-                      <p className="text-[10px] text-indigo-100/80 mt-1">{chip.note}</p>
-                    </div>
+
+          {searchQuery.trim().length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
+              {searchResults.length > 0 ? (
+                <ul className="py-2">
+                  {searchResults.map((s, idx) => (
+                    <li
+                      key={idx}
+                      onClick={() => {
+                        setSelectedStudent(s);
+                        setSearchQuery('');
+                      }}
+                      className="px-4 py-3 hover:bg-indigo-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                        {s.name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-700">{s.name}</div>
+                      </div>
+                    </li>
                   ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="relative z-40 -mt-14 sm:-mt-16 w-full max-w-2xl mx-auto px-1">
-              <div className="relative flex items-center">
-                <Search className="absolute left-4 w-5 h-5 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Ví dụ: Nguyễn Văn A" 
-                  value={searchQuery} 
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
-                />
-              </div>
-
-              {searchQuery.trim().length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
-                  {searchResults.length > 0 ? (
-                    <ul className="py-2">
-                      {searchResults.map((s, idx) => (
-                        <li 
-                          key={idx} 
-                          onClick={() => {
-                            setSelectedStudent(s);
-                            setSearchQuery('');
-                          }}
-                          className="px-4 py-3 hover:bg-indigo-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
-                            {s.name.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-slate-700">{s.name}</div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="p-6 text-center text-slate-500">
-                      Không tìm thấy thí sinh nào phù hợp.
-                    </div>
-                  )}
+                </ul>
+              ) : (
+                <div className="p-6 text-center text-slate-500">
+                  Không tìm thấy thí sinh nào phù hợp.
                 </div>
               )}
             </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={() => setLandingView('analytics')}
-                className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-full transition-colors shadow-sm"
-              >
-                <BarChartIcon className="w-4 h-4" />
-                Xem thống kê & phân tích toàn khóa
-              </button>
-            </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5 md:gap-6 pb-8 fade-in max-w-5xl mx-auto">
+    <div className="flex flex-col gap-4 sm:gap-5 md:gap-6 pb-8 fade-in max-w-6xl mx-auto">
       {viewQuestionKey && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setViewQuestionKey(null)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col fade-in scale-in" onClick={e => e.stopPropagation()}>
@@ -440,14 +365,33 @@ export function Dashboard({ questions, students }: Props) {
         </div>
         
         <div className="mt-6 sm:mt-8 bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
-          <div className="p-5 border-b border-slate-200">
-            <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-indigo-500" />
-              Chi tiết các câu sai và bỏ trống
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">Bảng thông số và nội dung các câu hỏi cần ôn tập lại</p>
-          </div>
+          <button
+            onClick={() => setShowWrongDetail(!showWrongDetail)}
+            className="w-full p-5 border-b border-slate-200 flex items-center justify-between hover:bg-slate-100/50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-indigo-500 shrink-0" />
+              <div>
+                <h3 className="font-bold text-slate-800 text-sm sm:text-base">
+                  Chi tiết các câu sai và bỏ trống
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {(() => {
+                    const wrong = selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0;
+                    const missing = selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0;
+                    if (wrong + missing === 0) return 'Không có lỗi sai';
+                    const parts = [];
+                    if (wrong > 0) parts.push(`${wrong} câu sai`);
+                    if (missing > 0) parts.push(`${missing} câu bỏ trống`);
+                    return parts.join(' · ') + ' — nhấp để xem chi tiết';
+                  })()}
+                </p>
+              </div>
+            </div>
+            <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200 ${showWrongDetail ? 'rotate-180' : ''}`} />
+          </button>
           
+          {showWrongDetail && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left border-collapse min-w-[700px]">
               <thead className="text-xs text-slate-500 bg-slate-100/50 uppercase font-semibold">
@@ -490,6 +434,7 @@ export function Dashboard({ questions, students }: Props) {
               </tbody>
             </table>
           </div>
+          )}
         </div>
 
         <div className="mt-6 sm:mt-8 bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
@@ -505,10 +450,12 @@ export function Dashboard({ questions, students }: Props) {
           </div>
           <div className="p-4 sm:p-5 overflow-x-auto bg-white">
             <div className="min-w-[700px]">
-              <KnowledgeMatrix 
-                wrongQuestions={selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []} 
-                missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []} 
-              />
+              <Suspense fallback={<div className="h-48 flex items-center justify-center text-slate-400 text-sm">Đang tải ma trận kiến thức...</div>}>
+                <KnowledgeMatrix 
+                  wrongQuestions={selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []} 
+                  missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []} 
+                />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -656,40 +603,19 @@ export function Dashboard({ questions, students }: Props) {
         </section>
       )}
 
-      {/* Class Statistics */}
-      <div className="mt-8 flex flex-col gap-4 sm:gap-5 md:gap-6">
-        <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 border-b border-slate-200 pb-2">Thống Kê Chung Toàn Lớp</h2>
-
-        {/* Quick Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-500 mb-0.5">Số lượng thí sinh</p>
-              <p className="text-2xl font-black text-slate-800">{summaryStats.totalStudents}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-500 mb-0.5">Điểm TB toàn khóa</p>
-              <p className="text-2xl font-black text-slate-800">{summaryStats.avgScore}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-              <Repeat className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-500 mb-0.5">Số lần thi trung bình</p>
-              <p className="text-2xl font-black text-slate-800">{summaryStats.avgAttempts} <span className="text-sm font-medium text-slate-500">lần/HS</span></p>
-            </div>
-          </div>
-        </div>
+      {/* Full Analytics — moved inside student view */}
+      <div className="mt-8 flex flex-col gap-8 sm:gap-10">
+        <Suspense fallback={<LazyFallback />}>
+          <AbilityDistribution students={students} metric={classMetric} onMetricChange={setClassMetric} />
+        </Suspense>
+        <Suspense fallback={<LazyFallback />}>
+          <ClassAnalytics
+            students={students}
+            questions={questions}
+            metric={classMetric}
+            onSelectStudent={s => setSelectedStudent(s)}
+          />
+        </Suspense>
       </div>
     </div>
   );
