@@ -172,6 +172,11 @@ export function AdminPage({ onExit }: AdminPageProps) {
   const [nextExamDateSaving, setNextExamDateSaving] = useState(false);
   const [nextExamDateStatus, setNextExamDateStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  // SBD Mapping
+  const [sbdMapStr, setSbdMapStr] = useState('');
+  const [sbdMapSaving, setSbdMapSaving] = useState(false);
+  const [sbdMapStatus, setSbdMapStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
   const refreshStats = useCallback(async () => {
     try { setStats(await fetchStats()); } catch { /* ignore */ }
   }, []);
@@ -190,6 +195,14 @@ export function AdminPage({ onExit }: AdminPageProps) {
         if (row.key === 'question_texts' && row.value) setQuestionTextsStr(row.value);
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
+        if (row.key === 'sbd_map' && row.value) {
+          try {
+            const map = JSON.parse(row.value);
+            // Convert JSON map back to TSV string
+            const lines = Object.entries(map).map(([k, v]) => `${k}\t${v}`);
+            setSbdMapStr(lines.join('\n'));
+          } catch {}
+        }
       }
     });
   }, [refreshStats]);
@@ -261,6 +274,33 @@ export function AdminPage({ onExit }: AdminPageProps) {
       setNextExamDateStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
     }
     setNextExamDateSaving(false);
+  };
+
+  const handleSaveSbdMap = async () => {
+    if (!supabase) return;
+    setSbdMapSaving(true);
+    setSbdMapStatus(null);
+    try {
+      const map: Record<string, string> = {};
+      const lines = sbdMapStr.split('\n').map(l => l.trim()).filter(l => l);
+      for (const line of lines) {
+        // Split by tab or comma
+        const parts = line.split(/\t|,/).map(p => p.trim());
+        if (parts.length >= 2) {
+          map[parts[0]] = parts[1];
+        }
+      }
+      const { error } = await supabase.from('exam_settings').upsert(
+        { key: 'sbd_map', value: JSON.stringify(map), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      setSbdMapStatus({ type: 'success', msg: 'Đã lưu danh sách SBD thành công!' });
+      setTimeout(() => setSbdMapStatus(null), 3000);
+    } catch (err: any) {
+      setSbdMapStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setSbdMapSaving(false);
   };
 
   const handleSaveTopicMap = async () => {
@@ -555,6 +595,39 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
               Lưu dự kiến đợt thi
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* SBD Mapping */}
+      <div className="card p-5 sm:p-6">
+        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+          <Users className="w-5 h-5 text-indigo-500" />
+          Danh sách Số Báo Danh (SBD)
+        </h2>
+        <p className="text-sm text-slate-500 mb-3">Copy 2 cột từ Excel (Họ Tên và SBD) rồi dán vào đây. Học sinh sẽ phải nhập đúng SBD này khi tra cứu điểm. Nếu để trống, hệ thống chỉ yêu cầu nhập tên.</p>
+        <div className="flex flex-col gap-3">
+          <div>
+            <textarea
+              value={sbdMapStr}
+              onChange={e => setSbdMapStr(e.target.value)}
+              placeholder="Nguyễn Văn A    123456&#10;Trần Thị B    654321"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white h-48 font-mono text-sm"
+            />
+          </div>
+          {sbdMapStatus && (
+            <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg ${sbdMapStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+              {sbdMapStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+              {sbdMapStatus.msg}
+            </div>
+          )}
+          <button
+            onClick={handleSaveSbdMap}
+            disabled={sbdMapSaving}
+            className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2"
+          >
+            {sbdMapSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Lưu danh sách SBD
+          </button>
         </div>
       </div>
 

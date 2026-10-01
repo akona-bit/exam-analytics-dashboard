@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { MetricKey, QuestionData, StudentData } from './types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
-import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet } from 'lucide-react';
+import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key } from 'lucide-react';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import questionTexts from './question_texts.json';
 
@@ -20,6 +20,7 @@ interface Props {
   questionTexts?: Record<string, string>;
   answerLink?: string;
   nextExamDate?: string;
+  sbdMap?: Record<string, string>;
 }
 
 function LazyFallback() {
@@ -46,9 +47,10 @@ const maskEmail = (email: string | null | undefined) => {
   return `${maskedName}@${maskedDomain}.${dExt}`;
 };
 
-export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts, answerLink, nextExamDate }: Props) {
+export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap }: Props) {
   const currentTexts = propQuestionTexts || texts;
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchSbd, setSearchSbd] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [viewQuestionKey, setViewQuestionKey] = useState<string | null>(null);
   const [progressMetric, setProgressMetric] = useState<'tho' | 'irt' | 'tp'>('tho');
@@ -59,10 +61,29 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
   const celebratedRef = React.useRef<Set<string>>(new Set());
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const lower = searchQuery.toLowerCase();
-    const matches = students.filter(s => s.name.toLowerCase().includes(lower) || (s.email && s.email.toLowerCase().includes(lower)));
+    if (!searchQuery.trim()) return { type: 'empty', data: [] };
+    const lowerName = searchQuery.toLowerCase();
+    const lowerSbd = searchSbd.toLowerCase().trim();
     
+    const nameMatches = students.filter(s => s.name.toLowerCase().includes(lowerName) || (s.email && s.email.toLowerCase().includes(lowerName)));
+    
+    if (nameMatches.length === 0) {
+      return { type: 'not_found', data: [] };
+    }
+
+    const matches = nameMatches.filter(s => {
+      const requiredSbd = sbdMap?.[s.name];
+      if (requiredSbd) {
+        return lowerSbd === requiredSbd.toLowerCase();
+      }
+      return true; // No SBD required for this student
+    });
+
+    if (matches.length === 0) {
+      if (!lowerSbd) return { type: 'missing_sbd', data: [] };
+      return { type: 'wrong_sbd', data: [] };
+    }
+
     // Group by email/name and pick the latest attempt
     const latestMap = new Map<string, StudentData>();
     for (const m of matches) {
@@ -73,8 +94,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       }
     }
     
-    return Array.from(latestMap.values()).slice(0, 5);
-  }, [students, searchQuery]);
+    return { type: 'success', data: Array.from(latestMap.values()).slice(0, 5) };
+  }, [students, searchQuery, searchSbd, sbdMap]);
 
   const classProgressData = useMemo(() => {
     const am = new Map<number, { vT: number, vD: number, c: number }>();
@@ -204,40 +225,62 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold gradient-header leading-tight px-4">
             {examName}
           </h1>
-          <p className="text-sm sm:text-base text-slate-400 mt-3 font-medium">Nhập họ tên bên dưới để xem kết quả chi tiết</p>
+          <p className="text-sm sm:text-base text-slate-400 mt-3 font-medium">Nhập họ tên và số báo danh bên dưới để tra cứu</p>
         </div>
-        <div className="relative w-full max-w-2xl px-1">
-          <div className="relative flex items-center">
-            <Search className="absolute left-4 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Nhập họ tên để tra cứu điểm thi..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus
-              className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-4 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                aria-label="Clear search"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            )}
+        <div className="relative w-full max-w-3xl px-1">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Họ và tên..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                  aria-label="Clear search"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
+            <div className="relative flex-1">
+              <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Số báo danh..."
+                value={searchSbd}
+                onChange={(e) => setSearchSbd(e.target.value)}
+                className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
+              />
+              {searchSbd && (
+                <button
+                  onClick={() => setSearchSbd('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                  aria-label="Clear SBD"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
           </div>
 
           {searchQuery.trim().length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 transform origin-top transition-all">
-              {searchResults.length > 0 ? (
+              {searchResults.type === 'success' ? (
                 <ul className="py-2 max-h-[300px] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
-                  {searchResults.map((s, idx) => (
+                  {searchResults.data.map((s, idx) => (
                     <li
                       key={idx}
                       onClick={() => {
                         setSelectedStudent(s);
                         setSearchQuery('');
+                        setSearchSbd('');
                       }}
                       className="px-4 py-3 sm:px-6 hover:bg-indigo-50 cursor-pointer flex items-center gap-4 transition-colors border-b border-slate-50 last:border-0 group"
                     >
@@ -263,9 +306,17 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                     </li>
                   ))}
                 </ul>
+              ) : searchResults.type === 'missing_sbd' ? (
+                <div className="p-6 text-center text-amber-600 font-medium">
+                  Vui lòng nhập <span className="font-bold">Số báo danh</span> để tra cứu.
+                </div>
+              ) : searchResults.type === 'wrong_sbd' ? (
+                <div className="p-6 text-center text-rose-500 font-medium">
+                  Số báo danh không đúng. Vui lòng kiểm tra lại!
+                </div>
               ) : (
                 <div className="p-6 text-center text-slate-500">
-                  Không tìm thấy thí sinh nào phù hợp.
+                  Không tìm thấy thí sinh nào trùng tên.
                 </div>
               )}
             </div>

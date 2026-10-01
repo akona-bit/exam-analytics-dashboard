@@ -122,6 +122,7 @@ export default function App() {
   const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(defaultQuestionTexts as Record<string, string>);
   const [answerLink, setAnswerLink] = useState('');
   const [nextExamDate, setNextExamDate] = useState('');
+  const [sbdMap, setSbdMap] = useState<Record<string, string>>({});
 
   // Hash-based routing for hidden admin access
   useEffect(() => {
@@ -142,6 +143,7 @@ export default function App() {
         if (row.key === 'question_texts') try { setQuestionTexts(JSON.parse(row.value)); } catch {}
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
+        if (row.key === 'sbd_map') try { setSbdMap(JSON.parse(row.value)); } catch {}
       }
     });
   }, []);
@@ -225,7 +227,8 @@ export default function App() {
             topicMap={topicMap} 
             questionTexts={questionTexts} 
             answerLink={answerLink} 
-            nextExamDate={nextExamDate} 
+            nextExamDate={nextExamDate}
+            sbdMap={sbdMap}
           />
         )}
       </main>
