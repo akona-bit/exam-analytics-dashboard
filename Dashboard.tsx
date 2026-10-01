@@ -2,6 +2,9 @@ import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { MetricKey, QuestionData, StudentData } from './types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { Download } from 'lucide-react';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import questionTexts from './question_texts.json';
 
@@ -59,6 +62,59 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
   const [classMetric, setClassMetric] = useState<MetricKey>('tho');
   const [showWrongDetail, setShowWrongDetail] = useState(false);
   const celebratedRef = React.useRef<Set<string>>(new Set());
+
+  const autoCompleteSuggestions = useMemo(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) return [];
+    const lowerName = searchQuery.toLowerCase();
+    const nameMatches = students.filter(s => s.name.toLowerCase().includes(lowerName) || (s.email && s.email.toLowerCase().includes(lowerName)));
+    // Get unique names
+    const uniqueNames = new Set<string>();
+    const suggestions: string[] = [];
+    for (const m of nameMatches) {
+      if (!uniqueNames.has(m.name)) {
+        uniqueNames.add(m.name);
+        suggestions.push(m.name);
+      }
+    }
+    return suggestions.slice(0, 5);
+  }, [searchQuery, students]);
+
+  const studentRankInfo = useMemo(() => {
+    if (!selectedStudent) return null;
+    const latestStudents = new Map<string, StudentData>();
+    students.forEach(s => {
+      const key = s.name;
+      const ex = latestStudents.get(key);
+      if (!ex || s.stt > ex.stt) latestStudents.set(key, s);
+    });
+    const allLatest = Array.from(latestStudents.values());
+    const totalScore = (s: StudentData) => (s.tho.toan || 0) + (s.tho.tdkh || 0);
+    allLatest.sort((a, b) => totalScore(b) - totalScore(a));
+    const rank = allLatest.findIndex(s => s.name === selectedStudent.name) + 1;
+    const total = allLatest.length;
+    const percentile = total > 1 ? (((total - rank) / total) * 100).toFixed(1) : "100";
+    return { rank, total, percentile };
+  }, [selectedStudent, students]);
+
+  const handleDownloadPDF = async () => {
+    const dashboardElement = document.getElementById('dashboard-content');
+    if (!dashboardElement) return;
+    
+    try {
+      const canvas = await html2canvas(dashboardElement, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Phieu_Diem_${selectedStudent?.name.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF', error);
+      alert('Đã có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
+    }
+  };
+
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return { type: 'empty', data: [] };
