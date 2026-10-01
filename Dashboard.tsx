@@ -79,23 +79,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     return suggestions.slice(0, 5);
   }, [searchQuery, students]);
 
-  const studentRankInfo = useMemo(() => {
-    if (!selectedStudent) return null;
-    const latestStudents = new Map<string, StudentData>();
-    students.forEach(s => {
-      const key = s.name;
-      const ex = latestStudents.get(key);
-      if (!ex || s.stt > ex.stt) latestStudents.set(key, s);
-    });
-    const allLatest = Array.from(latestStudents.values());
-    const totalScore = (s: StudentData) => (s.tho.toan || 0) + (s.tho.tdkh || 0);
-    allLatest.sort((a, b) => totalScore(b) - totalScore(a));
-    const rank = allLatest.findIndex(s => s.name === selectedStudent.name) + 1;
-    const total = allLatest.length;
-    const percentile = total > 1 ? (((total - rank) / total) * 100).toFixed(1) : "100";
-    return { rank, total, percentile };
-  }, [selectedStudent, students]);
-
+  
   const handleDownloadPDF = async () => {
     const dashboardElement = document.getElementById('dashboard-content');
     if (!dashboardElement) return;
@@ -224,7 +208,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     };
   }, [students]);
 
-  const studentRankInfoOld = useMemo(() => {
+  const studentRankInfo = useMemo(() => {
     if (!selectedStudent) return null;
     const key = selectedStudent.email || selectedStudent.name;
     const rankTho = rankData.tho.findIndex(s => (s.email || s.name) === key) + 1;
@@ -333,6 +317,21 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                   autoFocus
                   className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 dark:text-slate-200 font-medium text-base transition-all shadow-lg bg-white dark:bg-slate-800/95 backdrop-blur-sm hover:shadow-xl focus:shadow-xl outline-none"
                 />
+                {autoCompleteSuggestions.length > 0 && !selectedStudent && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden z-50 text-left">
+                    {autoCompleteSuggestions.map((sName, idx) => (
+                      <div 
+                        key={idx} 
+                        className="px-5 py-3 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-50 dark:border-slate-700/50 last:border-0 font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        onClick={() => {
+                          setSearchQuery(sName);
+                        }}
+                      >
+                        {sName}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Input 2 */}
@@ -351,8 +350,9 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             {/* BUTTON */}
             <button 
               type="submit"
-              className="px-10 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 text-sm sm:text-base tracking-wide"
+              className="px-10 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 text-sm sm:text-base tracking-wide flex items-center gap-2 justify-center mx-auto"
             >
+              <Search className="w-5 h-5" />
               TRA CỨU KẾT QUẢ
             </button>
           </form>
