@@ -232,82 +232,78 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
   if (!selectedStudent) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[75vh] fade-in relative w-full pt-12">
+      <div className="flex flex-col items-center justify-center min-h-[75vh] fade-in relative w-full">
         
-        {/* We use a glass container tightly wrapping the header to cover the baked-in text of the mockup image */}
         <div className="relative z-10 w-full flex flex-col items-center px-4">
           
-          <div className="bg-white/70 backdrop-blur-xl p-8 sm:p-10 rounded-[3rem] shadow-[0_8px_32px_rgba(255,255,255,0.2)] border border-white/80 flex flex-col items-center max-w-4xl text-center">
-            
-            {/* BADGE */}
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-sm border border-slate-100 mb-6">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-widest">Tra cứu điểm thi</span>
-            </div>
+          {/* BADGE */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 mb-4 shadow-sm border border-slate-100">
+            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Tra cứu điểm thi</span>
+          </div>
 
-            {/* TITLE & DESCRIPTION */}
-            <div className="relative inline-block mt-2">
+          {/* TITLE & DESCRIPTION */}
+          <div className="text-center mb-8">
+            <div className="relative inline-block mt-1">
               <h1 
-                className="text-5xl sm:text-7xl md:text-[5.5rem] font-black leading-tight px-6 text-blue-600 z-10 relative"
+                className="text-5xl sm:text-7xl md:text-8xl font-black leading-tight px-4 text-blue-600 z-10 relative"
                 style={{
                   fontFamily: "'Mali', cursive",
-                  transform: "rotate(-1deg)",
-                  WebkitTextStroke: "1.5px white",
-                  textShadow: "0px 4px 15px rgba(37, 99, 235, 0.2)"
+                  transform: "rotate(-1.5deg)",
+                  WebkitTextStroke: "1px white",
+                  textShadow: "2px 2px 0px white, -2px -2px 0px white, 2px -2px 0px white, -2px 2px 0px white"
                 }}
               >
                 {examName}
               </h1>
               {/* Decorative underline */}
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-2/3 h-[4px] bg-blue-400 rounded-full opacity-80"></div>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-[3px] bg-blue-400 rounded-full transform -rotate-1 opacity-80"></div>
             </div>
             
-            <p className="mt-10 text-base sm:text-lg text-slate-700 font-semibold">
-              Nhập họ tên và số báo danh bên dưới để xem kết quả chi tiết
-            </p>
+            <div className="mt-8">
+              <p className="text-sm sm:text-base text-slate-600 font-semibold text-center">
+                Nhập họ tên và số báo danh bên dưới để tra cứu
+              </p>
+            </div>
           </div>
           
-          {/* FORM: Unified Pill to cover the baked-in input */}
-          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-4xl px-2 mt-8 z-20">
-            <div className="flex flex-col sm:flex-row items-center w-full bg-white/95 backdrop-blur-2xl rounded-[2.5rem] sm:rounded-full p-2.5 shadow-2xl border-2 border-white/80 ring-4 ring-black/5">
+          {/* FORM */}
+          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-6">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
               
               {/* Input 1 */}
-              <div className="relative flex-1 group flex items-center w-full px-5 py-3">
-                <Search className="w-6 h-6 text-slate-400 group-focus-within:text-blue-500 transition-colors mr-3 shrink-0" />
+              <div className="relative flex-1 group">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Họ và tên..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full bg-transparent border-none focus:ring-0 text-slate-700 font-bold text-lg sm:text-xl outline-none placeholder:font-medium placeholder:text-slate-400"
+                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
                 />
               </div>
 
-              {/* Divider */}
-              <div className="hidden sm:block w-px h-12 bg-slate-200 mx-2"></div>
-              <div className="block sm:hidden w-full h-px bg-slate-200 my-2"></div>
-
               {/* Input 2 */}
-              <div className="relative flex-1 group flex items-center w-full px-5 py-3">
-                <Key className="w-6 h-6 text-slate-400 group-focus-within:text-blue-500 transition-colors mr-3 shrink-0" />
+              <div className="relative flex-1 group">
+                <Key className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Số báo danh..."
                   value={searchSbd}
                   onChange={(e) => setSearchSbd(e.target.value)}
-                  className="w-full bg-transparent border-none focus:ring-0 text-slate-700 font-bold text-lg sm:text-xl outline-none placeholder:font-medium placeholder:text-slate-400"
+                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
                 />
               </div>
-
-              {/* BUTTON */}
-              <button 
-                type="submit"
-                className="w-full sm:w-auto mt-2 sm:mt-0 px-8 py-4 sm:py-5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl sm:rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 text-base sm:text-lg whitespace-nowrap shrink-0"
-              >
-                TRA CỨU KẾT QUẢ
-              </button>
             </div>
+
+            {/* BUTTON */}
+            <button 
+              type="submit"
+              className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 text-sm sm:text-base tracking-wide"
+            >
+              TRA CỨU KẾT QUẢ
+            </button>
           </form>
 
         </div>
