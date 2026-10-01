@@ -297,6 +297,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 </button>
               )}
             </div>
+            </div>
           </div>
 
           {searchQuery.trim().length > 0 && (
