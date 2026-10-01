@@ -215,14 +215,23 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
+              className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 font-medium text-lg transition-all shadow-lg shadow-slate-900/10 bg-white"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
           </div>
 
           {searchQuery.trim().length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 transform origin-top transition-all">
               {searchResults.length > 0 ? (
-                <ul className="py-2">
+                <ul className="py-2 max-h-[300px] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
                   {searchResults.map((s, idx) => (
                     <li
                       key={idx}
@@ -230,13 +239,26 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                         setSelectedStudent(s);
                         setSearchQuery('');
                       }}
-                      className="px-4 py-3 hover:bg-indigo-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0"
+                      className="px-4 py-3 sm:px-6 hover:bg-indigo-50 cursor-pointer flex items-center gap-4 transition-colors border-b border-slate-50 last:border-0 group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
-                        {s.name.charAt(0)}
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden shrink-0 shadow-sm border border-slate-200 bg-slate-100 flex items-center justify-center group-hover:border-indigo-300 transition-colors">
+                        <img 
+                          src="/avatar.png" 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement!.innerText = s.name.charAt(0);
+                            e.currentTarget.parentElement!.className = "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-100 to-sky-100 text-indigo-600 flex items-center justify-center font-bold text-sm sm:text-base shrink-0 shadow-sm border border-white";
+                          }}
+                        />
                       </div>
-                      <div>
-                        <div className="font-semibold text-slate-700">{s.name}</div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-slate-700 sm:text-lg group-hover:text-indigo-700 transition-colors">{s.name}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">Nhấn để xem kết quả</div>
+                      </div>
+                      <div className="text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                       </div>
                     </li>
                   ))}
