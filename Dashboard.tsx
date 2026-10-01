@@ -297,12 +297,12 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           <div className="text-center mb-8">
             <div className="relative inline-block mt-1">
               <h1 
-                className="text-5xl sm:text-7xl md:text-8xl font-black leading-tight px-4 text-blue-600 z-10 relative"
+                className="text-5xl sm:text-7xl md:text-[5.5rem] font-black leading-tight px-6 text-blue-500 z-10 relative"
                 style={{
                   fontFamily: "'Mali', cursive",
                   transform: "rotate(-1.5deg)",
-                  WebkitTextStroke: "1px white",
-                  textShadow: "2px 2px 0px white, -2px -2px 0px white, 2px -2px 0px white, -2px 2px 0px white"
+                  WebkitTextStroke: "2px white",
+                  textShadow: "0px 4px 15px rgba(0,0,0,0.1), 3px 3px 0px white, -3px -3px 0px white, 3px -3px 0px white, -3px 3px 0px white"
                 }}
               >
                 {examName}
@@ -331,7 +331,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
+                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-lg bg-white/95 backdrop-blur-sm hover:shadow-xl focus:shadow-xl outline-none"
                 />
               </div>
 
@@ -343,7 +343,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                   placeholder="Số báo danh..."
                   value={searchSbd}
                   onChange={(e) => setSearchSbd(e.target.value)}
-                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-md bg-white hover:shadow-lg focus:shadow-lg outline-none"
+                  className="w-full pl-14 pr-6 py-3.5 sm:py-4 rounded-full border border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 font-medium text-base transition-all shadow-lg bg-white/95 backdrop-blur-sm hover:shadow-xl focus:shadow-xl outline-none"
                 />
               </div>
             </div>
@@ -351,7 +351,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             {/* BUTTON */}
             <button 
               type="submit"
-              className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 text-sm sm:text-base tracking-wide"
+              className="px-10 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 text-sm sm:text-base tracking-wide"
             >
               TRA CỨU KẾT QUẢ
             </button>
