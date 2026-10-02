@@ -79,6 +79,11 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     return suggestions.slice(0, 5);
   }, [searchQuery, students]);
 
+  React.useEffect(() => {
+    if (selectedStudent) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selectedStudent]);
   
   const handleDownloadPDF = async () => {
     const dashboardElement = document.getElementById('dashboard-content');
