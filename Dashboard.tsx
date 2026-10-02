@@ -516,67 +516,86 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={[
-                  { name: 'Thô (Toán)', 'Điểm của bạn': selectedStudent.tho.toan || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })() },
-                  { name: 'Thô (TDKH)', 'Điểm của bạn': selectedStudent.tho.tdkh || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })() },
-                  { name: 'IRT (Toán)', 'Điểm của bạn': selectedStudent.irt.toan || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })() },
-                  { name: 'IRT (TDKH)', 'Điểm của bạn': selectedStudent.irt.tdkh || 0, 'Trung bình chung': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })() },
-                ]}
-                margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }} 
-                  cursor={{ fill: '#f8fafc' }}
-                  formatter={(value: number) => value.toFixed(2)}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                <Bar dataKey="Điểm của bạn" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="Trung bình chung" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-            <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full flex items-center justify-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-2 lg:-ml-4 mt-2 lg:mt-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart 
-                  cx="50%" cy="50%" outerRadius="65%" 
-                  data={[
-                    { subject: 'Toán (Thô)', 'Điểm của bạn': selectedStudent.tho.toan || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                    { subject: 'TDKH (Thô)', 'Điểm của bạn': selectedStudent.tho.tdkh || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                    { subject: 'Toán (IRT)', 'Điểm của bạn': selectedStudent.irt.toan || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                    { subject: 'TDKH (IRT)', 'Điểm của bạn': selectedStudent.irt.tdkh || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                    { subject: 'Toán (TP)', 'Điểm của bạn': selectedStudent.thuongPhat.toan || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.toan !== undefined){s+=x.thuongPhat.toan;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                    { subject: 'TDKH (TP)', 'Điểm của bạn': selectedStudent.thuongPhat.tdkh || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.tdkh !== undefined){s+=x.thuongPhat.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                  ]}
-                >
-                  <defs>
-                    <linearGradient id="colorUv" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9}/>
-                      <stop offset="50%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0.9}/>
-                    </linearGradient>
-                    <linearGradient id="colorAvg" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.3}/>
-                    </linearGradient>
-                  </defs>
-                  <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <Radar name="Điểm của bạn" dataKey="Điểm của bạn" stroke="#6366f1" strokeWidth={2} fill="url(#colorUv)" fillOpacity={1} />
-                  <Radar name="Trung bình" dataKey="Trung bình" stroke="#94a3b8" strokeWidth={2} strokeDasharray="3 3" fill="url(#colorAvg)" fillOpacity={1} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
-                    formatter={(value: number) => value.toFixed(2)}
-                  />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                </RadarChart>
-              </ResponsiveContainer>
+            {/* Radar 1: Điểm của bạn */}
+            <div className="flex flex-col items-center w-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
+              <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2 mt-2">Năng Lực Của Bạn</h4>
+              <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart 
+                    cx="50%" cy="50%" outerRadius="65%" 
+                    data={[
+                      { metric: 'Điểm Thô', 'Toán': selectedStudent.tho.toan || 0, 'TDKH': selectedStudent.tho.tdkh || 0, fullMark: 10 },
+                      { metric: 'Điểm IRT', 'Toán': selectedStudent.irt.toan || 0, 'TDKH': selectedStudent.irt.tdkh || 0, fullMark: 10 },
+                      { metric: 'Thưởng Phạt', 'Toán': selectedStudent.thuongPhat.toan || 0, 'TDKH': selectedStudent.thuongPhat.tdkh || 0, fullMark: 10 },
+                    ]}
+                  >
+                    <defs>
+                      <linearGradient id="colorToan" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.9}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                      </linearGradient>
+                      <linearGradient id="colorTdkh" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.9}/>
+                        <stop offset="95%" stopColor="#f97316" stopOpacity={0.9}/>
+                      </linearGradient>
+                    </defs>
+                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                    <Radar name="Toán" dataKey="Toán" stroke="#6366f1" strokeWidth={2} fill="url(#colorToan)" fillOpacity={0.7} />
+                    <Radar name="TDKH" dataKey="TDKH" stroke="#f59e0b" strokeWidth={2} fill="url(#colorTdkh)" fillOpacity={0.7} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
+                      formatter={(value: number) => value.toFixed(2)}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Radar 2: Trung bình chung */}
+            <div className="flex flex-col items-center w-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
+              <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-2 mt-2">Mặt Bằng Chung</h4>
+              <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart 
+                    cx="50%" cy="50%" outerRadius="65%" 
+                    data={[
+                      { metric: 'Điểm Thô', 
+                        'Toán': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })(), 
+                        'TDKH': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                      { metric: 'Điểm IRT', 
+                        'Toán': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })(), 
+                        'TDKH': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                      { metric: 'Thưởng Phạt', 
+                        'Toán': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.toan !== undefined){s+=x.thuongPhat.toan;c++;} }); return c?s/c:0; })(), 
+                        'TDKH': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.tdkh !== undefined){s+=x.thuongPhat.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                    ]}
+                  >
+                    <defs>
+                      <linearGradient id="colorToanAvg" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.6}/>
+                      </linearGradient>
+                      <linearGradient id="colorTdkhAvg" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#d6d3d1" stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor="#e7e5e4" stopOpacity={0.6}/>
+                      </linearGradient>
+                    </defs>
+                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                    <Radar name="Toán" dataKey="Toán" stroke="#94a3b8" strokeWidth={2} strokeDasharray="3 3" fill="url(#colorToanAvg)" fillOpacity={0.7} />
+                    <Radar name="TDKH" dataKey="TDKH" stroke="#d6d3d1" strokeWidth={2} strokeDasharray="3 3" fill="url(#colorTdkhAvg)" fillOpacity={0.7} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
+                      formatter={(value: number) => value.toFixed(2)}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         </div>
