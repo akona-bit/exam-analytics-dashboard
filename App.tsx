@@ -280,9 +280,9 @@ export default function App() {
 
       {/* Floating QR Code */}
       {examUrl && !isAdmin && (
-        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="fixed bottom-4 right-4 z-40 bg-white dark:bg-slate-800 p-2.5 rounded-2xl shadow-xl border-2 border-indigo-100 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
+        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="relative sm:fixed sm:bottom-4 sm:right-4 z-40 mx-auto w-fit mt-4 mb-6 sm:mt-0 sm:mb-0 bg-white dark:bg-slate-800 p-2 sm:p-2.5 rounded-2xl shadow-xl border-2 border-indigo-100 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
           <p className="text-[10px] sm:text-xs font-black text-indigo-600 uppercase tracking-wide group-hover:text-indigo-700">Mã làm bài thi</p>
-          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(examUrl)}`} alt="QR Code" className="w-[80px] h-[80px] sm:w-[120px] sm:h-[120px]" />
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(examUrl)}`} alt="QR Code" className="w-14 h-14 sm:w-[120px] sm:h-[120px]" />
         </a>
       )}
     </div>

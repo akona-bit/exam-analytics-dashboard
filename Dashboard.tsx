@@ -288,7 +288,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             
             <div className="mt-8 text-center">
               <p className="inline-block px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-lg text-sm sm:text-base text-slate-700 dark:text-slate-200 font-bold text-center border border-white/50 dark:border-slate-700/50">
-                Nhập họ tên hoặc số báo danh bên dưới để tra cứu
+                Nhập họ tên hoặc email bên dưới để tra cứu
               </p>
             </div>
           </div>
