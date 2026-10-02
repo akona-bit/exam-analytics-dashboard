@@ -514,7 +514,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             <BarChartIcon className="w-5 h-5 text-indigo-500" />
             Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
           </h3>
-          <div className="h-[250px] sm:h-[300px] w-full -ml-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <div className="h-[250px] sm:h-[300px] w-full -ml-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
@@ -538,6 +539,33 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 <Bar dataKey="Trung bình chung" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+            <div className="h-[250px] sm:h-[300px] w-full flex items-center justify-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-2 lg:-ml-4 mt-4 lg:mt-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart 
+                  cx="50%" cy="50%" outerRadius="65%" 
+                  data={[
+                    { subject: 'Toán (Thô)', 'Điểm của bạn': selectedStudent.tho.toan || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                    { subject: 'TDKH (Thô)', 'Điểm của bạn': selectedStudent.tho.tdkh || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                    { subject: 'Toán (IRT)', 'Điểm của bạn': selectedStudent.irt.toan || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                    { subject: 'TDKH (IRT)', 'Điểm của bạn': selectedStudent.irt.tdkh || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                    { subject: 'Toán (TP)', 'Điểm của bạn': selectedStudent.thuongPhat.toan || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.toan !== undefined){s+=x.thuongPhat.toan;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                    { subject: 'TDKH (TP)', 'Điểm của bạn': selectedStudent.thuongPhat.tdkh || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.tdkh !== undefined){s+=x.thuongPhat.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
+                  ]}
+                >
+                  <PolarGrid stroke="#e2e8f0" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 9, fontWeight: 600 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                  <Radar name="Điểm của bạn" dataKey="Điểm của bạn" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
+                  <Radar name="Trung bình" dataKey="Trung bình" stroke="#cbd5e1" fill="#cbd5e1" fillOpacity={0.3} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
+                    formatter={(value: number) => value.toFixed(2)}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
         
