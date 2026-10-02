@@ -249,7 +249,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
-      alert("Vui lòng nhập Họ và tên hoặc Email để tra cứu.");
+      alert("Vui lòng nhập Họ và tên để tra cứu.");
       return;
     }
     
@@ -285,7 +285,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             
             <div className="mt-8 text-center">
               <p className="inline-block px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-lg text-sm sm:text-base text-slate-700 dark:text-slate-200 font-bold text-center border border-white/50 dark:border-slate-700/50">
-                Nhập họ tên hoặc email bên dưới để tra cứu
+                Nhập họ tên bên dưới để tra cứu
               </p>
             </div>
           </div>
@@ -297,7 +297,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               
               {/* Input 1 */}
               <div className="flex-1 flex flex-col gap-2 relative w-full">
-                <label htmlFor="lookup-name" className="pl-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Họ tên hoặc Email</label>
+                <label htmlFor="lookup-name" className="pl-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Họ và tên</label>
                 <div className="relative group">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors duration-300 pointer-events-none" />
                   <input
