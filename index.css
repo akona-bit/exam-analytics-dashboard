@@ -20,16 +20,14 @@ html, body, #root {
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 .card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 24px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 24px 48px -12px rgba(0, 0, 0, 0.06);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease;
 }
 .dark .card {
-  background: rgba(15, 23, 42, 0.6);
+  background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 24px 48px -12px rgba(0, 0, 0, 0.4);
 }
