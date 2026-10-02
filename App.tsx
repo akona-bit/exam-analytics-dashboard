@@ -225,17 +225,18 @@ export default function App() {
 
   return (
     <div className="min-h-[100dvh] w-screen relative bg-[#f8fafc] dark:bg-[#0f172a] overflow-x-hidden font-sans">
-      {/* Modern Mesh Gradient Background */}
+      {/* Background Image Layer */}
       <div 
-        className="fixed inset-0 w-full h-full pointer-events-none transition-colors duration-500"
+        className="fixed inset-0 w-full h-full pointer-events-none"
         style={{
-          background: isDark 
-            ? 'radial-gradient(circle at 15% 50%, rgba(30, 27, 75, 0.4), transparent 25%), radial-gradient(circle at 85% 30%, rgba(49, 46, 129, 0.4), transparent 25%)'
-            : 'radial-gradient(circle at 15% 50%, rgba(224, 231, 255, 0.8), transparent 25%), radial-gradient(circle at 85% 30%, rgba(238, 242, 255, 0.8), transparent 25%)',
+          backgroundImage: 'url("/bg.jpg?v=3")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'contrast(1.08) saturate(1.15) brightness(1.02)',
+          imageRendering: 'crisp-edges',
           zIndex: 0
         }}
       />
-      <div className="fixed inset-0 w-full h-full bg-grid-slate-900/[0.04] dark:bg-grid-slate-100/[0.03] bg-[bottom_1px_center] pointer-events-none" style={{ maskImage: 'linear-gradient(to bottom, transparent, black)' }} />
       {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
         {isLoading ? (
