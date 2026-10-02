@@ -295,29 +295,29 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           
           {/* FORM */}
           <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-6">
-            <div className="w-full rounded-[28px] border border-white/70 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_24px_60px_-24px_rgba(15,23,42,0.55)] p-5 sm:p-7 flex flex-col gap-5 fade-in">
-              <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <div className="w-full rounded-[32px] border border-white/80 dark:border-slate-700/60 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04),0_30px_60px_-15px_rgba(99,102,241,0.15)] p-6 sm:p-8 flex flex-col gap-6 fade-in transform transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04),0_30px_60px_-15px_rgba(99,102,241,0.25)]">
+              <div className="flex flex-col gap-2 w-full">
               
               {/* Input 1 */}
-              <div className="flex-1 flex flex-col gap-1.5 relative w-full">
-                <label htmlFor="lookup-name" className="pl-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Họ tên hoặc Email</label>
+              <div className="flex-1 flex flex-col gap-2 relative w-full">
+                <label htmlFor="lookup-name" className="pl-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Họ tên hoặc Email</label>
                 <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors pointer-events-none" />
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors duration-300 pointer-events-none" />
                   <input
                     id="lookup-name"
                     type="text"
-                    placeholder="Nhập họ tên hoặc email..."
+                    placeholder="Nhập thông tin để bắt đầu..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
                     autoComplete="off"
-                    className="w-full pl-12 pr-4 py-3.5 sm:py-4 rounded-2xl border border-slate-200 dark:border-slate-700 focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-base transition-all shadow-sm bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 focus:shadow-md outline-none"
+                    className="w-full pl-14 pr-5 py-4 sm:py-5 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 font-semibold text-lg transition-all bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600 outline-none shadow-inner"
                   />
                 </div>
                 
                 {/* Suggestions Dropdown */}
                 {searchQuery.trim() && searchResults.type === 'success' && searchResults.data.length > 0 && (
-                  <div className="absolute top-[100%] mt-2 left-0 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-[100]">
+                  <div className="absolute top-[100%] mt-3 left-0 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
                     {searchResults.data.map((student, idx) => (
                       <button
                         key={idx}
@@ -326,10 +326,15 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                           setSelectedStudent(student);
                           setSearchQuery('');
                         }}
-                        className="w-full text-left px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-100 dark:border-slate-700/50 last:border-0 flex items-center justify-between"
+                        className="w-full text-left px-5 sm:px-6 py-3 sm:py-4 hover:bg-indigo-50 dark:hover:bg-slate-700/50 transition-all border-b border-slate-50 dark:border-slate-700/50 last:border-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 group/item"
                       >
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">{student.name}</span>
-                        {student.email && <span className="text-sm text-slate-500 dark:text-slate-400">{maskEmail(student.email)}</span>}
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-500 group-hover/item:scale-110 group-hover/item:bg-indigo-500 group-hover/item:text-white transition-all duration-300 shrink-0">
+                            <Search className="w-4 h-4" />
+                          </div>
+                          <span className="font-bold text-slate-800 dark:text-slate-200 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors truncate">{student.name}</span>
+                        </div>
+                        {student.email && <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto ml-11 sm:ml-0">{maskEmail(student.email)}</span>}
                       </button>
                     ))}
                   </div>
@@ -341,9 +346,9 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             <button 
               type="submit"
               disabled={!searchQuery.trim()}
-              className="w-full sm:w-auto sm:mx-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 disabled:opacity-45 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:translate-y-0 text-sm sm:text-base tracking-wide flex items-center gap-2 justify-center"
+              className="w-full sm:w-auto sm:mx-auto mt-2 px-12 py-4 sm:py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 text-white font-black rounded-2xl transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:translate-y-0 text-base sm:text-lg tracking-widest flex items-center gap-3 justify-center group"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
               TRA CỨU KẾT QUẢ
             </button>
             </div>
