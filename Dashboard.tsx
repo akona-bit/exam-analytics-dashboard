@@ -81,7 +81,11 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
   React.useEffect(() => {
     if (selectedStudent) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 50);
     }
   }, [selectedStudent]);
   
