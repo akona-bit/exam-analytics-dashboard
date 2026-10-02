@@ -269,7 +269,10 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           
 
           {/* TITLE & DESCRIPTION */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 flex flex-col items-center">
+            <div className="mb-4 fade-in transform transition-all hover:scale-105 duration-300">
+              <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl rounded-full border-4 border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]" />
+            </div>
             <div className="relative inline-block mt-1">
               <h1 
                 className="text-5xl sm:text-7xl md:text-[5.5rem] font-black leading-tight px-6 text-blue-500 z-10 relative"

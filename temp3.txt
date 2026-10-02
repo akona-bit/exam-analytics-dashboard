@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https:;" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&display=swap" rel="stylesheet" fetchpriority="high">
+    <link rel="icon" type="image/png" href="./logo.png?v=3" />
+    <link rel="apple-touch-icon" href="./logo.png?v=3" />
+    <title>Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát</title>
+    <meta name="description" content="Hệ thống tra cứu điểm thi và phân tích kết quả khảo sát Toán &amp; Tư Duy Khoa Học. Xem điểm Thô, IRT, Thưởng Phạt, ma trận kiến thức và thống kê chung." />
+    <meta property="og:title" content="Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát" />
+    <meta property="og:description" content="Tra cứu điểm thi cá nhân, xem biểu đồ tiến bộ, ma trận kiến thức và phân tích thống kê chung." />
+    <meta property="og:image" content="./bg.jpg?v=3" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Tra Cứu Điểm Thi &amp; Phân Tích Khảo Sát" />
+    <meta name="twitter:description" content="Tra cứu điểm thi cá nhân và phân tích thống kê chung." />
+    <script type="module" crossorigin src="./assets/main-BOfjxLJS.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/react-vendor-XI1iE6St.js">
+    <link rel="modulepreload" crossorigin href="./assets/vendor-CfG5hR_T.js">
+    <link rel="modulepreload" crossorigin href="./assets/icons-BsqTbb89.js">
+    <link rel="modulepreload" crossorigin href="./assets/recharts-CNzd49hQ.js">
+    <link rel="modulepreload" crossorigin href="./assets/supabase-CaYjXlUq.js">
+    <link rel="stylesheet" crossorigin href="./assets/main-BD6GrW4L.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Unregister any existing service workers to remove PWA cache
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('ServiceWorker unregistered successfully');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
