@@ -270,23 +270,17 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
 
           {/* TITLE & DESCRIPTION */}
           <div className="text-center mb-8 flex flex-col items-center">
-            <div className="mb-4 fade-in transform transition-all hover:scale-105 duration-300">
-              <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl rounded-full border-4 border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]" />
+            <div className="mb-6 fade-in transform transition-all hover:scale-105 duration-500">
+              <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl rounded-full ring-4 ring-white/80 dark:ring-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]" />
             </div>
-            <div className="relative inline-block mt-1">
+            <div className="relative inline-block mt-1 fade-in">
               <h1 
-                className="text-5xl sm:text-7xl md:text-[5.5rem] font-black leading-tight px-6 text-blue-500 z-10 relative"
-                style={{
-                  fontFamily: "'Mali', cursive",
-                  transform: "rotate(-1.5deg)",
-                  WebkitTextStroke: "2px white",
-                  textShadow: "0px 4px 15px rgba(0,0,0,0.1), 3px 3px 0px white, -3px -3px 0px white, 3px -3px 0px white, -3px 3px 0px white"
-                }}
+                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-6 z-10 relative bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 drop-shadow-sm"
               >
                 {examName}
               </h1>
               {/* Decorative underline */}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-[3px] bg-blue-400 rounded-full transform -rotate-1 opacity-80"></div>
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1/2 h-1.5 bg-gradient-to-r from-transparent via-indigo-500 to-transparent rounded-full opacity-70 blur-[1px]"></div>
             </div>
             
             <div className="mt-8 text-center">
@@ -393,14 +387,14 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       )}
       <button 
         onClick={() => setSelectedStudent(null)}
-        className="flex items-center gap-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 bg-white dark:bg-slate-800/80 hover:bg-white dark:bg-slate-800 backdrop-blur-md shadow-sm font-semibold transition-all w-fit px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/60 mb-5 relative z-10"
+        className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white/70 dark:bg-slate-800/70 hover:bg-white dark:hover:bg-slate-800 backdrop-blur-xl shadow-sm hover:shadow-md font-bold transition-all w-fit px-5 py-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 mb-6 relative z-10 group"
       >
-        <ChevronLeft className="w-5 h-5" />
-        Quay lại tìm kiếm
+        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+        Quay Lại Tìm Kiếm
       </button>
 
       {/* Single Student Profile */}
-      <section className="card p-4 sm:p-5 md:p-8 border-2 border-indigo-100 bg-white dark:bg-slate-800 shadow-sm relative overflow-hidden">
+      <section className="card p-5 sm:p-8 md:p-10 relative overflow-hidden flex flex-col gap-4">
         
         {(() => {
           if (!studentRankInfo) return null;
@@ -442,7 +436,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           return null;
         })()}
         
-        <div className="flex flex-col sm:flex-row sm:items-center gap-5 border-b border-slate-100 dark:border-slate-700/50 pb-5 mb-5 mt-4 sm:mt-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-b border-slate-200/60 dark:border-slate-700/50 pb-6 mb-6 mt-4 sm:mt-0">
           {(() => {
             const isTop1 = studentRankInfo && (studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1);
             const isTop2 = !isTop1 && studentRankInfo && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2);
@@ -517,8 +511,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         </div>
         
         {/* Student Ability Chart */}
-        <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 p-4 sm:p-5">
-          <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2 mb-4">
+        <div className="mt-6 sm:mt-8 bg-slate-50/50 dark:bg-slate-900/30 rounded-[28px] border border-slate-200/60 dark:border-slate-700/50 p-5 sm:p-7 shadow-inner">
+          <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2 mb-6">
             <BarChartIcon className="w-5 h-5 text-indigo-500" />
             Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
           </h3>
@@ -548,7 +542,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               </BarChart>
             </ResponsiveContainer>
           </div>
-            <div className="h-[250px] sm:h-[300px] w-full flex items-center justify-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-2 lg:-ml-4 mt-4 lg:mt-0">
+            <div className="h-[250px] sm:h-[300px] w-full flex items-center justify-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-2 lg:-ml-4 mt-4 lg:mt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart 
                   cx="50%" cy="50%" outerRadius="65%" 
