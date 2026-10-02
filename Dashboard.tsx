@@ -303,30 +303,27 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     return (
       <div className="flex flex-col items-center justify-center min-h-[75vh] fade-in relative w-full">
         
-        <div className="relative z-10 w-full flex flex-col items-center px-4">
+        <div className="relative z-10 w-full flex flex-col lg:flex-row items-center justify-center gap-12 px-4 max-w-7xl mx-auto">
           
-
-          {/* TITLE & DESCRIPTION */}
-          <div className="text-center mb-8 flex flex-col items-center">
+          {/* LEFT: Text & Form */}
+          <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left w-full max-w-2xl">
             <div className="mb-6 fade-in transform transition-all hover:scale-105 duration-500">
               <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl rounded-full ring-4 ring-white/80 dark:ring-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]" />
             </div>
             <div className="relative inline-block mt-1 fade-in">
               <h1 
-                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-6 z-10 relative bg-clip-text text-transparent bg-gradient-to-r from-rose-500 via-red-500 to-amber-500 dark:from-rose-400 dark:via-red-400 dark:to-amber-400 drop-shadow-sm"
+                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight z-10 relative bg-clip-text text-transparent bg-gradient-to-r from-rose-500 via-red-500 to-amber-500 dark:from-rose-400 dark:via-red-400 dark:to-amber-400 drop-shadow-sm"
               >
                 {examName}
               </h1>
-              {/* Decorative underline */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1/2 h-1.5 bg-gradient-to-r from-transparent via-rose-500 to-transparent rounded-full opacity-70 blur-[1px]"></div>
+              <div className="absolute -bottom-2 left-0 w-1/2 h-1.5 bg-gradient-to-r from-transparent via-rose-500 to-transparent rounded-full opacity-70 blur-[1px]"></div>
             </div>
             
-            <div className="mt-8 text-center">
-              <p className="inline-block px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-lg text-sm sm:text-base text-slate-700 dark:text-slate-200 font-bold text-center border border-white/50 dark:border-slate-700/50">
+            <div className="mt-8 mb-8 text-center lg:text-left">
+              <p className="inline-block px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-lg text-sm sm:text-base text-slate-700 dark:text-slate-200 font-bold border border-white/50 dark:border-slate-700/50">
                 Nhập họ tên bên dưới để tra cứu
               </p>
             </div>
-          </div>
           
           {/* FORM */}
           <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-6">
@@ -387,10 +384,12 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             </button>
             </div>
           </form>
+          </div>
 
-
-
-        </div>
+          {/* RIGHT: Illustration */}
+          <div className="flex-1 hidden lg:flex justify-center items-center fade-in">
+            <img src="/search_hero.jpg" alt="Illustration" className="w-[500px] xl:w-[600px] object-cover rounded-3xl drop-shadow-2xl hover:scale-105 transition-transform duration-700" />
+          </div>        </div>
       </div>
     );
   }
@@ -431,8 +430,18 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       </button>
 
       {/* Single Student Profile */}
-      <section className="card p-5 sm:p-8 md:p-10 relative overflow-hidden flex flex-col gap-4">
+      <section className="card relative overflow-hidden flex flex-col">
         
+        {/* Banner Image */}
+        <div className="w-full h-40 sm:h-56 md:h-64 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+          <img src="/dashboard_banner.jpg" alt="Dashboard Banner" className="w-full h-full object-cover" />
+          <h2 className="absolute bottom-4 left-6 sm:left-10 z-20 text-white font-black text-2xl sm:text-3xl drop-shadow-md">
+            Hồ Sơ Năng Lực Của Bạn
+          </h2>
+        </div>
+
+        <div className="p-5 sm:p-8 md:p-10 flex flex-col gap-4">
         {(() => {
           if (!studentRankInfo) return null;
           const isTop1 = studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1;
@@ -718,6 +727,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               </Suspense>
             </div>
           </div>
+        </div>
         </div>
       </section>
 
