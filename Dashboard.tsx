@@ -313,12 +313,12 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             </div>
             <div className="relative inline-block mt-1 fade-in">
               <h1 
-                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-6 z-10 relative bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 drop-shadow-sm"
+                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-6 z-10 relative bg-clip-text text-transparent bg-gradient-to-r from-rose-500 via-red-500 to-amber-500 dark:from-rose-400 dark:via-red-400 dark:to-amber-400 drop-shadow-sm"
               >
                 {examName}
               </h1>
               {/* Decorative underline */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1/2 h-1.5 bg-gradient-to-r from-transparent via-indigo-500 to-transparent rounded-full opacity-70 blur-[1px]"></div>
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1/2 h-1.5 bg-gradient-to-r from-transparent via-rose-500 to-transparent rounded-full opacity-70 blur-[1px]"></div>
             </div>
             
             <div className="mt-8 text-center">
