@@ -15,32 +15,45 @@ export function CelebrationOverlay({ show, rank, name, onComplete }: Props) {
     if (show) {
       const duration = 5000;
       const end = Date.now() + duration;
-      const colors = ['#f59e0b', '#fbbf24', '#fcd34d', '#6366f1', '#10b981', '#f43f5e'];
 
-      const frame = () => {
-        confetti({
-          particleCount: 4,
-          angle: 270,
-          spread: 60,
-          origin: { x: Math.random(), y: -0.1 },
-          colors: colors,
-          startVelocity: 15,
-          gravity: 0.8,
-          ticks: 300,
-          zIndex: 100,
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
+      const randomInRange = (min: number, max: number) => {
+        return Math.random() * (max - min) + min;
       };
-      frame();
+
+      const interval = setInterval(() => {
+        const timeLeft = end - Date.now();
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          return;
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({
+          startVelocity: 30,
+          spread: 360,
+          ticks: 60,
+          zIndex: 100,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+        confetti({
+          startVelocity: 30,
+          spread: 360,
+          ticks: 60,
+          zIndex: 100,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+      }, 250);
 
       const timer = setTimeout(() => {
         onComplete();
       }, duration + 1000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timer);
+      };
     }
   }, [show, onComplete]);
 
