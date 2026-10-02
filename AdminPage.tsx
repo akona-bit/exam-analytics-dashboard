@@ -241,10 +241,16 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
         'STT': s.stt,
         'Họ và tên': s.name,
         'SBD / Email': s.email || '',
+        'Tiếng Việt (Thô)': s.tho_tv || 0,
+        'Tiếng Anh (Thô)': s.tho_ta || 0,
         'Toán (Thô)': s.tho_toan || 0,
         'TDKH (Thô)': s.tho_tdkh || 0,
+        'Tiếng Việt (IRT)': s.irt_tv || 0,
+        'Tiếng Anh (IRT)': s.irt_ta || 0,
         'Toán (IRT)': s.irt_toan || 0,
         'TDKH (IRT)': s.irt_tdkh || 0,
+        'Tiếng Việt (Thưởng phạt)': s.tp_tv || 0,
+        'Tiếng Anh (Thưởng phạt)': s.tp_ta || 0,
         'Toán (Thưởng phạt)': s.tp_toan || 0,
         'TDKH (Thưởng phạt)': s.tp_tdkh || 0
       })));
@@ -383,6 +389,10 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
         if (row.key === 'exam_url' && row.value) setExamUrl(row.value);
+        if (row.key === 'show_tv') setShowTv(row.value === 'true');
+        if (row.key === 'show_ta') setShowTa(row.value === 'true');
+        if (row.key === 'show_toan') setShowToan(row.value === 'true');
+        if (row.key === 'show_tdkh') setShowTdkh(row.value === 'true');
         if (row.key === 'sbd_map' && row.value) {
           try {
             const map = JSON.parse(row.value);
