@@ -177,6 +177,16 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     });
   }, [studentHistory, progressMetric, classProgressData]);
 
+  const chartData = useMemo(() => {
+    return studentHistory.map((s, i) => {
+      const data: any = { name: `Lần ${i + 1}` };
+      if (visibleParts?.tv !== false) data['Tiếng Việt'] = (s.tho.tv || 0) + (s.irt.tv || 0) + (s.thuongPhat.tv || 0);
+      if (visibleParts?.ta !== false) data['Tiếng Anh'] = (s.tho.ta || 0) + (s.irt.ta || 0) + (s.thuongPhat.ta || 0);
+      if (visibleParts?.toan !== false) data['Toán'] = (s.tho.toan || 0) + (s.irt.toan || 0) + (s.thuongPhat.toan || 0);
+      if (visibleParts?.tdkh !== false) data['TDKH'] = (s.tho.tdkh || 0) + (s.irt.tdkh || 0) + (s.thuongPhat.tdkh || 0);
+      return data;
+    });
+  }, [studentHistory, visibleParts]);
   const rankData = useMemo(() => {
     const groups = new Map<string, typeof students[0] & { totalTho: number, totalIrt: number, totalTp: number }>();
     for (const a of students) {
@@ -736,8 +746,10 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: '16px', fontSize: '13px' }} />
-                <Bar dataKey="Toán" fill="#6366f1" radius={[6,6,0,0]} maxBarSize={50} />
-                <Bar dataKey="TDKH" fill="#0ea5e9" radius={[6,6,0,0]} maxBarSize={50} />
+                {visibleParts?.tv !== false && <Bar dataKey="Tiếng Việt" fill="#06b6d4" radius={[6,6,0,0]} maxBarSize={50} />}
+                {visibleParts?.ta !== false && <Bar dataKey="Tiếng Anh" fill="#ec4899" radius={[6,6,0,0]} maxBarSize={50} />}
+                {visibleParts?.toan !== false && <Bar dataKey="Toán" fill="#6366f1" radius={[6,6,0,0]} maxBarSize={50} />}
+                {visibleParts?.tdkh !== false && <Bar dataKey="TDKH" fill="#0ea5e9" radius={[6,6,0,0]} maxBarSize={50} />}
               </BarChart>
             </ResponsiveContainer>
           </div>

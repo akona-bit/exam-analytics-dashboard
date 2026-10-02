@@ -169,7 +169,7 @@ async function fetchStats() {
   // Thống kê nâng cao đợt thi này — không dùng ngưỡng/cột nào hardcode
   let avgToan = 0, avgTdkh = 0, highScores = 0, hardestQ = '';
   try {
-    const { data: studentsData } = await supabase.from('students').select('stt, name, email, tho_toan, tho_tdkh');
+    const { data: studentsData } = await supabase.from('students').select('stt, name, email, tho_tv, tho_ta, tho_toan, tho_tdkh');
     if (studentsData && studentsData.length > 0) {
       const latest = new Map<string, { stt: number; tv: number; ta: number; toan: number; tdkh: number }>();
       for (const s of studentsData) {
