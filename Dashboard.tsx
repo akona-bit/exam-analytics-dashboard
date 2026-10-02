@@ -331,7 +331,6 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                           </div>
                           <span className="font-bold text-slate-800 dark:text-slate-200 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors truncate">{student.name}</span>
                         </div>
-                        {student.email && <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto ml-11 sm:ml-0">{maskEmail(student.email)}</span>}
                       </button>
                     ))}
                   </div>
@@ -555,11 +554,22 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                     { subject: 'TDKH (TP)', 'Điểm của bạn': selectedStudent.thuongPhat.tdkh || 0, 'Trung bình': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.tdkh !== undefined){s+=x.thuongPhat.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
                   ]}
                 >
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 9, fontWeight: 600 }} />
+                  <defs>
+                    <linearGradient id="colorUv" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9}/>
+                      <stop offset="50%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0.9}/>
+                    </linearGradient>
+                    <linearGradient id="colorAvg" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.3}/>
+                    </linearGradient>
+                  </defs>
+                  <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 9, fill: '#94a3b8' }} />
-                  <Radar name="Điểm của bạn" dataKey="Điểm của bạn" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
-                  <Radar name="Trung bình" dataKey="Trung bình" stroke="#cbd5e1" fill="#cbd5e1" fillOpacity={0.3} />
+                  <Radar name="Điểm của bạn" dataKey="Điểm của bạn" stroke="#6366f1" strokeWidth={2} fill="url(#colorUv)" fillOpacity={1} />
+                  <Radar name="Trung bình" dataKey="Trung bình" stroke="#94a3b8" strokeWidth={2} strokeDasharray="3 3" fill="url(#colorAvg)" fillOpacity={1} />
                   <Tooltip 
                     contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
                     formatter={(value: number) => value.toFixed(2)}
