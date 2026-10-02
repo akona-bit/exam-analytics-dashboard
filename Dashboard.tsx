@@ -468,43 +468,43 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100">{selectedStudent.name}</h2>
           </div>
           {studentRankInfo && (
-            <div className="flex flex-wrap gap-2 sm:gap-3">
-              <div className="bg-indigo-50 px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl border border-indigo-100 text-center min-w-[80px] sm:min-w-[100px] flex-1 sm:flex-none">
-                <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hạng Thô</div>
-                <div className="text-xl sm:text-2xl font-black text-indigo-600">#{studentRankInfo.rankTho}</div>
-                <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Tổng: {studentRankInfo.totalTho.toFixed(2)}</div>
+            <div className="flex flex-wrap gap-2 sm:gap-4 mt-2 sm:mt-0">
+              <div className="bg-indigo-50/80 dark:bg-indigo-900/30 backdrop-blur-sm px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-xl sm:rounded-2xl border border-indigo-200/60 dark:border-indigo-500/30 text-center min-w-[85px] sm:min-w-[110px] flex-1 sm:flex-none shadow-sm">
+                <div className="text-[10px] sm:text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider mb-1">Hạng Thô</div>
+                <div className="text-xl sm:text-3xl font-black text-indigo-700 dark:text-indigo-300">#{studentRankInfo.rankTho}</div>
+                <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Tổng: {studentRankInfo.totalTho.toFixed(2)}</div>
               </div>
-              <div className="bg-sky-50 px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl border border-sky-100 text-center min-w-[80px] sm:min-w-[100px] flex-1 sm:flex-none">
-                <div className="text-[10px] font-bold text-sky-400 uppercase tracking-wider mb-1">Hạng IRT</div>
-                <div className="text-xl sm:text-2xl font-black text-sky-600">#{studentRankInfo.rankIrt}</div>
-                <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Tổng: {studentRankInfo.totalIrt.toFixed(2)}</div>
+              <div className="bg-sky-50/80 dark:bg-sky-900/30 backdrop-blur-sm px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-xl sm:rounded-2xl border border-sky-200/60 dark:border-sky-500/30 text-center min-w-[85px] sm:min-w-[110px] flex-1 sm:flex-none shadow-sm">
+                <div className="text-[10px] sm:text-xs font-bold text-sky-500 dark:text-sky-400 uppercase tracking-wider mb-1">Hạng IRT</div>
+                <div className="text-xl sm:text-3xl font-black text-sky-700 dark:text-sky-300">#{studentRankInfo.rankIrt}</div>
+                <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Tổng: {studentRankInfo.totalIrt.toFixed(2)}</div>
               </div>
-              <div className="bg-amber-50 px-3 py-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl border border-amber-100 text-center min-w-[80px] sm:min-w-[100px] flex-1 sm:flex-none">
-                <div className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1">Hạng T.Phạt</div>
-                <div className="text-xl sm:text-2xl font-black text-amber-600">#{studentRankInfo.rankTp}</div>
-                <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Tổng: {studentRankInfo.totalTp.toFixed(2)}</div>
+              <div className="bg-amber-50/80 dark:bg-amber-900/30 backdrop-blur-sm px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-xl sm:rounded-2xl border border-amber-200/60 dark:border-amber-500/30 text-center min-w-[85px] sm:min-w-[110px] flex-1 sm:flex-none shadow-sm">
+                <div className="text-[10px] sm:text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider mb-1">Hạng T.Phạt</div>
+                <div className="text-xl sm:text-3xl font-black text-amber-700 dark:text-amber-300">#{studentRankInfo.rankTp}</div>
+                <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Tổng: {studentRankInfo.totalTp.toFixed(2)}</div>
               </div>
             </div>
           )}
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-indigo-200 transition-colors">
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider mb-1">Điểm Thô (Toán/TDKH)</p>
-            <p className="text-lg sm:text-xl font-bold text-indigo-600">{selectedStudent.tho.toan ?? '-'} <span className="text-slate-300 font-normal mx-0.5">/</span> {selectedStudent.tho.tdkh ?? '-'}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-md group">
+            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-indigo-500 transition-colors">Điểm Thô (Toán/TDKH)</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-indigo-600 dark:text-indigo-400">{selectedStudent.tho.toan ?? '-'} <span className="text-indigo-300 dark:text-indigo-600/50 font-normal mx-0.5">/</span> {selectedStudent.tho.tdkh ?? '-'}</p>
           </div>
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-sky-200 transition-colors">
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider mb-1">Điểm IRT (Toán/TDKH)</p>
-            <p className="text-lg sm:text-xl font-bold text-sky-600">{selectedStudent.irt.toan?.toFixed(2) ?? '-'} <span className="text-slate-300 font-normal mx-0.5">/</span> {selectedStudent.irt.tdkh?.toFixed(2) ?? '-'}</p>
+          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-sky-300 dark:hover:border-sky-500/50 transition-all shadow-sm hover:shadow-md group">
+            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-sky-500 transition-colors">Điểm IRT (Toán/TDKH)</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-sky-600 dark:text-sky-400">{selectedStudent.irt.toan?.toFixed(2) ?? '-'} <span className="text-sky-300 dark:text-sky-600/50 font-normal mx-0.5">/</span> {selectedStudent.irt.tdkh?.toFixed(2) ?? '-'}</p>
           </div>
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-amber-200 transition-colors">
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider mb-1">Thưởng Phạt (Toán/TDKH)</p>
-            <p className="text-lg sm:text-xl font-bold text-amber-600">{selectedStudent.thuongPhat.toan?.toFixed(2) ?? '-'} <span className="text-slate-300 font-normal mx-0.5">/</span> {selectedStudent.thuongPhat.tdkh?.toFixed(2) ?? '-'}</p>
+          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-amber-300 dark:hover:border-amber-500/50 transition-all shadow-sm hover:shadow-md group">
+            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-amber-500 transition-colors">Thưởng Phạt (Toán/TDKH)</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400">{selectedStudent.thuongPhat.toan?.toFixed(2) ?? '-'} <span className="text-amber-300 dark:text-amber-600/50 font-normal mx-0.5">/</span> {selectedStudent.thuongPhat.tdkh?.toFixed(2) ?? '-'}</p>
           </div>
-          <div className="p-4 bg-rose-50/50 rounded-2xl border border-rose-100 hover:border-rose-200 transition-colors">
-            <p className="text-[11px] sm:text-xs text-rose-500 font-semibold uppercase tracking-wider mb-1">Câu sai/Bỏ trống</p>
-            <p className="text-lg sm:text-xl font-bold text-rose-600">
-              {selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0} <span className="text-rose-300 font-normal mx-0.5">/</span> {selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0}
+          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-rose-200/60 dark:border-rose-700/50 hover:border-rose-300 dark:hover:border-rose-500/50 transition-all shadow-sm hover:shadow-md group">
+            <p className="text-[10px] sm:text-[11px] md:text-xs text-rose-500 dark:text-rose-400 font-bold uppercase tracking-wider mb-2 group-hover:text-rose-600 transition-colors">Câu sai / Bỏ trống</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-rose-600 dark:text-rose-400">
+              {selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0} <span className="text-rose-300 dark:text-rose-600/50 font-normal mx-0.5">/</span> {selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0}
             </p>
           </div>
         </div>
@@ -516,7 +516,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            <div className="h-[250px] sm:h-[300px] w-full -ml-2">
+            <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full -ml-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
@@ -528,8 +528,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }} 
                   cursor={{ fill: '#f8fafc' }}
@@ -541,7 +541,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               </BarChart>
             </ResponsiveContainer>
           </div>
-            <div className="h-[250px] sm:h-[300px] w-full flex items-center justify-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-2 lg:-ml-4 mt-4 lg:mt-0">
+            <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full flex items-center justify-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-2 lg:-ml-4 mt-2 lg:mt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart 
                   cx="50%" cy="50%" outerRadius="65%" 
@@ -566,8 +566,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                     </linearGradient>
                   </defs>
                   <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                   <Radar name="Điểm của bạn" dataKey="Điểm của bạn" stroke="#6366f1" strokeWidth={2} fill="url(#colorUv)" fillOpacity={1} />
                   <Radar name="Trung bình" dataKey="Trung bình" stroke="#94a3b8" strokeWidth={2} strokeDasharray="3 3" fill="url(#colorAvg)" fillOpacity={1} />
                   <Tooltip 
