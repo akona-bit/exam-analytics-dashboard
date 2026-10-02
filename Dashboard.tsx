@@ -24,6 +24,7 @@ interface Props {
   answerLink?: string;
   nextExamDate?: string;
   sbdMap?: Record<string, string>;
+  visibleParts?: { tv: boolean; ta: boolean; toan: boolean; tdkh: boolean };
 }
 
 function LazyFallback() {
@@ -50,7 +51,7 @@ const maskEmail = (email: string | null | undefined) => {
   return `${maskedName}@${maskedDomain}.${dExt}`;
 };
 
-export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap }: Props) {
+export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap, visibleParts }: Props) {
   const currentTexts = propQuestionTexts || texts;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
@@ -181,9 +182,9 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     for (const a of students) {
       const key = a.email || a.name;
       const ex = groups.get(key);
-      const thoScore = (a.tho.toan || 0) + (a.tho.tdkh || 0);
-      const irtScore = (a.irt.toan || 0) + (a.irt.tdkh || 0);
-      const tpScore = (a.thuongPhat.toan || 0) + (a.thuongPhat.tdkh || 0);
+      const thoScore = (visibleParts?.tv ? (a.tho.tv || 0) : 0) + (visibleParts?.ta ? (a.tho.ta || 0) : 0) + (visibleParts?.toan ? (a.tho.toan || 0) : 0) + (visibleParts?.tdkh ? (a.tho.tdkh || 0) : 0);
+      const irtScore = (visibleParts?.tv ? (a.irt.tv || 0) : 0) + (visibleParts?.ta ? (a.irt.ta || 0) : 0) + (visibleParts?.toan ? (a.irt.toan || 0) : 0) + (visibleParts?.tdkh ? (a.irt.tdkh || 0) : 0);
+      const tpScore = (visibleParts?.tv ? (a.thuongPhat.tv || 0) : 0) + (visibleParts?.ta ? (a.thuongPhat.ta || 0) : 0) + (visibleParts?.toan ? (a.thuongPhat.toan || 0) : 0) + (visibleParts?.tdkh ? (a.thuongPhat.tdkh || 0) : 0);
 
       if (!ex) {
         groups.set(key, { ...a, totalTho: thoScore, totalIrt: irtScore, totalTp: tpScore });
@@ -234,15 +235,52 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     }
   }, [studentRankInfo, selectedStudent]);
 
-  const chartData = useMemo(() => {
+  const radarDataCompare = useMemo(() => {
+    if (!selectedStudent) return [];
+    const getAvg = (subj: 'tv'|'ta'|'toan'|'tdkh') => {
+      let s = 0, c = 0;
+      students.forEach(x => {
+        const total = (x.tho[subj] || 0) + (x.irt[subj] || 0) + (x.thuongPhat[subj] || 0);
+        if (total > 0) { s += total; c++; }
+      });
+      return c ? +(s / c).toFixed(2) : 0;
+    };
+
+    const s = selectedStudent;
+    const res: any[] = [];
+    if (visibleParts?.tv !== false) {
+      res.push({ subject: 'Tiếng Việt', 'Điểm Của Bạn': (s.tho.tv||0)+(s.irt.tv||0)+(s.thuongPhat.tv||0), 'Trung Bình': getAvg('tv') });
+    }
+    if (visibleParts?.ta !== false) {
+      res.push({ subject: 'Tiếng Anh', 'Điểm Của Bạn': (s.tho.ta||0)+(s.irt.ta||0)+(s.thuongPhat.ta||0), 'Trung Bình': getAvg('ta') });
+    }
+    if (visibleParts?.toan !== false) {
+      res.push({ subject: 'Toán', 'Điểm Của Bạn': (s.tho.toan||0)+(s.irt.toan||0)+(s.thuongPhat.toan||0), 'Trung Bình': getAvg('toan') });
+    }
+    if (visibleParts?.tdkh !== false) {
+      res.push({ subject: 'Khoa Học', 'Điểm Của Bạn': (s.tho.tdkh||0)+(s.irt.tdkh||0)+(s.thuongPhat.tdkh||0), 'Trung Bình': getAvg('tdkh') });
+    }
+    return res;
+  }, [selectedStudent, students, visibleParts]);
+
+  const radarDataParts = useMemo(() => {
     if (!selectedStudent) return [];
     const s = selectedStudent;
-    return [
-      { name: 'Điểm Thô', Toán: s.tho.toan || 0, TDKH: s.tho.tdkh || 0 },
-      { name: 'Điểm IRT', Toán: s.irt.toan || 0, TDKH: s.irt.tdkh || 0 },
-      { name: 'Thưởng Phạt', Toán: s.thuongPhat.toan || 0, TDKH: s.thuongPhat.tdkh || 0 },
-    ];
-  }, [selectedStudent]);
+    const res: any[] = [];
+    if (visibleParts?.tv !== false) {
+      res.push({ subject: 'Tiếng Việt', 'Điểm Thô': s.tho.tv||0, 'Điểm IRT': s.irt.tv||0, 'Thưởng Phạt': s.thuongPhat.tv||0 });
+    }
+    if (visibleParts?.ta !== false) {
+      res.push({ subject: 'Tiếng Anh', 'Điểm Thô': s.tho.ta||0, 'Điểm IRT': s.irt.ta||0, 'Thưởng Phạt': s.thuongPhat.ta||0 });
+    }
+    if (visibleParts?.toan !== false) {
+      res.push({ subject: 'Toán', 'Điểm Thô': s.tho.toan||0, 'Điểm IRT': s.irt.toan||0, 'Thưởng Phạt': s.thuongPhat.toan||0 });
+    }
+    if (visibleParts?.tdkh !== false) {
+      res.push({ subject: 'Khoa Học', 'Điểm Thô': s.tho.tdkh||0, 'Điểm IRT': s.irt.tdkh||0, 'Thưởng Phạt': s.thuongPhat.tdkh||0 });
+    }
+    return res;
+  }, [selectedStudent, visibleParts]);
 
   const tooltipStyle = { borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '13px' };
 
@@ -490,16 +528,16 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
           <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-md group">
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-indigo-500 transition-colors">Điểm Thô (Toán/TDKH)</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-black text-indigo-600 dark:text-indigo-400">{selectedStudent.tho.toan ?? '-'} <span className="text-indigo-300 dark:text-indigo-600/50 font-normal mx-0.5">/</span> {selectedStudent.tho.tdkh ?? '-'}</p>
+            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-indigo-500 transition-colors">Tổng Điểm Thô</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-indigo-600 dark:text-indigo-400">{((visibleParts?.tv !== false ? selectedStudent.tho.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.tho.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.tho.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.tho.tdkh || 0 : 0)).toFixed(2)}</p>
           </div>
           <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-sky-300 dark:hover:border-sky-500/50 transition-all shadow-sm hover:shadow-md group">
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-sky-500 transition-colors">Điểm IRT (Toán/TDKH)</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-black text-sky-600 dark:text-sky-400">{selectedStudent.irt.toan?.toFixed(2) ?? '-'} <span className="text-sky-300 dark:text-sky-600/50 font-normal mx-0.5">/</span> {selectedStudent.irt.tdkh?.toFixed(2) ?? '-'}</p>
+            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-sky-500 transition-colors">Tổng Điểm IRT</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-sky-600 dark:text-sky-400">{((visibleParts?.tv !== false ? selectedStudent.irt.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.irt.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.irt.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.irt.tdkh || 0 : 0)).toFixed(2)}</p>
           </div>
           <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-amber-300 dark:hover:border-amber-500/50 transition-all shadow-sm hover:shadow-md group">
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-amber-500 transition-colors">Thưởng Phạt (Toán/TDKH)</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400">{selectedStudent.thuongPhat.toan?.toFixed(2) ?? '-'} <span className="text-amber-300 dark:text-amber-600/50 font-normal mx-0.5">/</span> {selectedStudent.thuongPhat.tdkh?.toFixed(2) ?? '-'}</p>
+            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-amber-500 transition-colors">Tổng Thưởng Phạt</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400">{((visibleParts?.tv !== false ? selectedStudent.thuongPhat.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.thuongPhat.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.thuongPhat.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.thuongPhat.tdkh || 0 : 0)).toFixed(2)}</p>
           </div>
           <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-rose-200/60 dark:border-rose-700/50 hover:border-rose-300 dark:hover:border-rose-500/50 transition-all shadow-sm hover:shadow-md group">
             <p className="text-[10px] sm:text-[11px] md:text-xs text-rose-500 dark:text-rose-400 font-bold uppercase tracking-wider mb-2 group-hover:text-rose-600 transition-colors">Câu sai / Bỏ trống</p>
@@ -516,34 +554,27 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* Radar 1: Điểm của bạn */}
+            {/* Radar 1: Bạn vs Trung Bình */}
             <div className="flex flex-col items-center w-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
-              <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2 mt-2">Năng Lực Của Bạn</h4>
+              <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2 mt-2">Tổng Điểm Bạn So Với Trung Bình</h4>
               <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart 
-                    cx="50%" cy="50%" outerRadius="65%" 
-                    data={[
-                      { metric: 'Điểm Thô', 'Toán': selectedStudent.tho.toan || 0, 'TDKH': selectedStudent.tho.tdkh || 0, fullMark: 10 },
-                      { metric: 'Điểm IRT', 'Toán': selectedStudent.irt.toan || 0, 'TDKH': selectedStudent.irt.tdkh || 0, fullMark: 10 },
-                      { metric: 'Thưởng Phạt', 'Toán': selectedStudent.thuongPhat.toan || 0, 'TDKH': selectedStudent.thuongPhat.tdkh || 0, fullMark: 10 },
-                    ]}
-                  >
+                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarDataCompare}>
                     <defs>
-                      <linearGradient id="colorToan" x1="0" y1="0" x2="1" y2="1">
+                      <linearGradient id="colorUser" x1="0" y1="0" x2="1" y2="1">
                         <stop offset="5%" stopColor="#6366f1" stopOpacity={0.9}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.9}/>
                       </linearGradient>
-                      <linearGradient id="colorTdkh" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.9}/>
-                        <stop offset="95%" stopColor="#f97316" stopOpacity={0.9}/>
+                      <linearGradient id="colorAvg" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.6}/>
                       </linearGradient>
                     </defs>
                     <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
                     <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Radar name="Toán" dataKey="Toán" stroke="#6366f1" strokeWidth={2} fill="url(#colorToan)" fillOpacity={0.7} />
-                    <Radar name="TDKH" dataKey="TDKH" stroke="#f59e0b" strokeWidth={2} fill="url(#colorTdkh)" fillOpacity={0.7} />
+                    <Radar name="Điểm Của Bạn" dataKey="Điểm Của Bạn" stroke="#6366f1" strokeWidth={3} fill="url(#colorUser)" fillOpacity={0.7} />
+                    <Radar name="Trung Bình" dataKey="Trung Bình" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="url(#colorAvg)" fillOpacity={0.5} />
                     <Tooltip 
                       contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
                       formatter={(value: number) => value.toFixed(2)}
@@ -554,40 +585,32 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               </div>
             </div>
 
-            {/* Radar 2: Trung bình chung */}
+            {/* Radar 2: Chi tiết các phần */}
             <div className="flex flex-col items-center w-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
-              <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-2 mt-2">Mặt Bằng Chung</h4>
+              <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-2 mt-2">Chi Tiết Năng Lực (Thô, IRT, T.Phạt)</h4>
               <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart 
-                    cx="50%" cy="50%" outerRadius="65%" 
-                    data={[
-                      { metric: 'Điểm Thô', 
-                        'Toán': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.toan !== undefined){s+=x.tho.toan;c++;} }); return c?s/c:0; })(), 
-                        'TDKH': (() => { let s=0,c=0; students.forEach(x => { if(x.tho.tdkh !== undefined){s+=x.tho.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                      { metric: 'Điểm IRT', 
-                        'Toán': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.toan !== undefined){s+=x.irt.toan;c++;} }); return c?s/c:0; })(), 
-                        'TDKH': (() => { let s=0,c=0; students.forEach(x => { if(x.irt.tdkh !== undefined){s+=x.irt.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                      { metric: 'Thưởng Phạt', 
-                        'Toán': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.toan !== undefined){s+=x.thuongPhat.toan;c++;} }); return c?s/c:0; })(), 
-                        'TDKH': (() => { let s=0,c=0; students.forEach(x => { if(x.thuongPhat.tdkh !== undefined){s+=x.thuongPhat.tdkh;c++;} }); return c?s/c:0; })(), fullMark: 10 },
-                    ]}
-                  >
+                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarDataParts}>
                     <defs>
-                      <linearGradient id="colorToanAvg" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.6}/>
-                        <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.6}/>
+                      <linearGradient id="colorTho" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.7}/>
+                        <stop offset="95%" stopColor="#34d399" stopOpacity={0.7}/>
                       </linearGradient>
-                      <linearGradient id="colorTdkhAvg" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#d6d3d1" stopOpacity={0.6}/>
-                        <stop offset="95%" stopColor="#e7e5e4" stopOpacity={0.6}/>
+                      <linearGradient id="colorIrt" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.7}/>
+                        <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.7}/>
+                      </linearGradient>
+                      <linearGradient id="colorTp" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.7}/>
+                        <stop offset="95%" stopColor="#fbbf24" stopOpacity={0.7}/>
                       </linearGradient>
                     </defs>
                     <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
                     <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Radar name="Toán" dataKey="Toán" stroke="#94a3b8" strokeWidth={2} strokeDasharray="3 3" fill="url(#colorToanAvg)" fillOpacity={0.7} />
-                    <Radar name="TDKH" dataKey="TDKH" stroke="#d6d3d1" strokeWidth={2} strokeDasharray="3 3" fill="url(#colorTdkhAvg)" fillOpacity={0.7} />
+                    <Radar name="Điểm Thô" dataKey="Điểm Thô" stroke="#10b981" strokeWidth={2} fill="url(#colorTho)" fillOpacity={0.5} />
+                    <Radar name="Điểm IRT" dataKey="Điểm IRT" stroke="#0ea5e9" strokeWidth={2} fill="url(#colorIrt)" fillOpacity={0.5} />
+                    <Radar name="Thưởng Phạt" dataKey="Thưởng Phạt" stroke="#f59e0b" strokeWidth={2} fill="url(#colorTp)" fillOpacity={0.5} />
                     <Tooltip 
                       contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
                       formatter={(value: number) => value.toFixed(2)}
@@ -806,31 +829,29 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold">
                 <tr>
                   <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" rowSpan={2}>Lần Thi</th>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Toán</th>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>TDKH</th>
+                  {visibleParts?.tv !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Tiếng Việt</th>}
+                  {visibleParts?.ta !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Tiếng Anh</th>}
+                  {visibleParts?.toan !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Toán</th>}
+                  {visibleParts?.tdkh !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>TDKH</th>}
                   <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center bg-indigo-50/50" rowSpan={2}>Tổng<br/>Thưởng Phạt</th>
                 </tr>
                 <tr>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th>
+                  {visibleParts?.tv !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
+                  {visibleParts?.ta !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
+                  {visibleParts?.toan !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
+                  {visibleParts?.tdkh !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
                 </tr>
               </thead>
               <tbody>
                 {studentHistory.map((s, i) => (
                   <tr key={i} className="hover:bg-slate-50 dark:bg-slate-900/50 transition-colors">
                     <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-bold text-slate-700 dark:text-slate-200">Lần {i + 1}</td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.toan?.toFixed(2) ?? '-'}</td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.toan?.toFixed(2) ?? '-'}</td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.toan?.toFixed(2) ?? '-'}</td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.tdkh?.toFixed(2) ?? '-'}</td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.tdkh?.toFixed(2) ?? '-'}</td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.tdkh?.toFixed(2) ?? '-'}</td>
+                    {visibleParts?.tv !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.tv?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.tv?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.tv?.toFixed(2) ?? '-'}</td></>}
+                    {visibleParts?.ta !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.ta?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.ta?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.ta?.toFixed(2) ?? '-'}</td></>}
+                    {visibleParts?.toan !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.toan?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.toan?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.toan?.toFixed(2) ?? '-'}</td></>}
+                    {visibleParts?.tdkh !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.tdkh?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.tdkh?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.tdkh?.toFixed(2) ?? '-'}</td></>}
                     <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-bold text-indigo-600 bg-indigo-50/30">
-                      {((s.thuongPhat.toan || 0) + (s.thuongPhat.tdkh || 0)).toFixed(2)}
+                      {((visibleParts?.tv !== false ? (s.thuongPhat.tv || 0) : 0) + (visibleParts?.ta !== false ? (s.thuongPhat.ta || 0) : 0) + (visibleParts?.toan !== false ? (s.thuongPhat.toan || 0) : 0) + (visibleParts?.tdkh !== false ? (s.thuongPhat.tdkh || 0) : 0)).toFixed(2)}
                     </td>
                   </tr>
                 ))}

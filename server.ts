@@ -19,23 +19,44 @@ async function loadData() {
     const rawStudentsPath = path.join(process.cwd(), 'raw_students.csv');
     const rawStudents = await fs.readFile(rawStudentsPath, 'utf-8');
     const lines = rawStudents.split('\n').map(l => l.trim()).filter(l => l);
-    const dataLines = lines.slice(2);
-    
-    for (const line of dataLines) {
-      const parts = parseCSVLine(line);
-      if (parts.length >= 8) {
-        memStudents.push({
-          stt: parseInt(parts[0], 10),
-          name: parts[2] || parts[1], // fallback to id if name is missing
-          email: parts[3] || null,
-          tho_toan: parseFloat(parts[4]),
-          tho_tdkh: parseFloat(parts[5]),
-          irt_toan: parseFloat(parts[6]),
-          irt_tdkh: parseFloat(parts[7]),
-          thuong_phat_toan: parseFloat(parts[8]),
-          thuong_phat_tdkh: parseFloat(parts[9]),
-          note: '',
-        });
+    if (lines.length > 0) {
+      const headers = parseCSVLine(lines[0]).map(s => s.toLowerCase().trim());
+      const idx = {
+        stt: headers.indexOf('stt'),
+        name: headers.indexOf('name') !== -1 ? headers.indexOf('name') : headers.indexOf('id'),
+        email: headers.indexOf('email'),
+        tho_tv: headers.indexOf('tho_tv'), tho_ta: headers.indexOf('tho_ta'), tho_toan: headers.indexOf('tho_toan'), tho_tdkh: headers.indexOf('tho_tdkh'),
+        irt_tv: headers.indexOf('irt_tv'), irt_ta: headers.indexOf('irt_ta'), irt_toan: headers.indexOf('irt_toan'), irt_tdkh: headers.indexOf('irt_tdkh'),
+        tp_tv: headers.indexOf('tp_tv'), tp_ta: headers.indexOf('tp_ta'), tp_toan: headers.indexOf('tp_toan'), tp_tdkh: headers.indexOf('tp_tdkh'),
+      };
+      const useFallback = idx.tho_toan === -1;
+      
+      for (let i = 2; i < lines.length; i++) {
+        const parts = parseCSVLine(lines[i]);
+        if (useFallback) {
+          if (parts.length >= 8) {
+            memStudents.push({
+              stt: parseInt(parts[0], 10),
+              name: parts[2] || parts[1],
+              email: parts[3] || null,
+              tho_toan: parseFloat(parts[4]), tho_tdkh: parseFloat(parts[5]),
+              irt_toan: parseFloat(parts[6]), irt_tdkh: parseFloat(parts[7]),
+              thuong_phat_toan: parseFloat(parts[8]), thuong_phat_tdkh: parseFloat(parts[9]),
+              note: '',
+            });
+          }
+        } else {
+           const getVal = (idxKey: number) => (idxKey !== -1 && parts[idxKey]) ? parseFloat(parts[idxKey]) : null;
+           memStudents.push({
+              stt: idx.stt !== -1 ? parseInt(parts[idx.stt], 10) : i,
+              name: (idx.name !== -1 ? parts[idx.name] : parts[0]) || parts[1],
+              email: idx.email !== -1 ? parts[idx.email] : null,
+              tho_tv: getVal(idx.tho_tv), tho_ta: getVal(idx.tho_ta), tho_toan: getVal(idx.tho_toan), tho_tdkh: getVal(idx.tho_tdkh),
+              irt_tv: getVal(idx.irt_tv), irt_ta: getVal(idx.irt_ta), irt_toan: getVal(idx.irt_toan), irt_tdkh: getVal(idx.irt_tdkh),
+              thuong_phat_tv: getVal(idx.tp_tv), thuong_phat_ta: getVal(idx.tp_ta), thuong_phat_toan: getVal(idx.tp_toan), thuong_phat_tdkh: getVal(idx.tp_tdkh),
+              note: '',
+           });
+        }
       }
     }
   } catch (e) {

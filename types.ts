@@ -19,9 +19,9 @@ export interface StudentData {
   stt: number;
   name: string;
   email?: string;
-  tho: { toan: number | null; tdkh: number | null };
-  irt: { toan: number | null; tdkh: number | null };
-  thuongPhat: { toan: number | null; tdkh: number | null };
+  tho: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
+  irt: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
+  thuongPhat: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
   note?: string;
   responses?: { question_num: number; status: string }[];
 }

@@ -32,22 +32,45 @@ const readLines = (text: string) => text.split('\n').map(l => l.trim()).filter(l
 
 function parseStudents(csv: string) {
   const rows: any[] = [];
-  const lines = readLines(csv).slice(2);
-  for (const line of lines) {
-    const parts = parseCSVLine(line);
-    if (parts.length >= 8) {
-      rows.push({
-        stt: parseInt(parts[0], 10),
-        name: parts[2] || parts[1],
-        email: parts[3] || null,
-        tho_toan: parseFloat(parts[4]),
-        tho_tdkh: parseFloat(parts[5]),
-        irt_toan: parseFloat(parts[6]),
-        irt_tdkh: parseFloat(parts[7]),
-        tp_toan: parseFloat(parts[8]),
-        tp_tdkh: parseFloat(parts[9]),
-        note: '',
-      });
+  const lines = readLines(csv);
+  if (lines.length < 2) return rows;
+  const headers = parseCSVLine(lines[0]).map(s => s.toLowerCase().trim());
+  const idx = {
+    stt: headers.indexOf('stt'),
+    name: headers.indexOf('name') !== -1 ? headers.indexOf('name') : headers.indexOf('id'),
+    email: headers.indexOf('email'),
+    tho_tv: headers.indexOf('tho_tv'), tho_ta: headers.indexOf('tho_ta'), tho_toan: headers.indexOf('tho_toan'), tho_tdkh: headers.indexOf('tho_tdkh'),
+    irt_tv: headers.indexOf('irt_tv'), irt_ta: headers.indexOf('irt_ta'), irt_toan: headers.indexOf('irt_toan'), irt_tdkh: headers.indexOf('irt_tdkh'),
+    tp_tv: headers.indexOf('tp_tv'), tp_ta: headers.indexOf('tp_ta'), tp_toan: headers.indexOf('tp_toan'), tp_tdkh: headers.indexOf('tp_tdkh'),
+  };
+  
+  const useFallback = idx.tho_toan === -1;
+
+  for (let i = 2; i < lines.length; i++) {
+    const parts = parseCSVLine(lines[i]);
+    if (useFallback) {
+      if (parts.length >= 8) {
+        rows.push({
+          stt: parseInt(parts[0], 10),
+          name: parts[2] || parts[1],
+          email: parts[3] || null,
+          tho_toan: parseFloat(parts[4]), tho_tdkh: parseFloat(parts[5]),
+          irt_toan: parseFloat(parts[6]), irt_tdkh: parseFloat(parts[7]),
+          tp_toan: parseFloat(parts[8]), tp_tdkh: parseFloat(parts[9]),
+          note: '',
+        });
+      }
+    } else {
+       const getVal = (idxKey: number) => (idxKey !== -1 && parts[idxKey]) ? parseFloat(parts[idxKey]) : null;
+       rows.push({
+          stt: idx.stt !== -1 ? parseInt(parts[idx.stt], 10) : i,
+          name: (idx.name !== -1 ? parts[idx.name] : parts[0]) || parts[1],
+          email: idx.email !== -1 ? parts[idx.email] : null,
+          tho_tv: getVal(idx.tho_tv), tho_ta: getVal(idx.tho_ta), tho_toan: getVal(idx.tho_toan), tho_tdkh: getVal(idx.tho_tdkh),
+          irt_tv: getVal(idx.irt_tv), irt_ta: getVal(idx.irt_ta), irt_toan: getVal(idx.irt_toan), irt_tdkh: getVal(idx.irt_tdkh),
+          tp_tv: getVal(idx.tp_tv), tp_ta: getVal(idx.tp_ta), tp_toan: getVal(idx.tp_toan), tp_tdkh: getVal(idx.tp_tdkh),
+          note: '',
+       });
     }
   }
   return rows;
@@ -148,20 +171,18 @@ async function fetchStats() {
   try {
     const { data: studentsData } = await supabase.from('students').select('stt, name, email, tho_toan, tho_tdkh');
     if (studentsData && studentsData.length > 0) {
-      // Chỉ tính lần thi mới nhất của từng thí sinh (giống dashboard)
-      const latest = new Map<string, { stt: number; toan: number; tdkh: number }>();
+      const latest = new Map<string, { stt: number; tv: number; ta: number; toan: number; tdkh: number }>();
       for (const s of studentsData) {
         const key = s.email || s.name;
         const prev = latest.get(key);
         if (!prev || (s.stt || 0) > prev.stt) {
-          latest.set(key, { stt: s.stt || 0, toan: s.tho_toan || 0, tdkh: s.tho_tdkh || 0 });
+          latest.set(key, { stt: s.stt || 0, tv: s.tho_tv || 0, ta: s.tho_ta || 0, toan: s.tho_toan || 0, tdkh: s.tho_tdkh || 0 });
         }
       }
       const rows = Array.from(latest.values());
-      avgToan = rows.reduce((sum, r) => sum + r.toan, 0) / rows.length;
-      avgTdkh = rows.reduce((sum, r) => sum + r.tdkh, 0) / rows.length;
-      // Xếp loại Giỏi lấy theo ABILITY_BANDS (thang tổng MAX_TOTAL_SCORE), không hardcode 80đ
-      highScores = rows.filter(r => r.toan + r.tdkh >= GIOI_MIN).length;
+      avgToan = rows.reduce((sum, r) => sum + r.toan, 0) / (rows.length || 1);
+      avgTdkh = rows.reduce((sum, r) => sum + r.tdkh, 0) / (rows.length || 1);
+      highScores = rows.filter(r => (r.tv + r.ta + r.toan + r.tdkh) >= GIOI_MIN).length;
     }
 
     // Câu sai nhiều nhất: bỏ câu lỗi đề (is_error) và câu không có số liệu
@@ -188,9 +209,14 @@ async function fetchStats() {
 /* ──────────── Component ──────────── */
 interface AdminPageProps {
   onExit: () => void;
+  questions?: any;
+  students?: any;
+  topicMap?: any;
+  questionTexts?: any;
+  visibleParts?: { tv: boolean; ta: boolean; toan: boolean; tdkh: boolean };
 }
 
-export function AdminPage({ onExit }: AdminPageProps) {
+export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authed, setAuthed] = useState(false);
@@ -302,6 +328,14 @@ export function AdminPage({ onExit }: AdminPageProps) {
   const [examNameSaving, setExamNameSaving] = useState(false);
   const [examNameStatus, setExamNameStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  // Visibility toggles
+  const [showTv, setShowTv] = useState(visibleParts?.tv ?? true);
+  const [showTa, setShowTa] = useState(visibleParts?.ta ?? true);
+  const [showToan, setShowToan] = useState(visibleParts?.toan ?? true);
+  const [showTdkh, setShowTdkh] = useState(visibleParts?.tdkh ?? true);
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
+  const [visibilityStatus, setVisibilityStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
   // Settings: Topic Map
   const [topicMapStr, setTopicMapStr] = useState(JSON.stringify(defaultTopicMap, null, 2));
   const [topicMapSaving, setTopicMapSaving] = useState(false);
@@ -392,6 +426,25 @@ export function AdminPage({ onExit }: AdminPageProps) {
       setExamNameStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
     }
     setExamNameSaving(false);
+  };
+
+  const handleSaveVisibility = async () => {
+    if (!supabase) return;
+    setVisibilitySaving(true);
+    setVisibilityStatus(null);
+    try {
+      await Promise.all([
+        supabase.from('exam_settings').upsert({ key: 'show_tv', value: showTv ? 'true' : 'false', updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+        supabase.from('exam_settings').upsert({ key: 'show_ta', value: showTa ? 'true' : 'false', updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+        supabase.from('exam_settings').upsert({ key: 'show_toan', value: showToan ? 'true' : 'false', updated_at: new Date().toISOString() }, { onConflict: 'key' }),
+        supabase.from('exam_settings').upsert({ key: 'show_tdkh', value: showTdkh ? 'true' : 'false', updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      ]);
+      setVisibilityStatus({ type: 'success', msg: 'Đã lưu hiển thị các phần thi!' });
+      setTimeout(() => setVisibilityStatus(null), 3000);
+    } catch (err: any) {
+      setVisibilityStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setVisibilitySaving(false);
   };
 
   const handleSaveAnswerLink = async () => {
@@ -781,6 +834,42 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           >
             {examNameSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Lưu thay đổi
+          </button>
+        </div>
+        <hr className="my-6 border-slate-100" />
+        <div className="flex flex-col gap-3">
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Hiển thị các phần thi (Nếu ẩn, phần này sẽ biến mất trên Dashboard của Thí sinh)</label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl hover:bg-indigo-50/50 transition-colors">
+              <input type="checkbox" checked={showTv} onChange={e => setShowTv(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+              <span className="font-semibold text-slate-700">Tiếng Việt</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl hover:bg-indigo-50/50 transition-colors">
+              <input type="checkbox" checked={showTa} onChange={e => setShowTa(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+              <span className="font-semibold text-slate-700">Tiếng Anh</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl hover:bg-indigo-50/50 transition-colors">
+              <input type="checkbox" checked={showToan} onChange={e => setShowToan(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+              <span className="font-semibold text-slate-700">Toán</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl hover:bg-indigo-50/50 transition-colors">
+              <input type="checkbox" checked={showTdkh} onChange={e => setShowTdkh(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+              <span className="font-semibold text-slate-700">Khoa Học</span>
+            </label>
+          </div>
+          {visibilityStatus && (
+            <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg ${visibilityStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+              {visibilityStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+              {visibilityStatus.msg}
+            </div>
+          )}
+          <button
+            onClick={handleSaveVisibility}
+            disabled={visibilitySaving}
+            className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2 mt-2"
+          >
+            {visibilitySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Lưu hiển thị
           </button>
         </div>
       </div>

@@ -14,9 +14,9 @@ import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 interface SupabaseStudent {
   stt: number; name: string; email: string | null;
-  tho_toan: number | null; tho_tdkh: number | null;
-  irt_toan: number | null; irt_tdkh: number | null;
-  tp_toan: number | null; tp_tdkh: number | null;
+  tho_toan: number | null; tho_tdkh: number | null; tho_tv: number | null; tho_ta: number | null;
+  irt_toan: number | null; irt_tdkh: number | null; irt_tv: number | null; irt_ta: number | null;
+  tp_toan: number | null; tp_tdkh: number | null; tp_tv: number | null; tp_ta: number | null;
   note: string | null;
 }
 interface SupabaseQuestion {
@@ -57,9 +57,9 @@ async function fetchFromSupabase(): Promise<{ questions: QuestionData[]; student
       stt: s.stt,
       name: s.name,
       email: s.email || undefined,
-      tho: { toan: s.tho_toan, tdkh: s.tho_tdkh },
-      irt: { toan: s.irt_toan, tdkh: s.irt_tdkh },
-      thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh },
+      tho: { toan: s.tho_toan, tdkh: s.tho_tdkh, tv: s.tho_tv ?? null, ta: s.tho_ta ?? null },
+      irt: { toan: s.irt_toan, tdkh: s.irt_tdkh, tv: s.irt_tv ?? null, ta: s.irt_ta ?? null },
+      thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh, tv: s.tp_tv ?? null, ta: s.tp_ta ?? null },
       note: s.note || undefined,
       responses: responsesByStt.get(s.stt),
     }));
@@ -125,6 +125,10 @@ export default function App() {
   const [nextExamDate, setNextExamDate] = useState('');
   const [examUrl, setExamUrl] = useState('');
   const [sbdMap, setSbdMap] = useState<Record<string, string>>({});
+  const [showTv, setShowTv] = useState(true);
+  const [showTa, setShowTa] = useState(true);
+  const [showToan, setShowToan] = useState(true);
+  const [showTdkh, setShowTdkh] = useState(true);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   useEffect(() => {
     if (isDark) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
@@ -153,6 +157,10 @@ export default function App() {
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
         if (row.key === 'exam_url' && row.value) setExamUrl(row.value);
         if (row.key === 'sbd_map') try { setSbdMap(JSON.parse(row.value)); } catch {}
+        if (row.key === 'show_tv') setShowTv(row.value !== 'false');
+        if (row.key === 'show_ta') setShowTa(row.value !== 'false');
+        if (row.key === 'show_toan') setShowToan(row.value !== 'false');
+        if (row.key === 'show_tdkh') setShowTdkh(row.value !== 'false');
       }
     });
   }, []);
@@ -195,7 +203,10 @@ export default function App() {
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
         <main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
-          <AdminPage onExit={() => { window.location.hash = ''; setIsAdmin(false); }} />
+          <AdminPage 
+            onExit={() => { window.location.hash = ''; setIsAdmin(false); }} 
+            visibleParts={{ tv: showTv, ta: showTa, toan: showToan, tdkh: showTdkh }}
+          />
         </main>
       </div>
     );
@@ -254,6 +265,7 @@ export default function App() {
             answerLink={answerLink} 
             nextExamDate={nextExamDate}
             sbdMap={sbdMap}
+            visibleParts={{ tv: showTv, ta: showTa, toan: showToan, tdkh: showTdkh }}
           />
         )}
 

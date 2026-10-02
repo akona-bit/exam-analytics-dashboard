@@ -8,8 +8,10 @@ function parse() {
       name: r[1],
       email: r[2],
       thuongPhat: {
-        toan: parseFloat(r[6] || 0),
-        tdkh: parseFloat(r[7] || 0)
+        tv: parseFloat(r[6] || 0),
+        ta: parseFloat(r[7] || 0),
+        toan: parseFloat(r[8] || 0),
+        tdkh: parseFloat(r[9] || 0)
       }
     };
   });
@@ -17,7 +19,7 @@ function parse() {
   const groups = new Map();
   for (const a of students) {
     if(!a.name) continue;
-    const score = (a.thuongPhat.toan || 0) + (a.thuongPhat.tdkh || 0);
+    const score = (a.thuongPhat.tv || 0) + (a.thuongPhat.ta || 0) + (a.thuongPhat.toan || 0) + (a.thuongPhat.tdkh || 0);
     const key = a.email || a.name;
     const ex = groups.get(key);
     if (!ex || score > ex.totalScore) groups.set(key, { ...a, totalScore: score });

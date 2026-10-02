@@ -9,10 +9,16 @@ CREATE TABLE IF NOT EXISTS students (
   stt         INTEGER NOT NULL,
   name        TEXT NOT NULL,
   email       TEXT,
+  tho_tv      FLOAT,
+  tho_ta      FLOAT,
   tho_toan    FLOAT,
   tho_tdkh    FLOAT,
+  irt_tv      FLOAT,
+  irt_ta      FLOAT,
   irt_toan    FLOAT,
   irt_tdkh    FLOAT,
+  tp_tv       FLOAT,
+  tp_ta       FLOAT,
   tp_toan     FLOAT,
   tp_tdkh     FLOAT,
   note        TEXT DEFAULT '',
@@ -86,5 +92,10 @@ CREATE INDEX IF NOT EXISTS idx_responses_stt ON student_responses(student_stt);
 -- =====================================================
 -- Seed default exam settings
 -- =====================================================
-INSERT INTO exam_settings (key, value) VALUES ('exam_name', 'Kì Thi Khảo Sát Toán & TDKH')
+INSERT INTO exam_settings (key, value) VALUES 
+  ('exam_name', 'Kì Thi Khảo Sát Năng Lực'),
+  ('show_tv', 'true'),
+  ('show_ta', 'true'),
+  ('show_toan', 'true'),
+  ('show_tdkh', 'true')
 ON CONFLICT (key) DO NOTHING;
