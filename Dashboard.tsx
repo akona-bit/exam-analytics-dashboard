@@ -406,7 +406,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5 md:gap-6 pb-8 fade-in max-w-6xl mx-auto">
+    <div className="flex flex-col gap-4 sm:gap-5 md:gap-6 pb-8 fade-in max-w-6xl mx-auto w-full min-w-0">
       {viewQuestionKey && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setViewQuestionKey(null)}>
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col fade-in scale-in" onClick={e => e.stopPropagation()}>
@@ -441,7 +441,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       </button>
 
       {/* Single Student Profile */}
-      <section className="card p-5 sm:p-8 md:p-10 relative overflow-hidden flex flex-col gap-4">
+      <section className="card p-5 sm:p-8 md:p-10 relative overflow-hidden flex flex-col gap-4 w-full min-w-0">
         
         {(() => {
           if (!studentRankInfo) return null;
@@ -558,14 +558,14 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         </div>
         
         {/* Student Ability Chart */}
-        <div className="mt-6 sm:mt-8 bg-slate-50/50 dark:bg-slate-900/30 rounded-[28px] border border-slate-200/60 dark:border-slate-700/50 p-5 sm:p-7 shadow-inner">
+        <div className="mt-6 sm:mt-8 bg-slate-50/50 dark:bg-slate-900/30 rounded-[28px] border border-slate-200/60 dark:border-slate-700/50 p-5 sm:p-7 shadow-inner w-full min-w-0">
           <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2 mb-6">
             <BarChartIcon className="w-5 h-5 text-indigo-500" />
             Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Radar 1: Bạn vs Trung Bình */}
-            <div className="flex flex-col items-center w-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
+            <div className="flex flex-col items-center w-full min-w-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
               <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2 mt-2">Tổng Điểm Bạn So Với Trung Bình</h4>
               <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -596,7 +596,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             </div>
 
             {/* Radar 2: Chi tiết các phần */}
-            <div className="flex flex-col items-center w-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
+            <div className="flex flex-col items-center w-full min-w-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
               <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-2 mt-2">Chi Tiết Năng Lực (Thô, IRT, T.Phạt)</h4>
               <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -633,7 +633,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           </div>
         </div>
         
-        <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+        <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden w-full min-w-0">
           <button
             onClick={() => setShowWrongDetail(!showWrongDetail)}
             className="w-full p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between hover:bg-slate-100 dark:bg-slate-800/50 transition-colors text-left"
@@ -706,7 +706,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           )}
         </div>
 
-        <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+        <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden w-full min-w-0">
           <div className="p-5 border-b border-slate-200 dark:border-slate-700">
             <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-indigo-500" />
@@ -829,7 +829,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       </div>
       
       {studentHistory.length > 1 && (
-        <section className="card overflow-hidden mt-4 sm:mt-5 md:mt-6">
+        <section className="card overflow-hidden mt-4 sm:mt-5 md:mt-6 w-full min-w-0">
           <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700/50">
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <span className="icon-box bg-emerald-50 text-emerald-600"><FileSpreadsheet className="w-[18px] h-[18px]" /></span>
