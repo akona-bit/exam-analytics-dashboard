@@ -198,7 +198,7 @@ export default function App() {
   // Admin route
   if (isAdmin) {
     return (
-      <div className="min-h-[100dvh] w-screen bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300">
+      <div className="min-h-[100dvh] w-full bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300">
         <button onClick={() => setIsDark(!isDark)} className="fixed top-4 left-4 z-50 p-2.5 rounded-full bg-white dark:bg-slate-800 shadow-md text-slate-700 dark:text-slate-200 hover:scale-110 transition-all">
           {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
@@ -235,7 +235,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-screen relative bg-[#f8fafc] dark:bg-[#0f172a] overflow-x-hidden font-sans">
+    <div className="min-h-[100dvh] w-full relative bg-[#f8fafc] dark:bg-[#0f172a] overflow-x-hidden font-sans">
       {/* Background Image Layer */}
       <div 
         className="fixed inset-0 w-full h-full pointer-events-none"
