@@ -95,15 +95,14 @@ export function ClassAnalytics({ students, questions, metric, onSelectStudent }:
             {rows.map((r, i) => (
               <tr
                 key={r.student.email || r.student.name}
-                onClick={() => onSelectStudent(r.student)}
-                className="border-b border-slate-50 hover:bg-indigo-50/40 transition-colors cursor-pointer group"
+                className="border-b border-slate-50 transition-colors"
               >
                 <td className="px-4 py-2.5 text-center">
                   <span className={`inline-flex items-center justify-center min-w-[26px] h-6 px-1 rounded-full text-xs font-bold ${startRank === 1 && i < 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
                     {startRank === 1 ? startRank + i : ranking.length - i}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">{r.student.name}</td>
+                <td className="px-4 py-2.5 font-semibold text-slate-700 dark:text-slate-200 transition-colors">{r.student.name}</td>
                 <td className={`px-4 py-2.5 text-right font-bold tabular-nums ${scoreColor}`}>{r.score.toFixed(2)}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums text-slate-500 dark:text-slate-400 dark:text-slate-500">{((r.score / MAX_TOTAL_SCORE) * 100).toFixed(0)}%</td>
               </tr>
@@ -216,7 +215,6 @@ export function ClassAnalytics({ students, questions, metric, onSelectStudent }:
               <span className="icon-box bg-amber-50 text-amber-600"><Trophy className="w-[18px] h-[18px]" /></span>
               Bảng Xếp Hạng {METRIC_LABEL[metric]}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1 ml-11">Nhấp vào thí sinh để xem hồ sơ chi tiết</p>
           </div>
         </div>
 
