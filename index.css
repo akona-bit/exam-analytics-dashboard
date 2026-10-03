@@ -82,3 +82,38 @@ html, body, #root {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
+
+@keyframes textShine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.premium-title {
+  background: linear-gradient(
+    to right,
+    #2563eb,
+    #7c3aed,
+    #db2777,
+    #2563eb
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: textShine 4s linear infinite;
+}
+
+.dark .premium-title {
+  background: linear-gradient(
+    to right,
+    #60a5fa,
+    #a78bfa,
+    #f472b6,
+    #60a5fa
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: textShine 4s linear infinite;
+}

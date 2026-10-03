@@ -332,7 +332,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             </div>
             <div className="relative inline-block mt-1 fade-in">
               <h1 
-                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-6 z-10 relative bg-clip-text text-transparent bg-gradient-to-r from-rose-500 via-red-500 to-amber-500 dark:from-rose-400 dark:via-red-400 dark:to-amber-400 drop-shadow-sm pb-2"
+                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-6 z-10 relative premium-title drop-shadow-md pb-2"
               >
                 {examName}
               </h1>
