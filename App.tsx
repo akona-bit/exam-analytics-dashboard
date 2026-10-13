@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Dashboard } from './Dashboard';
 import { AdminPage } from './AdminPage';
 import { QuestionData, StudentData } from './types';
+import { normalizeExamType } from './analytics';
 import defaultQuestionTexts from './question_texts.json';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 
@@ -18,16 +19,19 @@ interface SupabaseStudent {
   irt_toan: number | null; irt_tdkh: number | null; irt_tv: number | null; irt_ta: number | null;
   tp_toan: number | null; tp_tdkh: number | null; tp_tv: number | null; tp_ta: number | null;
   note: string | null;
+  exam_type?: string | null;
 }
 interface SupabaseQuestion {
   question_id: string; subject: string;
   total_attempts: number | null; correct: number | null; incorrect: number | null;
   penalty_score: number | null; bonus1: number | null; bonus2: number | null;
   bonus3: number | null; bonus_correct: number | null; is_error: boolean | null;
+  exam_type?: string | null;
 }
 interface SupabaseResponse {
   student_stt: number; student_name: string;
   question_num: number; status: string;
+  exam_type?: string | null;
 }
 
 /** Fetch all data from Supabase, return null if it fails or is empty */
@@ -45,29 +49,35 @@ async function fetchFromSupabase(): Promise<{ questions: QuestionData[]; student
     if (studentsRes.error || questionsRes.error || responsesRes.error) return null;
     if (!studentsRes.data || studentsRes.data.length === 0) return null;
 
-    // Group responses by student_stt
-    const responsesByStt = new Map<number, { question_num: number; status: string }[]>();
+    // Group responses by exam type + student_stt
+    const responsesByKey = new Map<string, { question_num: number; status: string }[]>();
     for (const r of (responsesRes.data || []) as SupabaseResponse[]) {
-      if (!responsesByStt.has(r.student_stt)) responsesByStt.set(r.student_stt, []);
-      responsesByStt.get(r.student_stt)!.push({ question_num: r.question_num, status: r.status });
+      const key = `${normalizeExamType(r.exam_type)}::${r.student_stt}`;
+      if (!responsesByKey.has(key)) responsesByKey.set(key, []);
+      responsesByKey.get(key)!.push({ question_num: r.question_num, status: r.status });
     }
 
     // Map students
-    const students: StudentData[] = (studentsRes.data as SupabaseStudent[]).map(s => ({
+    const students: StudentData[] = (studentsRes.data as SupabaseStudent[]).map(s => {
+      const examType = normalizeExamType(s.exam_type);
+      return {
       stt: s.stt,
       name: s.name,
       email: s.email || undefined,
+      examType,
       tho: { toan: s.tho_toan, tdkh: s.tho_tdkh, tv: s.tho_tv ?? null, ta: s.tho_ta ?? null },
       irt: { toan: s.irt_toan, tdkh: s.irt_tdkh, tv: s.irt_tv ?? null, ta: s.irt_ta ?? null },
       thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh, tv: s.tp_tv ?? null, ta: s.tp_ta ?? null },
       note: s.note || undefined,
-      responses: responsesByStt.get(s.stt),
-    }));
+      responses: responsesByKey.get(`${examType}::${s.stt}`),
+      };
+    });
 
     // Map questions
     const questions: QuestionData[] = (questionsRes.data as SupabaseQuestion[]).map(q => ({
       id: q.question_id,
       subject: q.subject,
+      examType: normalizeExamType(q.exam_type),
       totalAttempts: q.total_attempts,
       correct: q.correct,
       incorrect: q.incorrect,
@@ -240,13 +250,17 @@ export default function App() {
       <div 
         className="fixed inset-0 w-full h-full pointer-events-none"
         style={{
-          backgroundImage: 'url("/bg.jpg?v=3")',
+          backgroundImage: 'url("/bg.jpg?v=4")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          filter: 'contrast(1.08) saturate(1.15) brightness(1.02)',
+          filter: 'contrast(1.02) saturate(1.05)',
           imageRendering: 'crisp-edges',
           zIndex: 0
         }}
+      />
+      {/* Soft Ambient Overlay for enhanced text readability & contrast */}
+      <div 
+        className="fixed inset-0 w-full h-full pointer-events-none z-[1] bg-white/20 dark:bg-slate-950/45 backdrop-blur-[0.5px]"
       />
       {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">

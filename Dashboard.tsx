@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useMemo, useState } from 'react';
-import { MetricKey, QuestionData, StudentData } from './types';
+import { ExamType, MetricKey, QuestionData, StudentData } from './types';
+import { EXAM_TYPES, EXAM_TYPE_LABEL, countByExamType, examTypeOf, filterByExamType } from './analytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -9,6 +10,7 @@ import { CelebrationOverlay } from './CelebrationOverlay';
 import questionTexts from './question_texts.json';
 
 const KnowledgeMatrix = lazy(() => import('./KnowledgeMatrix').then(m => ({ default: m.KnowledgeMatrix })));
+import { defaultTopicMap } from './KnowledgeMatrix';
 const AbilityDistribution = lazy(() => import('./AbilityDistribution').then(m => ({ default: m.AbilityDistribution })));
 const ClassAnalytics = lazy(() => import('./ClassAnalytics').then(m => ({ default: m.ClassAnalytics })));
 
@@ -32,6 +34,39 @@ function LazyFallback() {
     <div className="h-64 flex flex-col items-center justify-center gap-3 text-slate-400 dark:text-slate-500">
       <div className="w-8 h-8 border-2 border-slate-200 dark:border-slate-700 border-t-indigo-400 rounded-full animate-spin" />
       <p className="text-sm font-medium">Đang tải...</p>
+    </div>
+  );
+}
+
+function ExamTypeTabs({ active, onChange, counts }: { active: ExamType; onChange: (t: ExamType) => void; counts: Record<ExamType, number> }) {
+  const visible = EXAM_TYPES.filter(t => counts[t] > 0);
+  if (visible.length < 2) return null;
+  return (
+    <div className="w-full flex justify-center">
+      <div role="tablist" className="inline-flex items-center gap-1 p-1.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm max-w-full overflow-x-auto">
+        {visible.map(t => {
+          const on = t === active;
+          return (
+            <button
+              key={t}
+              role="tab"
+              type="button"
+              aria-selected={on}
+              onClick={() => onChange(t)}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-bold transition-all whitespace-nowrap ${
+                on
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+              }`}
+            >
+              {EXAM_TYPE_LABEL[t]}
+              <span className={`ml-2 text-xs font-black tabular-nums ${on ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}`}>
+                {counts[t].toLocaleString('vi-VN')}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -61,12 +96,28 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
   const [showCelebration, setShowCelebration] = useState(false);
   const [classMetric, setClassMetric] = useState<MetricKey>('tho');
   const [showWrongDetail, setShowWrongDetail] = useState(false);
+  const [examType, setExamType] = useState<ExamType>('survey');
   const celebratedRef = React.useRef<Set<string>>(new Set());
+
+  const examCounts = useMemo(() => countByExamType(students), [students]);
+  const activeStudents = useMemo(() => filterByExamType(students, examType), [students, examType]);
+  const activeQuestions = useMemo(() => filterByExamType(questions, examType), [questions, examType]);
+
+  const handleExamTypeChange = (next: ExamType) => {
+    setSearchQuery('');
+    setViewQuestionKey(null);
+    setSelectedStudent(prev => {
+      if (!prev) return null;
+      const key = prev.email || prev.name;
+      return students.find(s => examTypeOf(s) === next && (s.email || s.name) === key) || null;
+    });
+    setExamType(next);
+  };
 
   const autoCompleteSuggestions = useMemo(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) return [];
     const lowerName = searchQuery.toLowerCase();
-    const nameMatches = students.filter(s => s.name.toLowerCase().includes(lowerName) || (s.email && s.email.toLowerCase().includes(lowerName)));
+    const nameMatches = activeStudents.filter(s => s.name.toLowerCase().includes(lowerName) || (s.email && s.email.toLowerCase().includes(lowerName)));
     // Get unique names
     const uniqueNames = new Set<string>();
     const suggestions: string[] = [];
@@ -77,7 +128,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       }
     }
     return suggestions.slice(0, 5);
-  }, [searchQuery, students]);
+  }, [searchQuery, activeStudents]);
 
   React.useEffect(() => {
     if (selectedStudent) {
@@ -125,7 +176,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     };
 
     const matches: StudentData[] = [];
-    for (const s of students) {
+    for (const s of activeStudents) {
       const byName = s.name.toLowerCase().includes(lowerQuery)
         || (!!s.email && s.email.toLowerCase().includes(lowerQuery));
       if (byName) {
@@ -138,12 +189,12 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     }
 
     return pickLatest(matches);
-  }, [students, searchQuery]);
+  }, [activeStudents, searchQuery]);
 
   const classProgressData = useMemo(() => {
     const am = new Map<number, { vT: number, vD: number, c: number }>();
     const g = new Map<string, StudentData[]>();
-    for (const s of students) { 
+    for (const s of activeStudents) { 
       const key = s.email || s.name;
       if (!g.has(key)) g.set(key, []); 
       g.get(key)!.push(s); 
@@ -163,13 +214,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     return Array.from(am.entries()).sort((a, b) => a[0] - b[0]).map(([n, d]) => ({
       name: `Lần ${n}`, 'TB Chung Toán': d.c ? +(d.vT/d.c).toFixed(2) : 0, 'TB Chung TDKH': d.c ? +(d.vD/d.c).toFixed(2) : 0,
     }));
-  }, [students, progressMetric]);
+  }, [activeStudents, progressMetric]);
 
   const studentHistory = useMemo(() => {
     if (!selectedStudent) return [];
     const key = selectedStudent.email || selectedStudent.name;
-    return students.filter(s => (s.email || s.name) === key).sort((a, b) => a.stt - b.stt);
-  }, [selectedStudent, students]);
+    return activeStudents.filter(s => (s.email || s.name) === key).sort((a, b) => a.stt - b.stt);
+  }, [selectedStudent, activeStudents]);
 
   const progressChartData = useMemo(() => {
     return studentHistory.map((s, i) => {
@@ -197,8 +248,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     });
   }, [studentHistory, visibleParts]);
   const rankData = useMemo(() => {
-    const groups = new Map<string, typeof students[0] & { totalTho: number, totalIrt: number, totalTp: number }>();
-    for (const a of students) {
+    const groups = new Map<string, typeof activeStudents[0] & { totalTho: number, totalIrt: number, totalTp: number }>();
+    for (const a of activeStudents) {
       const key = a.email || a.name;
       const ex = groups.get(key);
       const thoScore = (visibleParts?.tv ? (a.tho.tv || 0) : 0) + (visibleParts?.ta ? (a.tho.ta || 0) : 0) + (visibleParts?.toan ? (a.tho.toan || 0) : 0) + (visibleParts?.tdkh ? (a.tho.tdkh || 0) : 0);
@@ -219,7 +270,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       irt: [...arr].sort((a, b) => b.totalIrt - a.totalIrt),
       tp: [...arr].sort((a, b) => b.totalTp - a.totalTp)
     };
-  }, [students]);
+  }, [activeStudents]);
 
   const studentRankInfo = useMemo(() => {
     if (!selectedStudent) return null;
@@ -242,7 +293,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     if (studentRankInfo && (studentRankInfo.rankTho === 1 || studentRankInfo.rankTho === 2 || 
                             studentRankInfo.rankIrt === 1 || studentRankInfo.rankIrt === 2 || 
                             studentRankInfo.rankTp === 1 || studentRankInfo.rankTp === 2) && selectedStudent) {
-      const key = selectedStudent.email || selectedStudent.name;
+      const key = `${examType}::${selectedStudent.email || selectedStudent.name}`;
       if (!celebratedRef.current.has(key)) {
         setShowCelebration(true);
         celebratedRef.current.add(key);
@@ -252,13 +303,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
     } else {
       setShowCelebration(false);
     }
-  }, [studentRankInfo, selectedStudent]);
+  }, [studentRankInfo, selectedStudent, examType]);
 
   const radarDataCompare = useMemo(() => {
     if (!selectedStudent) return [];
     const getAvg = (subj: 'tv'|'ta'|'toan'|'tdkh') => {
       let s = 0, c = 0;
-      students.forEach(x => {
+      activeStudents.forEach(x => {
         const total = (x.tho[subj] || 0) + (x.irt[subj] || 0) + (x.thuongPhat[subj] || 0);
         if (total > 0) { s += total; c++; }
       });
@@ -280,7 +331,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       res.push({ subject: 'Khoa Học', 'Điểm Của Bạn': (s.tho.tdkh||0)+(s.irt.tdkh||0)+(s.thuongPhat.tdkh||0), 'Trung Bình': getAvg('tdkh') });
     }
     return res;
-  }, [selectedStudent, students, visibleParts]);
+  }, [selectedStudent, activeStudents, visibleParts]);
 
   const radarDataParts = useMemo(() => {
     if (!selectedStudent) return [];
@@ -326,28 +377,34 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           
 
           {/* TITLE & DESCRIPTION */}
-          <div className="text-center mb-10 flex flex-col items-center">
+          <div className="text-center mb-8 flex flex-col items-center">
             <div className="mb-6 fade-in transform transition-all hover:scale-105 duration-500">
               <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl rounded-full ring-4 ring-white dark:ring-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] bg-white" />
             </div>
             <div className="relative inline-block mt-1 fade-in">
-              <h1 
-                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-6 z-10 relative premium-title drop-shadow-md pb-2"
-              >
-                {examName}
-              </h1>
+              <div className="glass-panel px-6 sm:px-10 py-3 sm:py-4 rounded-3xl shadow-xl inline-flex items-center justify-center">
+                <h1 
+                  className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight z-10 relative premium-title"
+                >
+                  {examName}
+                </h1>
+              </div>
             </div>
+          </div>
+
+          <div className="mb-10">
+            <ExamTypeTabs active={examType} onChange={handleExamTypeChange} counts={examCounts} />
           </div>
           
           {/* FORM */}
           <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-6">
-            <div className="w-full rounded-[32px] bg-white shadow-2xl p-6 sm:p-8 flex flex-col gap-6 fade-in transform transition-all duration-300">
+            <div className="w-full rounded-[32px] glass-panel p-6 sm:p-8 flex flex-col gap-6 fade-in transform transition-all duration-300">
               <div className="flex flex-col gap-2 w-full">
               
               <div className="flex-1 flex flex-col gap-3 relative w-full">
-                <label htmlFor="lookup-name" className="pl-2 text-sm font-bold uppercase tracking-widest text-slate-500">Tra cứu điểm thi</label>
+                <label htmlFor="lookup-name" className="pl-2 text-sm font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300">Tra cứu điểm thi</label>
                 <div className="relative group">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 group-focus-within:text-indigo-500 transition-colors duration-300 pointer-events-none" />
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors duration-300 pointer-events-none" />
                   <input
                     id="lookup-name"
                     type="text"
@@ -356,13 +413,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
                     autoComplete="off"
-                    className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-800 placeholder:text-slate-400 font-bold text-lg transition-all bg-slate-50 hover:bg-white outline-none shadow-inner"
+                    className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-900 dark:text-white placeholder:text-slate-400 font-bold text-lg transition-all bg-white/70 dark:bg-slate-800/70 hover:bg-white dark:hover:bg-slate-800 outline-none shadow-inner"
                   />
                 </div>
                 
                 {/* Suggestions Dropdown */}
                 {searchQuery.trim() && searchResults.type === 'success' && searchResults.data.length > 0 && (
-                  <div className="absolute top-[100%] mt-3 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
+                  <div className="absolute top-[100%] mt-3 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
                     {searchResults.data.map((student, idx) => (
                       <button
                         key={idx}
@@ -371,13 +428,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                           setSelectedStudent(student);
                           setSearchQuery('');
                         }}
-                        className="w-full text-left px-5 sm:px-6 py-3 sm:py-4 hover:bg-indigo-50 transition-all border-b border-slate-50 last:border-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 group/item"
+                        className="w-full text-left px-5 sm:px-6 py-3 sm:py-4 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all border-b border-slate-100 dark:border-slate-700/60 last:border-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 group/item"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 group-hover/item:scale-110 group-hover/item:bg-indigo-500 group-hover/item:text-white transition-all duration-300 shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover/item:scale-110 group-hover/item:bg-indigo-600 group-hover/item:text-white transition-all duration-300 shrink-0">
                             <Search className="w-4 h-4" />
                           </div>
-                          <span className="font-bold text-slate-800 group-hover/item:text-indigo-600 transition-colors truncate">{student.name}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors truncate">{student.name}</span>
                         </div>
                       </button>
                     ))}
@@ -432,6 +489,9 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           onComplete={() => setShowCelebration(false)}
         />
       )}
+      <div className="mb-2">
+        <ExamTypeTabs active={examType} onChange={handleExamTypeChange} counts={examCounts} />
+      </div>
       <button 
         onClick={() => setSelectedStudent(null)}
         className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white/70 dark:bg-slate-800/70 hover:bg-white dark:hover:bg-slate-800 backdrop-blur-xl shadow-sm hover:shadow-md font-bold transition-all w-fit px-5 py-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 mb-6 relative z-10 group"
@@ -675,7 +735,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
               <tbody>
                 {selectedStudent.responses?.filter(r => r.status === 'wrong' || r.status === 'missing').sort((a,b) => a.question_num - b.question_num).map((r, i) => {
                   const qKey = `Câu ${r.question_num}`;
-                  const qData = questions.find(q => q.id === qKey);
+                  const qData = activeQuestions.find(q => q.id === qKey);
                   return (
                     <tr key={i} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:bg-slate-900/50 transition-colors cursor-pointer" onClick={() => setViewQuestionKey(qKey)}>
                       <td className="px-3 sm:px-4 py-3">
@@ -705,6 +765,112 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           </div>
           )}
         </div>
+
+        {/* ── Số câu đúng theo vùng kiến thức ── */}
+        {(() => {
+          const activeTopicMap = topicMap || defaultTopicMap;
+          const wrongSet = new Set(selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []);
+          const missingSet = new Set(selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []);
+
+          // Group topics into broader categories matching KnowledgeMatrix layout
+          const categoryGroups: { category: string; topics: string[]; color: string; bgColor: string; barColor: string }[] = [
+            { category: 'Đại số', topics: ['Hệ bất phương trình bậc nhất 2 ẩn', 'Hàm số bậc 2', 'Lượng giác', 'Dãy số', 'Giới hạn & Hàm số liên tục', 'Số mũ & Logarit', 'Đạo hàm', 'Xác suất & Tổ hợp'], color: 'text-indigo-700 dark:text-indigo-300', bgColor: 'bg-indigo-50 dark:bg-indigo-900/30', barColor: 'bg-indigo-500' },
+            { category: 'Hình học', topics: ['Hệ thức lượng trong tam giác & Vecto', 'Toạ độ Oxy', 'Hình học không gian'], color: 'text-violet-700 dark:text-violet-300', bgColor: 'bg-violet-50 dark:bg-violet-900/30', barColor: 'bg-violet-500' },
+            { category: 'Logic', topics: ['Logic sắp xếp', 'Logic phân nhóm'], color: 'text-cyan-700 dark:text-cyan-300', bgColor: 'bg-cyan-50 dark:bg-cyan-900/30', barColor: 'bg-cyan-500' },
+            { category: 'PTSL', topics: ['Dữ liệu bảng', 'Dữ liệu biểu đồ cột', 'Dữ liệu biểu đồ tròn'], color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-50 dark:bg-amber-900/30', barColor: 'bg-amber-500' },
+            { category: 'SLKH', topics: ['Đọc hiểu KHTN', 'Đọc hiểu KHXH'], color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-50 dark:bg-emerald-900/30', barColor: 'bg-emerald-500' },
+          ];
+
+          // Build data for each topic
+          const topicData = Object.entries(activeTopicMap).map(([topic, qNums]) => {
+            const total = qNums.length;
+            const wrong = qNums.filter(q => wrongSet.has(q)).length;
+            const missing = qNums.filter(q => missingSet.has(q)).length;
+            const correct = total - wrong - missing;
+            const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+            return { topic, qNums, total, correct, wrong, missing, pct };
+          });
+
+          // Build category summaries
+          const catData = categoryGroups.map(g => {
+            const topics = g.topics
+              .map(t => topicData.find(td => td.topic === t))
+              .filter(Boolean) as typeof topicData;
+            const total = topics.reduce((s, t) => s + t.total, 0);
+            const correct = topics.reduce((s, t) => s + t.correct, 0);
+            const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+            return { ...g, topics, total, correct, pct };
+          }).filter(c => c.total > 0);
+
+          const overallTotal = topicData.reduce((s, t) => s + t.total, 0);
+          const overallCorrect = topicData.reduce((s, t) => s + t.correct, 0);
+          const overallPct = overallTotal > 0 ? Math.round((overallCorrect / overallTotal) * 100) : 0;
+
+          const getPctColor = (pct: number) => {
+            if (pct >= 80) return 'text-emerald-600 dark:text-emerald-400';
+            if (pct >= 50) return 'text-amber-600 dark:text-amber-400';
+            return 'text-rose-600 dark:text-rose-400';
+          };
+
+          return (
+            <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden w-full min-w-0">
+              <div className="p-5 border-b border-slate-200 dark:border-slate-700">
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+                  <Target className="w-5 h-5 text-emerald-500" />
+                  Số Câu Đúng Theo Vùng Kiến Thức
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Tổng quan: <span className={`font-bold ${getPctColor(overallPct)}`}>{overallCorrect}/{overallTotal} câu đúng ({overallPct}%)</span>
+                </p>
+              </div>
+              <div className="p-4 sm:p-5 bg-white dark:bg-slate-800 flex flex-col gap-5">
+                {catData.map(cat => (
+                  <div key={cat.category}>
+                    {/* Category header */}
+                    <div className={`flex items-center justify-between mb-2.5 px-3 py-2 rounded-xl ${cat.bgColor}`}>
+                      <h4 className={`font-extrabold text-sm ${cat.color}`}>{cat.category}</h4>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-bold ${getPctColor(cat.pct)}`}>{cat.correct}/{cat.total} đúng</span>
+                        <span className={`text-sm font-black tabular-nums ${getPctColor(cat.pct)}`}>{cat.pct}%</span>
+                      </div>
+                    </div>
+                    {/* Category progress bar */}
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full mb-3 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${cat.barColor}`}
+                        style={{ width: `${cat.pct}%` }}
+                      />
+                    </div>
+                    {/* Sub-topics */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-1">
+                      {cat.topics.map(t => (
+                        <div key={t.topic} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors group">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">{t.topic}</span>
+                              <span className={`text-xs font-bold tabular-nums whitespace-nowrap ${getPctColor(t.pct)}`}>
+                                {t.correct}/{t.total}
+                              </span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full mt-1.5 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ease-out ${t.pct >= 80 ? 'bg-emerald-400' : t.pct >= 50 ? 'bg-amber-400' : 'bg-rose-400'}`}
+                                style={{ width: `${t.pct}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className={`text-[11px] font-black tabular-nums w-10 text-right ${getPctColor(t.pct)}`}>
+                            {t.pct}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden w-full min-w-0">
           <div className="p-5 border-b border-slate-200 dark:border-slate-700">
@@ -876,12 +1042,12 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       {/* Full Analytics — moved inside student view */}
       <div className="mt-8 flex flex-col gap-8 sm:gap-10">
         <Suspense fallback={<LazyFallback />}>
-          <AbilityDistribution students={students} metric={classMetric} onMetricChange={setClassMetric} />
+          <AbilityDistribution students={activeStudents} metric={classMetric} onMetricChange={setClassMetric} />
         </Suspense>
         <Suspense fallback={<LazyFallback />}>
           <ClassAnalytics
-            students={students}
-            questions={questions}
+            students={activeStudents}
+            questions={activeQuestions}
             metric={classMetric}
             onSelectStudent={s => setSelectedStudent(s)}
           />

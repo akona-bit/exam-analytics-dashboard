@@ -1,4 +1,27 @@
-import { MetricKey, StudentData, SubjectKey } from './types';
+import { ExamType, MetricKey, StudentData, SubjectKey } from './types';
+
+export const EXAM_TYPES: ExamType[] = ['survey', 'mock'];
+
+export const EXAM_TYPE_LABEL: Record<ExamType, string> = {
+  survey: 'Kì Thi Khảo Sát',
+  mock: 'Kì Thi Thử',
+};
+
+export const normalizeExamType = (v: unknown): ExamType => {
+  const raw = String(v ?? '').trim().toLowerCase();
+  return raw === 'mock' || raw === 'thi_thu' || raw === 'thu' || raw === 'kì thi thử' ? 'mock' : 'survey';
+};
+
+export const examTypeOf = (row: { examType?: ExamType }): ExamType => normalizeExamType(row.examType);
+
+export const filterByExamType = <T extends { examType?: ExamType }>(rows: T[], type: ExamType): T[] =>
+  rows.filter(r => examTypeOf(r) === type);
+
+export const countByExamType = <T extends { examType?: ExamType }>(rows: T[]): Record<ExamType, number> => {
+  const counts: Record<ExamType, number> = { survey: 0, mock: 0 };
+  for (const r of rows) counts[examTypeOf(r)] += 1;
+  return counts;
+};
 
 export const METRIC_LABEL: Record<MetricKey, string> = {
   tho: 'Điểm Thô',

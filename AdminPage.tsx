@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
-import { QuestionData, StudentData } from './types';
+import { ExamType, QuestionData, StudentData } from './types';
 import {
   Upload, LogOut, Database, Trash2, CheckCircle2, AlertCircle,
   FileSpreadsheet, Users, BookOpen, ChevronLeft, Loader2, Settings, Save, Download
@@ -8,7 +8,7 @@ import {
 import * as XLSX from 'xlsx';
 import defaultQuestionTexts from './question_texts.json';
 import { defaultTopicMap } from './KnowledgeMatrix';
-import { ABILITY_BANDS, MAX_TOTAL_SCORE } from './analytics';
+import { ABILITY_BANDS, EXAM_TYPES, EXAM_TYPE_LABEL, MAX_TOTAL_SCORE, normalizeExamType } from './analytics';
 
 /* ──────────── CSV Parser ──────────── */
 function parseCSVLine(text: string): string[] {
@@ -140,16 +140,16 @@ function parseQuestions(csv: string) {
 }
 
 
-async function uploadToSupabase(table: string, data: any[]) {
+async function uploadToSupabase(table: string, data: any[], examType: ExamType) {
   if (!supabase) throw new Error('No supabase client');
-  
-  // Delete all rows safely
-  const { error: delErr } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+  const { error: delErr } = await supabase.from(table).delete().eq('exam_type', examType);
   if (delErr) throw delErr;
 
-  // Insert in chunks of 500
-  for (let i = 0; i < data.length; i += 500) {
-    const chunk = data.slice(i, i + 500);
+  const rows = data.map(r => ({ ...r, exam_type: examType }));
+
+  for (let i = 0; i < rows.length; i += 500) {
+    const chunk = rows.slice(i, i + 500);
     const { error } = await supabase.from(table).insert(chunk);
     if (error) throw error;
   }
@@ -160,11 +160,17 @@ const GIOI_MIN = ABILITY_BANDS.find(b => b.short === 'Giỏi')?.min ?? MAX_TOTAL
 
 async function fetchStats() {
   if (!supabase) return null;
-  const [{ count: studentCount }, { count: questionCount }, { count: responseCount }] = await Promise.all([
+  const [{ count: studentCount }, { count: questionCount }, { count: responseCount }, { data: typeRows }] = await Promise.all([
     supabase.from('students').select('*', { count: 'exact', head: true }),
     supabase.from('questions').select('*', { count: 'exact', head: true }),
     supabase.from('student_responses').select('*', { count: 'exact', head: true }),
+    supabase.from('students').select('exam_type'),
   ]);
+
+  const examCounts: Record<ExamType, number> = { survey: 0, mock: 0 };
+  for (const r of (typeRows as { exam_type?: string }[]) || []) {
+    examCounts[normalizeExamType(r.exam_type)] += 1;
+  }
 
   // Thống kê nâng cao đợt thi này — không dùng ngưỡng/cột nào hardcode
   let avgToan = 0, avgTdkh = 0, highScores = 0, hardestQ = '';
@@ -202,7 +208,8 @@ async function fetchStats() {
     avgToan: avgToan,
     avgTdkh: avgTdkh,
     highScores: highScores,
-    hardestQ: hardestQ
+    hardestQ: hardestQ,
+    examCounts: examCounts,
   };
 }
 
@@ -238,6 +245,7 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
       }
       
       const ws = XLSX.utils.json_to_sheet(studentsData.map(s => ({
+        'Loại kì thi': EXAM_TYPE_LABEL[normalizeExamType(s.exam_type)],
         'STT': s.stt,
         'Họ và tên': s.name,
         'SBD / Email': s.email || '',
@@ -269,8 +277,9 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
   const [uploadProgress, setUploadProgress] = useState('');
 
   // Stats
-  const [stats, setStats] = useState<{ students: number; questions: number; responses: number; avgToan?: number; avgTdkh?: number; highScores?: number; hardestQ?: string } | null>(null);
-  const [clearConfirm, setClearConfirm] = useState(false);
+  const [stats, setStats] = useState<{ students: number; questions: number; responses: number; avgToan?: number; avgTdkh?: number; highScores?: number; hardestQ?: string; examCounts?: Record<ExamType, number> } | null>(null);
+  const [clearConfirm, setClearConfirm] = useState<false | 'all' | ExamType>(false);
+  const [uploadExamType, setUploadExamType] = useState<ExamType>('survey');
 
   const handleUpload = async () => {
     if (!studentsFile || !responsesFile || !questionsFile) {
@@ -304,15 +313,15 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
       }
 
       setUploadProgress('Đang tải dữ liệu học sinh lên máy chủ...');
-      await uploadToSupabase('students', students);
+      await uploadToSupabase('students', students, uploadExamType);
 
       setUploadProgress('Đang tải dữ liệu câu hỏi lên máy chủ...');
-      await uploadToSupabase('questions', questions);
+      await uploadToSupabase('questions', questions, uploadExamType);
 
       setUploadProgress('Đang tải dữ liệu bài làm lên máy chủ...');
-      await uploadToSupabase('student_responses', responses);
+      await uploadToSupabase('student_responses', responses, uploadExamType);
 
-      setUploadStatus({ type: 'success', msg: `Thành công! Đã tải lên ${students.length} học sinh và ${questions.length} câu hỏi.` });
+      setUploadStatus({ type: 'success', msg: `Thành công! Đã tải ${EXAM_TYPE_LABEL[uploadExamType].toLowerCase()}: ${students.length} học sinh và ${questions.length} câu hỏi.` });
       refreshStats();
       
       // Clear file inputs
@@ -606,26 +615,28 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
       const parsedResponses = parseResponses(responsesCsv, parsedStudents);
       const parsedQuestions = parseQuestions(questionsCsv);
 
-      // Clear old data
+      // Clear old data of this exam type only
       setUploadProgress('Đang xoá dữ liệu cũ...');
-      await supabase.from('student_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('student_responses').delete().eq('exam_type', uploadExamType);
+      await supabase.from('students').delete().eq('exam_type', uploadExamType);
+      await supabase.from('questions').delete().eq('exam_type', uploadExamType);
+
+      const stamp = (rows: any[]) => rows.map(r => ({ ...r, exam_type: uploadExamType }));
 
       // Insert students (batch 500)
       setUploadProgress(`Đang tải ${parsedStudents.length} học sinh...`);
       for (let i = 0; i < parsedStudents.length; i += 500) {
-        await supabase.from('students').insert(parsedStudents.slice(i, i + 500));
+        await supabase.from('students').insert(stamp(parsedStudents.slice(i, i + 500)));
       }
 
       // Insert questions
       setUploadProgress(`Đang tải ${parsedQuestions.length} câu hỏi...`);
-      await supabase.from('questions').insert(parsedQuestions);
+      await supabase.from('questions').insert(stamp(parsedQuestions));
 
       // Insert responses (batch 1000)
       setUploadProgress(`Đang tải ${parsedResponses.length} bản ghi câu sai/bỏ trống...`);
       for (let i = 0; i < parsedResponses.length; i += 1000) {
-        await supabase.from('student_responses').insert(parsedResponses.slice(i, i + 1000));
+        await supabase.from('student_responses').insert(stamp(parsedResponses.slice(i, i + 1000)));
       }
 
       setUploadProgress('');
@@ -644,9 +655,15 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
   const handleClearAll = async () => {
     if (!supabase) return;
     setLoading(true);
-    await supabase.from('student_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (clearConfirm === 'all') {
+      await supabase.from('student_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    } else if (clearConfirm !== false) {
+      await supabase.from('student_responses').delete().eq('exam_type', clearConfirm);
+      await supabase.from('students').delete().eq('exam_type', clearConfirm);
+      await supabase.from('questions').delete().eq('exam_type', clearConfirm);
+    }
     setLoading(false);
     setClearConfirm(false);
     await refreshStats();
@@ -781,6 +798,33 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           <Upload className="w-5 h-5 text-emerald-600" />
           Cập nhật dữ liệu điểm (CSV)
         </h2>
+        <div className="flex flex-col gap-2 mb-4 max-w-sm">
+          <label className="text-sm font-bold text-slate-700">Loại kì thi của dữ liệu này</label>
+          <div className="flex gap-2 p-1.5 rounded-xl bg-emerald-50 border border-emerald-200">
+            {EXAM_TYPES.map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setUploadExamType(t)}
+                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                  uploadExamType === t
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-emerald-700 hover:bg-emerald-100'
+                }`}
+              >
+                {EXAM_TYPE_LABEL[t]}
+                {stats?.examCounts?.[t] ? (
+                  <span className={`ml-1.5 text-xs font-black tabular-nums ${uploadExamType === t ? 'text-white/80' : 'text-emerald-500'}`}>
+                    {stats.examCounts[t].toLocaleString('vi-VN')}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500">
+            Dữ liệu của {EXAM_TYPE_LABEL[uploadExamType].toLowerCase()} sẽ được thay thế, dữ liệu kì thi còn lại giữ nguyên.
+          </p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-slate-700">File Học sinh (raw_students.csv)</label>
@@ -1079,7 +1123,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           Tải lên dữ liệu mới
         </h2>
         <p className="text-sm text-slate-500 mb-5">
-          Chọn 3 file CSV. Dữ liệu cũ sẽ bị xoá và thay thế bằng dữ liệu mới.
+          Chọn 3 file CSV. Dữ liệu cũ của <span className="font-semibold text-indigo-600">{EXAM_TYPE_LABEL[uploadExamType].toLowerCase()}</span> sẽ bị xoá và thay thế bằng dữ liệu mới.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <FileInput label="raw_students.csv" file={studentsFile} onChange={setStudentsFile} />
@@ -1115,16 +1159,27 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           <Trash2 className="w-5 h-5" />
           Vùng nguy hiểm
         </h2>
-        <p className="text-sm text-slate-500 mb-4">Xoá toàn bộ dữ liệu trong database. Không thể hoàn tác.</p>
+        <p className="text-sm text-slate-500 mb-4">Xoá dữ liệu của một loại kì thi, hoặc xoá toàn bộ. Không thể hoàn tác.</p>
+        <div className="flex flex-wrap gap-3 mb-4">
+          {EXAM_TYPES.map(t => (
+            !clearConfirm ? (
+              <button key={t} onClick={() => setClearConfirm(t)} className="px-4 py-2 rounded-lg border-2 border-rose-200 text-rose-600 font-semibold text-sm hover:bg-rose-50 transition-colors">
+                Xoá dữ liệu {EXAM_TYPE_LABEL[t].toLowerCase()}
+              </button>
+            ) : null
+          ))}
+        </div>
         {!clearConfirm ? (
-          <button onClick={() => setClearConfirm(true)} className="px-4 py-2 rounded-lg border-2 border-rose-200 text-rose-600 font-semibold text-sm hover:bg-rose-50 transition-colors">
+          <button onClick={() => setClearConfirm('all')} className="px-4 py-2 rounded-lg border-2 border-rose-200 text-rose-600 font-semibold text-sm hover:bg-rose-50 transition-colors">
             Xoá toàn bộ dữ liệu
           </button>
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-rose-600">Bạn chắc chắn?</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-rose-600">
+              Xoá {clearConfirm === 'all' ? 'toàn bộ dữ liệu' : `dữ liệu ${EXAM_TYPE_LABEL[clearConfirm].toLowerCase()}`}?
+            </span>
             <button onClick={handleClearAll} disabled={loading} className="px-4 py-2 rounded-lg bg-rose-600 text-white font-semibold text-sm hover:bg-rose-700 transition-colors disabled:opacity-50">
-              {loading ? 'Đang xoá...' : 'Đồng ý, xoá hết'}
+              {loading ? 'Đang xoá...' : 'Đồng ý, xoá'}
             </button>
             <button onClick={() => setClearConfirm(false)} className="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 font-semibold text-sm hover:bg-slate-200 transition-colors">
               Huỷ

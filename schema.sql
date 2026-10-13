@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS students (
   tp_toan     FLOAT,
   tp_tdkh     FLOAT,
   note        TEXT DEFAULT '',
+  exam_type   TEXT NOT NULL DEFAULT 'survey',
   created_at  TIMESTAMPTZ DEFAULT now()
 );
 
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS questions (
   id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   question_id     TEXT NOT NULL,
   subject         TEXT NOT NULL,
+  exam_type       TEXT NOT NULL DEFAULT 'survey',
   total_attempts  INTEGER,
   correct         INTEGER,
   incorrect       INTEGER,
@@ -45,6 +47,7 @@ CREATE TABLE IF NOT EXISTS questions (
 -- Student responses table (wrong/missing only, like the existing format)
 CREATE TABLE IF NOT EXISTS student_responses (
   id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  exam_type    TEXT NOT NULL DEFAULT 'survey',
   student_stt  INTEGER NOT NULL,
   student_name TEXT NOT NULL,
   question_num INTEGER NOT NULL,
@@ -88,6 +91,9 @@ CREATE INDEX IF NOT EXISTS idx_students_stt ON students(stt);
 CREATE INDEX IF NOT EXISTS idx_students_name ON students(name);
 CREATE INDEX IF NOT EXISTS idx_questions_qid ON questions(question_id);
 CREATE INDEX IF NOT EXISTS idx_responses_stt ON student_responses(student_stt);
+CREATE INDEX IF NOT EXISTS idx_students_exam_type ON students(exam_type);
+CREATE INDEX IF NOT EXISTS idx_questions_exam_type ON questions(exam_type);
+CREATE INDEX IF NOT EXISTS idx_responses_exam_type ON student_responses(exam_type);
 
 -- =====================================================
 -- Seed default exam settings

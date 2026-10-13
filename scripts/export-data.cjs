@@ -19,9 +19,27 @@ function parseCSVLine(text) {
 const readLines = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf-8')
   .split('\n').map(l => l.trim()).filter(l => l);
 
+const EXAM_TYPE_HEADERS = ['exam_type', 'examtype', 'loai_ky_thi', 'loai_ki_thi', 'ky_thi'];
+
+const normalizeExamType = (v) => {
+  const raw = String(v == null ? '' : v).trim().toLowerCase();
+  return raw === 'mock' || raw === 'thi_thu' || raw === 'thu' || raw === 'kì thi thử' ? 'mock' : 'survey';
+};
+
+const findExamTypeIndex = (headers) => {
+  for (const h of EXAM_TYPE_HEADERS) {
+    const i = headers.indexOf(h);
+    if (i !== -1) return i;
+  }
+  return -1;
+};
+
 function loadStudents() {
   const rows = [];
-  const lines = readLines('raw_students.csv').slice(2);
+  const allLines = readLines('raw_students.csv');
+  const headers = parseCSVLine(allLines[0] || '').map(h => h.toLowerCase().trim());
+  const examIdx = findExamTypeIndex(headers);
+  const lines = allLines.slice(2);
   for (const line of lines) {
     const parts = parseCSVLine(line);
     if (parts.length >= 8) {
@@ -36,6 +54,7 @@ function loadStudents() {
         thuong_phat_toan: parseFloat(parts[8]),
         thuong_phat_tdkh: parseFloat(parts[9]),
         note: '',
+        exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
       });
     }
   }
@@ -108,7 +127,10 @@ function loadResponses(students) {
 
 function loadQuestions() {
   const rows = [];
-  const lines = readLines('questions.csv').slice(2);
+  const allLines = readLines('questions.csv');
+  const headers = parseCSVLine(allLines[0] || '').map(h => h.toLowerCase().trim());
+  const examIdx = findExamTypeIndex(headers);
+  const lines = allLines.slice(2);
   let currentPhanThi = '';
 
   for (const line of lines) {
@@ -129,6 +151,7 @@ function loadQuestions() {
         diem_thuong_3_y: num(parts[8]),
         diem_thuong_dung: num(parts[9]),
         isError: parts[2] === 'LỖI ĐỀ THI' || parts[1] === 'Câu 4',
+        exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
       });
     }
   }
@@ -150,6 +173,7 @@ const studentsJson = [...students].sort((a, b) => a.stt - b.stt).map(s => ({
   stt: s.stt,
   name: s.name,
   email: s.email,
+  examType: s.exam_type,
   tho: { toan: s.tho_toan, tdkh: s.tho_tdkh },
   irt: { toan: s.irt_toan, tdkh: s.irt_tdkh },
   thuongPhat: { toan: s.thuong_phat_toan, tdkh: s.thuong_phat_tdkh },
@@ -160,6 +184,7 @@ const studentsJson = [...students].sort((a, b) => a.stt - b.stt).map(s => ({
 const questionsJson = questions.map(q => ({
   id: q.cau_hoi,
   subject: q.phan_thi,
+  examType: q.exam_type,
   totalAttempts: q.hs_da_lam,
   correct: q.hs_lam_dung,
   incorrect: q.hs_lam_sai,

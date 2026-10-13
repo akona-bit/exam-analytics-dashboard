@@ -11,6 +11,21 @@ let memStudents: any[] = [];
 let memResponses: any[] = [];
 let memQuestions: any[] = [];
 
+const EXAM_TYPE_HEADERS = ['exam_type', 'examtype', 'loai_ky_thi', 'loai_ki_thi', 'ky_thi'];
+
+const normalizeExamType = (v: unknown): 'survey' | 'mock' => {
+  const raw = String(v == null ? '' : v).trim().toLowerCase();
+  return raw === 'mock' || raw === 'thi_thu' || raw === 'thu' || raw === 'kì thi thử' ? 'mock' : 'survey';
+};
+
+const findExamTypeIndex = (headers: string[]): number => {
+  for (const h of EXAM_TYPE_HEADERS) {
+    const i = headers.indexOf(h);
+    if (i !== -1) return i;
+  }
+  return -1;
+};
+
 async function loadData() {
   console.log('Loading CSV data into memory...');
   
@@ -30,6 +45,7 @@ async function loadData() {
         tp_tv: headers.indexOf('tp_tv'), tp_ta: headers.indexOf('tp_ta'), tp_toan: headers.indexOf('tp_toan'), tp_tdkh: headers.indexOf('tp_tdkh'),
       };
       const useFallback = idx.tho_toan === -1;
+      const examIdx = findExamTypeIndex(headers);
       
       for (let i = 2; i < lines.length; i++) {
         const parts = parseCSVLine(lines[i]);
@@ -43,6 +59,7 @@ async function loadData() {
               irt_toan: parseFloat(parts[6]), irt_tdkh: parseFloat(parts[7]),
               thuong_phat_toan: parseFloat(parts[8]), thuong_phat_tdkh: parseFloat(parts[9]),
               note: '',
+              exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
             });
           }
         } else {
@@ -55,6 +72,7 @@ async function loadData() {
               irt_tv: getVal(idx.irt_tv), irt_ta: getVal(idx.irt_ta), irt_toan: getVal(idx.irt_toan), irt_tdkh: getVal(idx.irt_tdkh),
               thuong_phat_tv: getVal(idx.tp_tv), thuong_phat_ta: getVal(idx.tp_ta), thuong_phat_toan: getVal(idx.tp_toan), thuong_phat_tdkh: getVal(idx.tp_tdkh),
               note: '',
+              exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
            });
         }
       }
@@ -144,6 +162,8 @@ async function loadData() {
     const rawQuestionsPath = path.join(process.cwd(), 'questions.csv');
     const rawQuestions = await fs.readFile(rawQuestionsPath, 'utf-8');
     const lines = rawQuestions.split('\n').map(l => l.trim()).filter(l => l);
+    const headers = parseCSVLine(lines[0] || '').map(h => h.toLowerCase().trim());
+    const examIdx = findExamTypeIndex(headers);
     const dataLines = lines.slice(2);
     let currentPhanThi = '';
     
@@ -166,7 +186,8 @@ async function loadData() {
           diem_thuong_2_y: parseFloatSafe(parts[7]),
           diem_thuong_3_y: parseFloatSafe(parts[8]),
           diem_thuong_dung: parseFloatSafe(parts[9]),
-          isError: parts[2] === 'LỖI ĐỀ THI' || parts[1] === 'Câu 4'
+          isError: parts[2] === 'LỖI ĐỀ THI' || parts[1] === 'Câu 4',
+          exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
         });
       }
     }
@@ -201,6 +222,7 @@ async function startServer() {
         stt: s.stt,
         name: s.name,
         email: s.email,
+        examType: normalizeExamType(s.exam_type),
         tho: { toan: s.tho_toan, tdkh: s.tho_tdkh },
         irt: { toan: s.irt_toan, tdkh: s.irt_tdkh },
         thuongPhat: { toan: s.thuong_phat_toan, tdkh: s.thuong_phat_tdkh },
@@ -219,6 +241,7 @@ async function startServer() {
       const formatted = memQuestions.map(q => ({
         id: q.cau_hoi,
         subject: q.phan_thi,
+        examType: normalizeExamType(q.exam_type),
         totalAttempts: q.hs_da_lam,
         correct: q.hs_lam_dung,
         incorrect: q.hs_lam_sai,

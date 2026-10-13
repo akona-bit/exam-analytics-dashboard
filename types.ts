@@ -1,9 +1,11 @@
 export type MetricKey = 'tho' | 'irt' | 'thuongPhat';
 export type SubjectKey = 'toan' | 'tdkh';
+export type ExamType = 'survey' | 'mock';
 
 export interface QuestionData {
   id: string;
   subject: string;
+  examType?: ExamType;
   totalAttempts: number | null;
   correct: number | null;
   incorrect: number | null;
@@ -19,6 +21,7 @@ export interface StudentData {
   stt: number;
   name: string;
   email?: string;
+  examType?: ExamType;
   tho: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
   irt: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
   thuongPhat: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
