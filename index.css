@@ -9,8 +9,8 @@ html, body, #root {
   margin: 0;
   padding: 0;
   font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
-  background: #0f172a;
-  color: #0f172a;
+  background: #08090e;
+  color: #f8fafc;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
