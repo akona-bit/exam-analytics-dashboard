@@ -9,6 +9,7 @@ export default defineConfig(() => {
     base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
+      preserveSymlinks: true,
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
@@ -23,9 +24,6 @@ export default defineConfig(() => {
       minify: 'esbuild',
       cssCodeSplit: true,
       rollupOptions: {
-        input: {
-          main: path.resolve(__dirname, 'index.html')
-        },
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {

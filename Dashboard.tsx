@@ -3,7 +3,7 @@ import { ExamType, MetricKey, QuestionData, StudentData } from './types';
 import { EXAM_TYPES, EXAM_TYPE_LABEL, countByExamType, examTypeOf, filterByExamType } from './analytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon, Check, CheckCircle2, Layers, Filter, LayoutGrid, Table, Loader2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 import { Download } from 'lucide-react';
 import { CelebrationOverlay } from './CelebrationOverlay';
@@ -169,29 +169,80 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
     
     setIsExportingPDF(true);
     try {
-      // Small delay to allow any pending DOM paint
-      await new Promise(r => setTimeout(r, 60));
+      // Small delay to allow any pending DOM paint or layout stabilization
+      await new Promise(r => setTimeout(r, 100));
+
+      const elementHeight = dashboardElement.offsetHeight || 2000;
+      // Auto-scale to ensure we don't exceed browser canvas limits (canvas max dimensions)
+      const targetScale = elementHeight > 3500 ? 1.5 : 2;
 
       const canvas = await html2canvas(dashboardElement, {
-        scale: 2,
+        scale: targetScale,
         useCORS: true,
         allowTaint: false,
         logging: false,
         backgroundColor: '#ffffff',
         windowWidth: 1200,
-        imageTimeout: 6000,
+        imageTimeout: 8000,
         onclone: (clonedDoc) => {
-          const img = clonedDoc.querySelector('img[alt="Avatar"]') as HTMLImageElement | null;
-          if (img) {
-            img.crossOrigin = 'anonymous';
+          // Remove dark mode in clone so print/export is always pristine high-contrast light
+          clonedDoc.documentElement.classList.remove('dark');
+          clonedDoc.body.classList.remove('dark');
+
+          // Ensure container has clear explicit sizing in cloned DOM
+          const clonedContainer = clonedDoc.getElementById('dashboard-content');
+          if (clonedContainer) {
+            clonedContainer.style.width = '1140px';
+            clonedContainer.style.maxWidth = '1140px';
+            clonedContainer.style.backgroundColor = '#ffffff';
+            clonedContainer.style.padding = '12px';
+            clonedContainer.style.borderRadius = '16px';
+          }
+
+          // Handle avatar: if loaded, convert to dataURL or fallback safely to initials
+          const clonedAvatar = clonedDoc.querySelector('img[alt="Avatar"]') as HTMLImageElement | null;
+          const originalAvatar = document.querySelector('img[alt="Avatar"]') as HTMLImageElement | null;
+          if (clonedAvatar) {
+            let inlined = false;
+            if (originalAvatar && originalAvatar.complete && originalAvatar.naturalWidth > 0) {
+              try {
+                const c = document.createElement('canvas');
+                c.width = originalAvatar.naturalWidth;
+                c.height = originalAvatar.naturalHeight;
+                const ctx = c.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(originalAvatar, 0, 0);
+                  clonedAvatar.src = c.toDataURL('image/png');
+                  inlined = true;
+                }
+              } catch {
+                inlined = false;
+              }
+            }
+            if (!inlined) {
+              clonedAvatar.style.display = 'none';
+              const fallback = clonedAvatar.nextElementSibling as HTMLElement | null;
+              if (fallback) {
+                fallback.style.display = 'flex';
+                fallback.style.borderRadius = '14px';
+              }
+            }
           }
         },
         ignoreElements: (element) => {
-          return element.classList.contains('no-pdf') || element.getAttribute('data-no-pdf') === 'true';
+          return element.classList?.contains('no-pdf') || element.getAttribute('data-no-pdf') === 'true';
         }
       });
 
+      if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas rendering produced empty image');
+      }
+
       const imgData = canvas.toDataURL('image/png');
+      if (!imgData || imgData === 'data:,' || imgData.length < 100) {
+        throw new Error('Canvas data URL is invalid');
+      }
+
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -201,20 +252,26 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
       let heightLeft = imgHeight;
       let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pageHeight;
       }
 
-      const safeName = (selectedStudent.name || 'Thi_Sinh').replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      pdf.save(`Phieu_Diem_${safeName}.pdf`);
+      const safeName = (selectedStudent.name || 'Thi_Sinh')
+        .trim()
+        .replace(/\s+/g, '_')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9_-]/g, '');
+
+      pdf.save(`Phieu_Diem_${safeName || 'Thi_Sinh'}.pdf`);
     } catch (error) {
-      console.error('Error generating PDF', error);
+      console.error('Error generating PDF:', error);
       alert('Đã có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
     } finally {
       setIsExportingPDF(false);
@@ -772,7 +829,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
           </div>
 
           {/* Sub-tab Navigation */}
-          <div className="flex items-center border-b border-slate-200 dark:border-slate-700/60 mt-2 overflow-x-auto hide-scrollbar gap-1 sm:gap-2">
+          <div className="flex items-center border-b border-slate-200 dark:border-slate-700/60 mt-2 overflow-x-auto hide-scrollbar gap-1 sm:gap-2 no-pdf">
             <button
               onClick={() => setStudentTab('overview')}
               className={`px-4 sm:px-6 py-3 font-bold text-xs sm:text-sm border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
@@ -1566,7 +1623,9 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-full bg-[#5865F2]/10 text-[#5865F2] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" className="w-4.5 h-auto" />
+                  <svg className="w-4.5 h-4.5 fill-[#5865F2]" viewBox="0 0 24 24">
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                  </svg>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">

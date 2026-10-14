@@ -24,6 +24,7 @@
     "esbuild": "^0.25.0",
     "express": "^4.21.2",
     "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.5.2",
     "jimp": "^1.6.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.35.0",
