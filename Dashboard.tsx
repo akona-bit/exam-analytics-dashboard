@@ -596,10 +596,10 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {selectedStudent.email ? maskEmail(selectedStudent.email) : `Thí sinh STT: ${selectedStudent.stt}`}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+                  <span>Mã thí sinh: #{selectedStudent.stt.toString().padStart(4, '0')}</span>
                   {studentHistory.length > 1 && (
-                    <span className="ml-2 text-indigo-600 dark:text-purple-400 font-bold">
+                    <span className="text-indigo-600 dark:text-purple-400 font-bold">
                       · {studentHistory.length} lần thi
                     </span>
                   )}
