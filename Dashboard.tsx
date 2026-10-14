@@ -441,7 +441,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
           {/* TITLE & DESCRIPTION */}
           <div className="text-center mb-6 flex flex-col items-center">
             <div className="mb-4 fade-in transform transition-all hover:scale-105 duration-300">
-              <div className="p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-900/5 dark:shadow-black/40 ring-1 ring-slate-100 dark:ring-white/10">
+              <div className="p-3.5 rounded-3xl bg-white/85 backdrop-blur-xl border border-white/90 shadow-xl shadow-indigo-900/10 ring-1 ring-white/80">
                 <img src="/logo.png" alt="Logo" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" />
               </div>
             </div>
@@ -462,15 +462,15 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
           
           {/* FORM */}
           <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-5">
-            <div className="w-full rounded-3xl bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl p-6 sm:p-8 flex flex-col gap-6 fade-in border border-slate-200/80 dark:border-slate-800/90 shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/60 transition-all duration-300 hover:border-blue-500/30">
+            <div className="w-full rounded-3xl bg-white/85 backdrop-blur-xl p-6 sm:p-8 flex flex-col gap-6 fade-in border border-white/90 shadow-[0_10px_40px_rgba(60,80,160,0.22)] transition-all duration-300">
               <div className="flex flex-col gap-2 w-full">
               
               <div className="flex-1 flex flex-col gap-2.5 relative w-full">
-                <label htmlFor="lookup-name" className="pl-1 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                <label htmlFor="lookup-name" className="pl-1 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700">
                   Tra cứu kết quả thí sinh
                 </label>
                 <div className="relative group">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors duration-200 pointer-events-none" />
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors duration-200 pointer-events-none" />
                   <input
                     id="lookup-name"
                     type="text"
@@ -479,7 +479,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
                     autoComplete="off"
-                    className="w-full pl-14 pr-5 py-4 sm:py-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold text-base sm:text-lg transition-all bg-slate-50/80 dark:bg-slate-950/60 hover:bg-white dark:hover:bg-slate-950/90 outline-none shadow-xs"
+                    className="w-full pl-14 pr-5 py-4 sm:py-4.5 rounded-2xl border border-slate-200/90 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 text-slate-900 placeholder:text-slate-400 font-bold text-base sm:text-lg transition-all bg-white/90 hover:bg-white outline-none shadow-xs"
                   />
                 </div>
                 

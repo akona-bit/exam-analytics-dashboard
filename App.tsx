@@ -11,6 +11,7 @@ import { normalizeExamType } from './analytics';
 import defaultQuestionTexts from './question_texts.json';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
+import { SkyBackground } from './SkyBackground';
 
 /* ──────────── Supabase → App type mapping ──────────── */
 
@@ -251,23 +252,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full relative bg-[#f8fafc] dark:bg-[#0f172a] overflow-x-hidden font-sans">
-      {/* Background Image Layer */}
-      <div 
-        className="fixed inset-0 w-full h-full pointer-events-none"
-        style={{
-          backgroundImage: 'url("/bg.jpg?v=5")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'contrast(1.04) saturate(1.12) brightness(1.02)',
-          imageRendering: 'crisp-edges',
-          zIndex: 0
-        }}
-      />
-      {/* Subtle Cinematic Vignette for readability */}
-      <div 
-        className="fixed inset-0 w-full h-full pointer-events-none z-[1] bg-gradient-to-b from-slate-950/20 via-transparent to-slate-950/40"
-      />
+    <div className="min-h-[100dvh] w-full relative bg-transparent overflow-x-hidden font-sans">
+      {/* Procedural Anime Dawn/Twilight Sky Background (SVG + CSS) */}
+      <SkyBackground />
 
 
 
@@ -296,7 +283,7 @@ export default function App() {
         {/* Footer */}
         {!isLoading && (
           <div className="mt-auto pt-10 pb-6 w-full text-center flex-shrink-0 relative z-20">
-            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md inline-flex items-center gap-1.5 px-4 py-2 rounded-full shadow-xs border border-slate-200/80 dark:border-slate-800">
+            <p className="text-xs sm:text-sm font-semibold text-slate-800 bg-white/85 backdrop-blur-md inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full shadow-md border border-white/90">
               <span>Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua</span>
               <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center hover:scale-110 transition-transform">
                 <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" className="h-4.5 w-auto" />
@@ -318,8 +305,8 @@ export default function App() {
 
       {/* Floating QR Code */}
       {examUrl && !isAdmin && (
-        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="relative sm:fixed sm:bottom-4 sm:right-4 z-40 mx-auto w-fit mt-4 mb-6 sm:mt-0 sm:mb-0 bg-white dark:bg-slate-800 p-2 sm:p-2.5 rounded-2xl shadow-xl border-2 border-indigo-100 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
-          <p className="text-[10px] sm:text-xs font-black text-indigo-600 uppercase tracking-wide group-hover:text-indigo-700">Mã làm bài thi</p>
+        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="relative sm:fixed sm:bottom-4 sm:right-4 z-40 mx-auto w-fit mt-4 mb-6 sm:mt-0 sm:mb-0 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white/90 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
+          <p className="text-[10px] sm:text-xs font-black text-indigo-700 uppercase tracking-wide group-hover:text-indigo-800">Mã làm bài thi</p>
           <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(examUrl)}`} alt="QR Code" className="w-14 h-14 sm:w-[120px] sm:h-[120px]" />
         </a>
       )}
