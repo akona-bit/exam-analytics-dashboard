@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { ExamType, MetricKey, QuestionData, StudentData } from './types';
 import { EXAM_TYPES, EXAM_TYPE_LABEL, countByExamType, examTypeOf, filterByExamType } from './analytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon, Check, CheckCircle2, Layers, Filter, LayoutGrid, Table } from 'lucide-react';
+import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon, Check, CheckCircle2, Layers, Filter, LayoutGrid, Table, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Download } from 'lucide-react';
@@ -102,6 +102,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
   const [radarMode, setRadarMode] = useState<'compare' | 'parts'>('compare');
   const [knowledgeFilter, setKnowledgeFilter] = useState<'all' | 'strong' | 'medium' | 'weak'>('all');
   const [knowledgeViewMode, setKnowledgeViewMode] = useState<'cards' | 'table'>('cards');
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const celebratedRef = React.useRef<Set<string>>(new Set());
 
   const examCounts = useMemo(() => countByExamType(students), [students]);
@@ -162,21 +163,54 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
   }, [selectedStudent]);
   
   const handleDownloadPDF = async () => {
+    if (!selectedStudent) return;
     const dashboardElement = document.getElementById('dashboard-content');
     if (!dashboardElement) return;
     
+    setIsExportingPDF(true);
     try {
-      const canvas = await html2canvas(dashboardElement, { scale: 2, useCORS: true });
+      // Small delay to allow any pending DOM paint
+      await new Promise(r => setTimeout(r, 60));
+
+      const canvas = await html2canvas(dashboardElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 1200,
+        ignoreElements: (element) => {
+          return element.classList.contains('no-pdf') || element.getAttribute('data-no-pdf') === 'true';
+        }
+      });
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Phieu_Diem_${selectedStudent?.name.replace(/\s+/g, '_')}.pdf`);
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const safeName = (selectedStudent.name || 'Thi_Sinh').replace(/\s+/g, '_').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      pdf.save(`Phieu_Diem_${safeName}.pdf`);
     } catch (error) {
       console.error('Error generating PDF', error);
       alert('Đã có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
+    } finally {
+      setIsExportingPDF(false);
     }
   };
 
@@ -523,10 +557,11 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
 
         <button
           onClick={handleDownloadPDF}
-          className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-white bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 dark:hover:bg-indigo-600 font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-indigo-200 dark:border-indigo-800 text-sm shadow-xs"
+          disabled={isExportingPDF}
+          className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-white bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 dark:hover:bg-indigo-600 font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-indigo-200 dark:border-indigo-800 text-sm shadow-xs disabled:opacity-60 cursor-pointer"
         >
-          <Download className="w-4 h-4" />
-          <span>Xuất Phiếu Điểm</span>
+          {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          <span>{isExportingPDF ? 'Đang tạo PDF...' : 'Xuất Phiếu Điểm'}</span>
         </button>
       </div>
 
@@ -578,11 +613,9 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                 ) : studentRankInfo && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2) ? (
                   <span className="text-3xl">🥈</span>
                 ) : (
-                  <img 
-                    src={`https://robohash.org/${encodeURIComponent(selectedStudent.name)}?set=set4&bgset=bg1`}
-                    alt="Avatar" 
-                    className="w-full h-full object-cover scale-110"
-                  />
+                  <div className="w-full h-full flex items-center justify-center font-black text-lg sm:text-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-inner">
+                    {selectedStudent.name.trim().split(/\s+/).map(n => n[0]).slice(-2).join('').toUpperCase()}
+                  </div>
                 )}
               </div>
               <div>
