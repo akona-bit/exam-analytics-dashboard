@@ -97,6 +97,8 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
   const [classMetric, setClassMetric] = useState<MetricKey>('tho');
   const [showWrongDetail, setShowWrongDetail] = useState(false);
   const [examType, setExamType] = useState<ExamType>('survey');
+  const [studentTab, setStudentTab] = useState<'overview' | 'review' | 'history' | 'class'>('overview');
+  const [radarMode, setRadarMode] = useState<'compare' | 'parts'>('compare');
   const celebratedRef = React.useRef<Set<string>>(new Set());
 
   const examCounts = useMemo(() => countByExamType(students), [students]);
@@ -490,566 +492,694 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
       <div className="mb-2">
         <ExamTypeTabs active={examType} onChange={handleExamTypeChange} counts={examCounts} />
       </div>
-      <button 
-        onClick={() => setSelectedStudent(null)}
-        className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white/70 dark:bg-slate-800/70 hover:bg-white dark:hover:bg-slate-800 backdrop-blur-xl shadow-sm hover:shadow-md font-bold transition-all w-fit px-5 py-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 mb-6 relative z-10 group"
-      >
-        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        Quay Lại Tìm Kiếm
-      </button>
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <button 
+          onClick={() => { setSelectedStudent(null); setStudentTab('overview'); }}
+          className="flex items-center gap-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-xs hover:shadow-sm font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 text-sm group"
+        >
+          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span>Quay Lại Tra Cứu</span>
+        </button>
 
-      {/* Single Student Profile */}
-      <section className="card p-5 sm:p-8 md:p-10 relative overflow-hidden flex flex-col gap-4 w-full min-w-0">
+        <button
+          onClick={handleDownloadPDF}
+          className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-white bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 dark:hover:bg-indigo-600 font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-indigo-200 dark:border-indigo-800 text-sm shadow-xs"
+        >
+          <Download className="w-4 h-4" />
+          <span>Xuất Phiếu Điểm</span>
+        </button>
+      </div>
+
+      {/* Main Student Profile & Dashboard Card */}
+      <div id="dashboard-content" className="flex flex-col gap-4 sm:gap-5 w-full min-w-0">
         
-        {(() => {
-          if (!studentRankInfo) return null;
-          const isTop1 = studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1;
-          const isTop2 = !isTop1 && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2);
+        {/* Profile Card & Scoreboard */}
+        <section className="card p-4 sm:p-6 md:p-7 relative overflow-hidden flex flex-col gap-4 w-full min-w-0">
           
-          if (isTop1) {
-            return (
-              <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 border-2 border-yellow-300 text-white font-bold px-6 py-5 rounded-2xl mb-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transform hover:scale-[1.01] transition-transform">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white dark:bg-slate-800 opacity-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-14 h-14 bg-white dark:bg-slate-800/20 backdrop-blur-md rounded-full flex items-center justify-center text-3xl shadow-inner shrink-0 border border-white/40">
-                    👑
-                  </div>
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-black drop-shadow-md">Tuyệt vời, {selectedStudent.name}!</h3>
-                    <p className="font-semibold text-yellow-50/90 text-sm sm:text-base mt-1">Xuất sắc đạt danh hiệu <span className="uppercase font-black text-white bg-black/10 px-2 py-0.5 rounded ml-1">Thủ Khoa</span> trong đợt thi này!</p>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-          if (isTop2) {
-            return (
-              <div className="relative overflow-hidden bg-gradient-to-r from-slate-300 via-gray-300 to-slate-400 border-2 border-slate-300 text-slate-800 dark:text-slate-100 font-bold px-6 py-5 rounded-2xl mb-6 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 transform hover:scale-[1.01] transition-transform">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white dark:bg-slate-800 opacity-40 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-14 h-14 bg-white dark:bg-slate-800/40 backdrop-blur-md rounded-full flex items-center justify-center text-3xl shadow-inner shrink-0 border border-white/50">
-                    👑
-                  </div>
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-black drop-shadow-sm">Chúc mừng, {selectedStudent.name}!</h3>
-                    <p className="font-semibold text-slate-700 dark:text-slate-200 text-sm sm:text-base mt-1">Xuất sắc đạt danh hiệu <span className="uppercase font-black text-slate-900 bg-white dark:bg-slate-800/30 px-2 py-0.5 rounded ml-1">Á Khoa</span> trong đợt thi này!</p>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-          return null;
-        })()}
-        
-        <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-b border-slate-200/60 dark:border-slate-700/50 pb-6 mb-6 mt-4 sm:mt-0">
+          {/* Top Rank Banner (Compact & Sleek) */}
           {(() => {
-            const isTop1 = studentRankInfo && (studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1);
-            const isTop2 = !isTop1 && studentRankInfo && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2);
+            if (!studentRankInfo) return null;
+            const isTop1 = studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1;
+            const isTop2 = !isTop1 && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2);
             
             if (isTop1) {
               return (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-md border-4 border-yellow-400 bg-yellow-50 text-4xl flex items-center justify-center">
-                  👑
+                <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-white shadow-sm font-bold">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">👑</span>
+                    <span className="text-xs sm:text-sm font-extrabold tracking-wide">
+                      Tuyệt vời! <span className="underline decoration-white/60">{selectedStudent.name}</span> xuất sắc đạt danh hiệu <span className="bg-white/20 px-2 py-0.5 rounded-md text-white font-black uppercase text-xs">Thủ Khoa</span> kỳ thi này!
+                    </span>
+                  </div>
                 </div>
               );
             }
             if (isTop2) {
               return (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-md border-4 border-slate-300 bg-slate-50 dark:bg-slate-900/50 text-4xl flex items-center justify-center">
-                  👑
+                <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-slate-300 via-gray-300 to-slate-400 text-slate-800 shadow-sm font-bold">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">🥈</span>
+                    <span className="text-xs sm:text-sm font-extrabold tracking-wide">
+                      Chúc mừng! <span className="underline decoration-slate-800/40">{selectedStudent.name}</span> xuất sắc đạt danh hiệu <span className="bg-slate-900/10 px-2 py-0.5 rounded-md text-slate-900 font-black uppercase text-xs">Á Khoa</span> kỳ thi này!
+                    </span>
+                  </div>
                 </div>
               );
             }
-            return (
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shrink-0 shadow-sm border-2 border-indigo-100 bg-indigo-50/50 flex items-center justify-center">
-                <img 
-                  src={`https://robohash.org/${encodeURIComponent(selectedStudent.name)}?set=set4&bgset=bg1`}
-                  alt="Avatar" 
-                  className="w-full h-full object-cover scale-110"
-                />
-              </div>
-            );
+            return null;
           })()}
-          <div className="flex-1">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100">{selectedStudent.name}</h2>
-          </div>
-          {studentRankInfo && (
-            <div className="flex flex-wrap gap-2 sm:gap-4 mt-2 sm:mt-0">
-              <div className="bg-indigo-50/80 dark:bg-indigo-900/30 backdrop-blur-sm px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-xl sm:rounded-2xl border border-indigo-200/60 dark:border-indigo-500/30 text-center min-w-[85px] sm:min-w-[110px] flex-1 sm:flex-none shadow-sm">
-                <div className="text-[10px] sm:text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider mb-1">Hạng Thô</div>
-                <div className="text-xl sm:text-3xl font-black text-indigo-700 dark:text-indigo-300">#{studentRankInfo.rankTho}</div>
-                <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Tổng: {studentRankInfo.totalTho.toFixed(2)}</div>
+
+          {/* Profile Details Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3.5">
+              <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl overflow-hidden shrink-0 shadow-md border-2 border-indigo-200 dark:border-purple-500/40 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center">
+                {studentRankInfo && (studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1) ? (
+                  <span className="text-3xl">👑</span>
+                ) : studentRankInfo && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2) ? (
+                  <span className="text-3xl">🥈</span>
+                ) : (
+                  <img 
+                    src={`https://robohash.org/${encodeURIComponent(selectedStudent.name)}?set=set4&bgset=bg1`}
+                    alt="Avatar" 
+                    className="w-full h-full object-cover scale-110"
+                  />
+                )}
               </div>
-              <div className="bg-sky-50/80 dark:bg-sky-900/30 backdrop-blur-sm px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-xl sm:rounded-2xl border border-sky-200/60 dark:border-sky-500/30 text-center min-w-[85px] sm:min-w-[110px] flex-1 sm:flex-none shadow-sm">
-                <div className="text-[10px] sm:text-xs font-bold text-sky-500 dark:text-sky-400 uppercase tracking-wider mb-1">Hạng IRT</div>
-                <div className="text-xl sm:text-3xl font-black text-sky-700 dark:text-sky-300">#{studentRankInfo.rankIrt}</div>
-                <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Tổng: {studentRankInfo.totalIrt.toFixed(2)}</div>
-              </div>
-              <div className="bg-amber-50/80 dark:bg-amber-900/30 backdrop-blur-sm px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-xl sm:rounded-2xl border border-amber-200/60 dark:border-amber-500/30 text-center min-w-[85px] sm:min-w-[110px] flex-1 sm:flex-none shadow-sm">
-                <div className="text-[10px] sm:text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider mb-1">Hạng T.Phạt</div>
-                <div className="text-xl sm:text-3xl font-black text-amber-700 dark:text-amber-300">#{studentRankInfo.rankTp}</div>
-                <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">Tổng: {studentRankInfo.totalTp.toFixed(2)}</div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-md group">
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-indigo-500 transition-colors">Tổng Điểm Thô</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-black text-indigo-600 dark:text-indigo-400">{((visibleParts?.tv !== false ? selectedStudent.tho.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.tho.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.tho.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.tho.tdkh || 0 : 0)).toFixed(2)}</p>
-          </div>
-          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-sky-300 dark:hover:border-sky-500/50 transition-all shadow-sm hover:shadow-md group">
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-sky-500 transition-colors">Tổng Điểm IRT</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-black text-sky-600 dark:text-sky-400">{((visibleParts?.tv !== false ? selectedStudent.irt.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.irt.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.irt.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.irt.tdkh || 0 : 0)).toFixed(2)}</p>
-          </div>
-          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-slate-200/60 dark:border-slate-700/50 hover:border-amber-300 dark:hover:border-amber-500/50 transition-all shadow-sm hover:shadow-md group">
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 group-hover:text-amber-500 transition-colors">Tổng Thưởng Phạt</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400">{((visibleParts?.tv !== false ? selectedStudent.thuongPhat.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.thuongPhat.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.thuongPhat.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.thuongPhat.tdkh || 0 : 0)).toFixed(2)}</p>
-          </div>
-          <div className="p-4 sm:p-5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[20px] border border-rose-200/60 dark:border-rose-700/50 hover:border-rose-300 dark:hover:border-rose-500/50 transition-all shadow-sm hover:shadow-md group">
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-rose-500 dark:text-rose-400 font-bold uppercase tracking-wider mb-2 group-hover:text-rose-600 transition-colors">Câu sai / Bỏ trống</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-black text-rose-600 dark:text-rose-400">
-              {selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0} <span className="text-rose-300 dark:text-rose-600/50 font-normal mx-0.5">/</span> {selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0}
-            </p>
-          </div>
-        </div>
-        
-        {/* Student Ability Chart */}
-        <div className="mt-6 sm:mt-8 bg-slate-50/50 dark:bg-slate-900/30 rounded-[28px] border border-slate-200/60 dark:border-slate-700/50 p-5 sm:p-7 shadow-inner w-full min-w-0">
-          <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2 mb-6">
-            <BarChartIcon className="w-5 h-5 text-indigo-500" />
-            Đánh Giá Năng Lực Của Bạn So Với Mặt Bằng Chung
-          </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* Radar 1: Bạn vs Trung Bình */}
-            <div className="flex flex-col items-center w-full min-w-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
-              <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2 mt-2">Tổng Điểm Bạn So Với Trung Bình</h4>
-              <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarDataCompare}>
-                    <defs>
-                      <linearGradient id="colorUser" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.9}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.9}/>
-                      </linearGradient>
-                      <linearGradient id="colorAvg" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.6}/>
-                        <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.6}/>
-                      </linearGradient>
-                    </defs>
-                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Radar name="Điểm Của Bạn" dataKey="Điểm Của Bạn" stroke="#6366f1" strokeWidth={3} fill="url(#colorUser)" fillOpacity={0.7} />
-                    <Radar name="Trung Bình" dataKey="Trung Bình" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="url(#colorAvg)" fillOpacity={0.5} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
-                      formatter={(value: number) => value.toFixed(2)}
-                    />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                  </RadarChart>
-                </ResponsiveContainer>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {selectedStudent.name}
+                  </h2>
+                  {sbdMap?.[selectedStudent.name] && (
+                    <span className="px-2 py-0.5 text-xs font-black rounded-lg bg-indigo-100 dark:bg-purple-900/50 text-indigo-700 dark:text-purple-300 border border-indigo-200 dark:border-purple-700">
+                      SBD: {sbdMap[selectedStudent.name]}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {selectedStudent.email ? maskEmail(selectedStudent.email) : `Thí sinh STT: ${selectedStudent.stt}`}
+                  {studentHistory.length > 1 && (
+                    <span className="ml-2 text-indigo-600 dark:text-purple-400 font-bold">
+                      · {studentHistory.length} lần thi
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
 
-            {/* Radar 2: Chi tiết các phần */}
-            <div className="flex flex-col items-center w-full min-w-0 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-4">
-              <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-2 mt-2">Chi Tiết Năng Lực (Thô, IRT, T.Phạt)</h4>
-              <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarDataParts}>
-                    <defs>
-                      <linearGradient id="colorTho" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.7}/>
-                        <stop offset="95%" stopColor="#34d399" stopOpacity={0.7}/>
-                      </linearGradient>
-                      <linearGradient id="colorIrt" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.7}/>
-                        <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.7}/>
-                      </linearGradient>
-                      <linearGradient id="colorTp" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.7}/>
-                        <stop offset="95%" stopColor="#fbbf24" stopOpacity={0.7}/>
-                      </linearGradient>
-                    </defs>
-                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Radar name="Điểm Thô" dataKey="Điểm Thô" stroke="#10b981" strokeWidth={2} fill="url(#colorTho)" fillOpacity={0.5} />
-                    <Radar name="Điểm IRT" dataKey="Điểm IRT" stroke="#0ea5e9" strokeWidth={2} fill="url(#colorIrt)" fillOpacity={0.5} />
-                    <Radar name="Thưởng Phạt" dataKey="Thưởng Phạt" stroke="#f59e0b" strokeWidth={2} fill="url(#colorTp)" fillOpacity={0.5} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
-                      formatter={(value: number) => value.toFixed(2)}
-                    />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <span className="px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700">
+                {EXAM_TYPE_LABEL[examType] || 'Kỳ thi'}
+              </span>
             </div>
           </div>
-        </div>
-        
-        <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden w-full min-w-0">
-          <button
-            onClick={() => setShowWrongDetail(!showWrongDetail)}
-            className="w-full p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between hover:bg-slate-100 dark:bg-slate-800/50 transition-colors text-left"
-          >
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-indigo-500 shrink-0" />
-              <div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base">
-                  Chi tiết các câu sai và bỏ trống
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">
+
+          {/* Compact Scoreboard Bento Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 my-1">
+            {/* Điểm Thô */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 shadow-xs relative overflow-hidden group hover:shadow-sm transition-all">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Điểm Thô</span>
+                {studentRankInfo?.rankTho && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black bg-indigo-600 text-white shadow-xs">
+                    Hạng #{studentRankInfo.rankTho}
+                  </span>
+                )}
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                {((visibleParts?.tv !== false ? selectedStudent.tho.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.tho.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.tho.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.tho.tdkh || 0 : 0)).toFixed(2)}
+              </div>
+              <div className="mt-2 pt-2 border-t border-indigo-100/80 dark:border-indigo-900/40 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Toán: <strong className="text-slate-700 dark:text-slate-200">{selectedStudent.tho.toan?.toFixed(1) ?? '-'}</strong></span>
+                <span>KHTN: <strong className="text-slate-700 dark:text-slate-200">{selectedStudent.tho.tdkh?.toFixed(1) ?? '-'}</strong></span>
+              </div>
+            </div>
+
+            {/* Điểm IRT */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-800/40 shadow-xs relative overflow-hidden group hover:shadow-sm transition-all">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">Điểm IRT</span>
+                {studentRankInfo?.rankIrt && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black bg-sky-600 text-white shadow-xs">
+                    Hạng #{studentRankInfo.rankIrt}
+                  </span>
+                )}
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                {((visibleParts?.tv !== false ? selectedStudent.irt.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.irt.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.irt.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.irt.tdkh || 0 : 0)).toFixed(2)}
+              </div>
+              <div className="mt-2 pt-2 border-t border-sky-100/80 dark:border-sky-900/40 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Toán: <strong className="text-slate-700 dark:text-slate-200">{selectedStudent.irt.toan?.toFixed(1) ?? '-'}</strong></span>
+                <span>KHTN: <strong className="text-slate-700 dark:text-slate-200">{selectedStudent.irt.tdkh?.toFixed(1) ?? '-'}</strong></span>
+              </div>
+            </div>
+
+            {/* Thưởng Phạt */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800/40 shadow-xs relative overflow-hidden group hover:shadow-sm transition-all">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Thưởng Phạt</span>
+                {studentRankInfo?.rankTp && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black bg-amber-600 text-white shadow-xs">
+                    Hạng #{studentRankInfo.rankTp}
+                  </span>
+                )}
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                {((visibleParts?.tv !== false ? selectedStudent.thuongPhat.tv || 0 : 0) + (visibleParts?.ta !== false ? selectedStudent.thuongPhat.ta || 0 : 0) + (visibleParts?.toan !== false ? selectedStudent.thuongPhat.toan || 0 : 0) + (visibleParts?.tdkh !== false ? selectedStudent.thuongPhat.tdkh || 0 : 0)).toFixed(2)}
+              </div>
+              <div className="mt-2 pt-2 border-t border-amber-100/80 dark:border-amber-900/40 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Toán: <strong className="text-slate-700 dark:text-slate-200">{selectedStudent.thuongPhat.toan?.toFixed(1) ?? '-'}</strong></span>
+                <span>KHTN: <strong className="text-slate-700 dark:text-slate-200">{selectedStudent.thuongPhat.tdkh?.toFixed(1) ?? '-'}</strong></span>
+              </div>
+            </div>
+
+            {/* Tình Trạng Bài Làm */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-800/40 shadow-xs relative overflow-hidden group hover:shadow-sm transition-all">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">Tỷ Lệ Đúng</span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black bg-emerald-600 text-white shadow-xs">
                   {(() => {
                     const wrong = selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0;
                     const missing = selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0;
-                    if (wrong + missing === 0) return 'Không có lỗi sai';
-                    const parts = [];
-                    if (wrong > 0) parts.push(`${wrong} câu sai`);
-                    if (missing > 0) parts.push(`${missing} câu bỏ trống`);
-                    return parts.join(' · ') + ' — nhấp để xem chi tiết';
+                    const totalQ = (selectedStudent.responses?.length || 60);
+                    const correct = Math.max(0, totalQ - wrong - missing);
+                    return `${correct}/${totalQ} đúng`;
                   })()}
-                </p>
+                </span>
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                {(() => {
+                  const wrong = selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0;
+                  const missing = selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0;
+                  const totalQ = (selectedStudent.responses?.length || 60);
+                  const correct = Math.max(0, totalQ - wrong - missing);
+                  return `${Math.round((correct / totalQ) * 100)}%`;
+                })()}
+              </div>
+              <div className="mt-2 pt-2 border-t border-rose-100/80 dark:border-rose-900/40 flex items-center justify-between text-[11px]">
+                <span className="text-rose-600 dark:text-rose-400 font-bold">
+                  {selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0} câu sai
+                </span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">
+                  {selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0} bỏ trống
+                </span>
               </div>
             </div>
-            <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-200 ${showWrongDetail ? 'rotate-180' : ''}`} />
-          </button>
-          
-          {showWrongDetail && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse min-w-full sm:min-w-[700px]">
-              <thead className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/50 uppercase font-semibold">
-                <tr>
-                  <th className="px-3 sm:px-4 py-3 border-b border-slate-200 dark:border-slate-700">Câu Hỏi / Nội dung</th>
-                  <th className="px-3 sm:px-4 py-3 border-b border-slate-200 dark:border-slate-700 w-20 sm:w-24">Trạng thái</th>
-                  <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-200 dark:border-slate-700 text-right w-24">TS đúng</th>
-                  <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-200 dark:border-slate-700 text-right w-24 text-rose-500">TS sai</th>
-                  <th className="hidden sm:table-cell px-4 py-3 border-b border-slate-200 dark:border-slate-700 text-right w-24 text-amber-600">Phạt</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedStudent.responses?.filter(r => r.status === 'wrong' || r.status === 'missing').sort((a,b) => a.question_num - b.question_num).map((r, i) => {
-                  const qKey = `Câu ${r.question_num}`;
-                  const qData = activeQuestions.find(q => q.id === qKey);
-                  return (
-                    <tr key={i} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:bg-slate-900/50 transition-colors cursor-pointer" onClick={() => setViewQuestionKey(qKey)}>
-                      <td className="px-3 sm:px-4 py-3">
-                        <div className="font-bold text-slate-800 dark:text-slate-100 mb-1">{qKey} <span className="text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500 ml-2 bg-slate-200/50 px-1.5 py-0.5 rounded">{qData?.subject || ''}</span></div>
-                        <div className="text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs line-clamp-2">{currentTexts[qKey] || "Chưa có dữ liệu nội dung câu hỏi."}</div>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-[10px] sm:text-[11px] font-bold whitespace-nowrap ${r.status === 'wrong' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
-                          {r.status === 'wrong' ? 'Làm Sai' : 'Bỏ Trống'}
-                        </span>
-                      </td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-emerald-600 font-medium">{qData?.correct ?? '-'}</td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-rose-500 font-bold">{qData?.incorrect ?? '-'}</td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-amber-600 font-semibold bg-amber-50/10">
-                        {qData?.penaltyScore !== null && qData?.penaltyScore !== undefined ? qData.penaltyScore.toFixed(4) : '-'}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {(!selectedStudent.responses || selectedStudent.responses.filter(r => r.status === 'wrong' || r.status === 'missing').length === 0) && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">Không có lỗi sai nào hoặc chưa có dữ liệu chi tiết.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
           </div>
-          )}
-        </div>
 
-        {/* ── Số câu đúng theo vùng kiến thức ── */}
-        {(() => {
-          const activeTopicMap = topicMap || defaultTopicMap;
-          const wrongSet = new Set(selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []);
-          const missingSet = new Set(selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []);
+          {/* Sub-tab Navigation */}
+          <div className="flex items-center border-b border-slate-200 dark:border-slate-700/60 mt-2 overflow-x-auto hide-scrollbar gap-1 sm:gap-2">
+            <button
+              onClick={() => setStudentTab('overview')}
+              className={`px-4 sm:px-6 py-3 font-bold text-xs sm:text-sm border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
+                studentTab === 'overview'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <BarChartIcon className="w-4 h-4" />
+              <span>Phân Tích Năng Lực</span>
+            </button>
 
-          // Group topics into broader categories matching KnowledgeMatrix layout
-          const categoryGroups: { category: string; topics: string[]; color: string; bgColor: string; barColor: string }[] = [
-            { category: 'Đại số', topics: ['Hệ bất phương trình bậc nhất 2 ẩn', 'Hàm số bậc 2', 'Lượng giác', 'Dãy số', 'Giới hạn & Hàm số liên tục', 'Số mũ & Logarit', 'Đạo hàm', 'Xác suất & Tổ hợp'], color: 'text-indigo-700 dark:text-indigo-300', bgColor: 'bg-indigo-50 dark:bg-indigo-900/30', barColor: 'bg-indigo-500' },
-            { category: 'Hình học', topics: ['Hệ thức lượng trong tam giác & Vecto', 'Toạ độ Oxy', 'Hình học không gian'], color: 'text-violet-700 dark:text-violet-300', bgColor: 'bg-violet-50 dark:bg-violet-900/30', barColor: 'bg-violet-500' },
-            { category: 'Logic', topics: ['Logic sắp xếp', 'Logic phân nhóm'], color: 'text-cyan-700 dark:text-cyan-300', bgColor: 'bg-cyan-50 dark:bg-cyan-900/30', barColor: 'bg-cyan-500' },
-            { category: 'PTSL', topics: ['Dữ liệu bảng', 'Dữ liệu biểu đồ cột', 'Dữ liệu biểu đồ tròn'], color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-50 dark:bg-amber-900/30', barColor: 'bg-amber-500' },
-            { category: 'SLKH', topics: ['Đọc hiểu KHTN', 'Đọc hiểu KHXH'], color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-50 dark:bg-emerald-900/30', barColor: 'bg-emerald-500' },
-          ];
+            <button
+              onClick={() => setStudentTab('review')}
+              className={`px-4 sm:px-6 py-3 font-bold text-xs sm:text-sm border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
+                studentTab === 'review'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <Target className="w-4 h-4 text-emerald-500" />
+              <span>Câu Hỏi & Ma Trận Kiến Thức</span>
+            </button>
 
-          // Build data for each topic
-          const topicData = Object.entries(activeTopicMap).map(([topic, qNums]) => {
-            const total = qNums.length;
-            const wrong = qNums.filter(q => wrongSet.has(q)).length;
-            const missing = qNums.filter(q => missingSet.has(q)).length;
-            const correct = total - wrong - missing;
-            const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-            return { topic, qNums, total, correct, wrong, missing, pct };
-          });
+            {studentHistory.length > 1 && (
+              <button
+                onClick={() => setStudentTab('history')}
+                className={`px-4 sm:px-6 py-3 font-bold text-xs sm:text-sm border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
+                  studentTab === 'history'
+                    ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20'
+                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4 text-rose-500" />
+                <span>Lịch Sử {studentHistory.length} Lần Thi</span>
+              </button>
+            )}
 
-          // Build category summaries
-          const catData = categoryGroups.map(g => {
-            const topics = g.topics
-              .map(t => topicData.find(td => td.topic === t))
-              .filter(Boolean) as typeof topicData;
-            const total = topics.reduce((s, t) => s + t.total, 0);
-            const correct = topics.reduce((s, t) => s + t.correct, 0);
-            const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-            return { ...g, topics, total, correct, pct };
-          }).filter(c => c.total > 0);
+            <button
+              onClick={() => setStudentTab('class')}
+              className={`px-4 sm:px-6 py-3 font-bold text-xs sm:text-sm border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
+                studentTab === 'class'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <PieChartIcon className="w-4 h-4 text-amber-500" />
+              <span>Thống Kê Toàn Khóa</span>
+            </button>
+          </div>
+        </section>
 
-          const overallTotal = topicData.reduce((s, t) => s + t.total, 0);
-          const overallCorrect = topicData.reduce((s, t) => s + t.correct, 0);
-          const overallPct = overallTotal > 0 ? Math.round((overallCorrect / overallTotal) * 100) : 0;
+        {/* TAB 1: OVERVIEW */}
+        {studentTab === 'overview' && (
+          <div className="flex flex-col gap-4 sm:gap-5 fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              {/* Radar Chart */}
+              <div className="card p-4 sm:p-5 flex flex-col">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
+                    <BarChartIcon className="w-4 h-4 text-indigo-500" />
+                    Đánh Giá Năng Lực
+                  </h3>
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
+                    <button
+                      onClick={() => setRadarMode('compare')}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                        radarMode === 'compare'
+                          ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      So với TB Lớp
+                    </button>
+                    <button
+                      onClick={() => setRadarMode('parts')}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                        radarMode === 'parts'
+                          ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      Thành phần điểm
+                    </button>
+                  </div>
+                </div>
 
-          const getPctColor = (pct: number) => {
-            if (pct >= 80) return 'text-emerald-600 dark:text-emerald-400';
-            if (pct >= 50) return 'text-amber-600 dark:text-amber-400';
-            return 'text-rose-600 dark:text-rose-400';
-          };
-
-          return (
-            <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden w-full min-w-0">
-              <div className="p-5 border-b border-slate-200 dark:border-slate-700">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
-                  <Target className="w-5 h-5 text-emerald-500" />
-                  Số Câu Đúng Theo Vùng Kiến Thức
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Tổng quan: <span className={`font-bold ${getPctColor(overallPct)}`}>{overallCorrect}/{overallTotal} câu đúng ({overallPct}%)</span>
-                </p>
+                <div className="h-[270px] sm:h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {radarMode === 'compare' ? (
+                      <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarDataCompare}>
+                        <defs>
+                          <linearGradient id="colorUser" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.9}/>
+                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.9}/>
+                          </linearGradient>
+                          <linearGradient id="colorAvg" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.6}/>
+                            <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.6}/>
+                          </linearGradient>
+                        </defs>
+                        <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                        <Radar name="Điểm Của Bạn" dataKey="Điểm Của Bạn" stroke="#6366f1" strokeWidth={2.5} fill="url(#colorUser)" fillOpacity={0.6} />
+                        <Radar name="Trung Bình" dataKey="Trung Bình" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="4 4" fill="url(#colorAvg)" fillOpacity={0.4} />
+                        <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => value.toFixed(2)} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '6px' }} />
+                      </RadarChart>
+                    ) : (
+                      <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarDataParts}>
+                        <defs>
+                          <linearGradient id="colorTho" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.7}/>
+                            <stop offset="95%" stopColor="#34d399" stopOpacity={0.7}/>
+                          </linearGradient>
+                          <linearGradient id="colorIrt" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.7}/>
+                            <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.7}/>
+                          </linearGradient>
+                          <linearGradient id="colorTp" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.7}/>
+                            <stop offset="95%" stopColor="#fbbf24" stopOpacity={0.7}/>
+                          </linearGradient>
+                        </defs>
+                        <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                        <Radar name="Điểm Thô" dataKey="Điểm Thô" stroke="#10b981" strokeWidth={2} fill="url(#colorTho)" fillOpacity={0.5} />
+                        <Radar name="Điểm IRT" dataKey="Điểm IRT" stroke="#0ea5e9" strokeWidth={2} fill="url(#colorIrt)" fillOpacity={0.5} />
+                        <Radar name="Thưởng Phạt" dataKey="Thưởng Phạt" stroke="#f59e0b" strokeWidth={2} fill="url(#colorTp)" fillOpacity={0.5} />
+                        <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => value.toFixed(2)} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '6px' }} />
+                      </RadarChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="p-4 sm:p-5 bg-white dark:bg-slate-800 flex flex-col gap-5">
-                {catData.map(cat => (
-                  <div key={cat.category}>
-                    {/* Category header */}
-                    <div className={`flex items-center justify-between mb-2.5 px-3 py-2 rounded-xl ${cat.bgColor}`}>
-                      <h4 className={`font-extrabold text-sm ${cat.color}`}>{cat.category}</h4>
-                      <div className="flex items-center gap-3">
-                        <span className={`text-xs font-bold ${getPctColor(cat.pct)}`}>{cat.correct}/{cat.total} đúng</span>
-                        <span className={`text-sm font-black tabular-nums ${getPctColor(cat.pct)}`}>{cat.pct}%</span>
-                      </div>
+
+              {/* Bar Chart: Điểm số từng môn */}
+              <div className="card p-4 sm:p-5 flex flex-col">
+                <div className="flex items-center justify-between mb-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
+                    <span className="icon-box bg-indigo-50 text-indigo-600"><BarChartIcon className="w-4 h-4" /></span>
+                    Điểm Số Theo Từng Môn
+                  </h3>
+                </div>
+                <div className="h-[270px] sm:h-[300px] w-full -ml-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                      <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
+                      <Legend iconType="circle" wrapperStyle={{ paddingTop: '8px', fontSize: '11px' }} />
+                      {visibleParts?.tv !== false && <Bar dataKey="Tiếng Việt" fill="#06b6d4" radius={[6,6,0,0]} maxBarSize={45} />}
+                      {visibleParts?.ta !== false && <Bar dataKey="Tiếng Anh" fill="#ec4899" radius={[6,6,0,0]} maxBarSize={45} />}
+                      {visibleParts?.toan !== false && <Bar dataKey="Toán" fill="#6366f1" radius={[6,6,0,0]} maxBarSize={45} />}
+                      {visibleParts?.tdkh !== false && <Bar dataKey="TDKH" fill="#0ea5e9" radius={[6,6,0,0]} maxBarSize={45} />}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* If attempts > 1, show progress chart */}
+            {studentHistory.length > 1 && (
+              <div className="card p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 gap-3">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
+                    <span className="icon-box bg-rose-50 text-rose-500"><TrendingUp className="w-4 h-4" /></span>
+                    Tiến Bộ Qua Các Lần Thi
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
+                      <button 
+                        onClick={() => setProgressSubject('Toán')} 
+                        className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${progressSubject === 'Toán' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+                      >
+                        Môn Toán
+                      </button>
+                      <button 
+                        onClick={() => setProgressSubject('TDKH')} 
+                        className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${progressSubject === 'TDKH' ? 'bg-white dark:bg-slate-700 text-sky-600 shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+                      >
+                        Môn TDKH
+                      </button>
                     </div>
-                    {/* Category progress bar */}
-                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full mb-3 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ease-out ${cat.barColor}`}
-                        style={{ width: `${cat.pct}%` }}
+                    <select className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      value={progressMetric} onChange={(e) => setProgressMetric(e.target.value as any)}>
+                      <option value="tho">Điểm Thô</option>
+                      <option value="irt">Điểm IRT</option>
+                      <option value="tp">Thưởng Phạt</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="h-[230px] sm:h-[260px] w-full -ml-3 sm:-ml-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={progressChartData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9'} stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor={progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9'} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend iconType="circle" wrapperStyle={{ paddingTop: '8px', fontSize: '11px' }} />
+                      <Area 
+                        type="monotone" 
+                        name={`Điểm ${progressSubject} (Cá nhân)`} 
+                        dataKey={progressSubject} 
+                        stroke={progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9'} 
+                        strokeWidth={2.5} 
+                        fillOpacity={1} 
+                        fill="url(#colorScore)" 
+                        dot={{ r: 3.5, fill: '#fff', strokeWidth: 2, stroke: progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9' }} 
+                        activeDot={{ r: 5 }} 
                       />
-                    </div>
-                    {/* Sub-topics */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-1">
-                      {cat.topics.map(t => (
-                        <div key={t.topic} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors group">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">{t.topic}</span>
-                              <span className={`text-xs font-bold tabular-nums whitespace-nowrap ${getPctColor(t.pct)}`}>
-                                {t.correct}/{t.total}
-                              </span>
-                            </div>
-                            <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full mt-1.5 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ease-out ${t.pct >= 80 ? 'bg-emerald-400' : t.pct >= 50 ? 'bg-amber-400' : 'bg-rose-400'}`}
-                                style={{ width: `${t.pct}%` }}
-                              />
-                            </div>
-                          </div>
-                          <span className={`text-[11px] font-black tabular-nums w-10 text-right ${getPctColor(t.pct)}`}>
-                            {t.pct}%
-                          </span>
-                        </div>
-                      ))}
+                      <Line 
+                        type="monotone" 
+                        name={`TB Lớp ${progressSubject}`} 
+                        dataKey={`TB Chung ${progressSubject}`} 
+                        stroke="#94a3b8" 
+                        strokeDasharray="4 4" 
+                        strokeWidth={1.5} 
+                        dot={false} 
+                        activeDot={false} 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: REVIEW QUESTIONS & KNOWLEDGE MATRIX */}
+        {studentTab === 'review' && (
+          <div className="flex flex-col gap-4 sm:gap-5 fade-in">
+            {/* Vùng kiến thức */}
+            {(() => {
+              const activeTopicMap = topicMap || defaultTopicMap;
+              const wrongSet = new Set(selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []);
+              const missingSet = new Set(selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []);
+
+              const categoryGroups: { category: string; topics: string[]; color: string; bgColor: string; barColor: string }[] = [
+                { category: 'Đại số', topics: ['Hệ bất phương trình bậc nhất 2 ẩn', 'Hàm số bậc 2', 'Lượng giác', 'Dãy số', 'Giới hạn & Hàm số liên tục', 'Số mũ & Logarit', 'Đạo hàm', 'Xác suất & Tổ hợp'], color: 'text-indigo-700 dark:text-indigo-300', bgColor: 'bg-indigo-50 dark:bg-indigo-900/30', barColor: 'bg-indigo-500' },
+                { category: 'Hình học', topics: ['Hệ thức lượng trong tam giác & Vecto', 'Toạ độ Oxy', 'Hình học không gian'], color: 'text-violet-700 dark:text-violet-300', bgColor: 'bg-violet-50 dark:bg-violet-900/30', barColor: 'bg-violet-500' },
+                { category: 'Logic', topics: ['Logic sắp xếp', 'Logic phân nhóm'], color: 'text-cyan-700 dark:text-cyan-300', bgColor: 'bg-cyan-50 dark:bg-cyan-900/30', barColor: 'bg-cyan-500' },
+                { category: 'PTSL', topics: ['Dữ liệu bảng', 'Dữ liệu biểu đồ cột', 'Dữ liệu biểu đồ tròn'], color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-50 dark:bg-amber-900/30', barColor: 'bg-amber-500' },
+                { category: 'SLKH', topics: ['Đọc hiểu KHTN', 'Đọc hiểu KHXH'], color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-50 dark:bg-emerald-900/30', barColor: 'bg-emerald-500' },
+              ];
+
+              const topicData = Object.entries(activeTopicMap).map(([topic, qNums]) => {
+                const total = qNums.length;
+                const wrong = qNums.filter(q => wrongSet.has(q)).length;
+                const missing = qNums.filter(q => missingSet.has(q)).length;
+                const correct = total - wrong - missing;
+                const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+                return { topic, qNums, total, correct, wrong, missing, pct };
+              });
+
+              const catData = categoryGroups.map(g => {
+                const topics = g.topics
+                  .map(t => topicData.find(td => td.topic === t))
+                  .filter(Boolean) as typeof topicData;
+                const total = topics.reduce((s, t) => s + t.total, 0);
+                const correct = topics.reduce((s, t) => s + t.correct, 0);
+                const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+                return { ...g, topics, total, correct, pct };
+              }).filter(c => c.total > 0);
+
+              const overallTotal = topicData.reduce((s, t) => s + t.total, 0);
+              const overallCorrect = topicData.reduce((s, t) => s + t.correct, 0);
+              const overallPct = overallTotal > 0 ? Math.round((overallCorrect / overallTotal) * 100) : 0;
+
+              const getPctColor = (pct: number) => {
+                if (pct >= 80) return 'text-emerald-600 dark:text-emerald-400';
+                if (pct >= 50) return 'text-amber-600 dark:text-amber-400';
+                return 'text-rose-600 dark:text-rose-400';
+              };
+
+              return (
+                <div className="card overflow-hidden w-full min-w-0">
+                  <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+                        <Target className="w-5 h-5 text-emerald-500" />
+                        Số Câu Đúng Theo Vùng Kiến Thức
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Tổng cộng: <span className={`font-bold ${getPctColor(overallPct)}`}>{overallCorrect}/{overallTotal} câu đúng ({overallPct}%)</span>
+                      </p>
                     </div>
                   </div>
-                ))}
+                  <div className="p-4 sm:p-5 flex flex-col gap-4">
+                    {catData.map(cat => (
+                      <div key={cat.category} className="p-3 sm:p-4 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className={`font-black text-xs sm:text-sm uppercase tracking-wide ${cat.color}`}>{cat.category}</h4>
+                          <div className="flex items-center gap-2.5">
+                            <span className={`text-xs font-bold ${getPctColor(cat.pct)}`}>{cat.correct}/{cat.total} đúng</span>
+                            <span className={`text-xs sm:text-sm font-black tabular-nums ${getPctColor(cat.pct)}`}>{cat.pct}%</span>
+                          </div>
+                        </div>
+                        <div className="w-full h-2 bg-slate-200/80 dark:bg-slate-700/80 rounded-full mb-3 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ease-out ${cat.barColor}`}
+                            style={{ width: `${cat.pct}%` }}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {cat.topics.map(t => (
+                            <div key={t.topic} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-white/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50 text-xs">
+                              <span className="flex-1 truncate text-slate-700 dark:text-slate-200 font-medium">{t.topic}</span>
+                              <span className={`font-bold tabular-nums ${getPctColor(t.pct)}`}>{t.correct}/{t.total} ({t.pct}%)</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Chi tiết câu sai và bỏ trống */}
+            <div className="card overflow-hidden w-full min-w-0">
+              <button
+                onClick={() => setShowWrongDetail(!showWrongDetail)}
+                className="w-full p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-5 h-5 text-indigo-500 shrink-0" />
+                  <div>
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base">
+                      Chi Tiết Các Câu Sai & Bỏ Trống
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {(() => {
+                        const wrong = selectedStudent.responses?.filter(r => r.status === 'wrong').length ?? 0;
+                        const missing = selectedStudent.responses?.filter(r => r.status === 'missing').length ?? 0;
+                        if (wrong + missing === 0) return 'Không có lỗi sai nào';
+                        const parts = [];
+                        if (wrong > 0) parts.push(`${wrong} câu sai`);
+                        if (missing > 0) parts.push(`${missing} câu bỏ trống`);
+                        return parts.join(' · ') + ' — nhấp để ' + (showWrongDetail ? 'thu gọn' : 'mở rộng');
+                      })()}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200 ${showWrongDetail ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showWrongDetail && (
+                <div className="overflow-x-auto border-t border-slate-100 dark:border-slate-800">
+                  <table className="w-full text-sm text-left border-collapse min-w-full sm:min-w-[650px]">
+                    <thead className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/80 uppercase font-bold">
+                      <tr>
+                        <th className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">Câu Hỏi / Nội dung</th>
+                        <th className="px-3 py-3 border-b border-slate-200 dark:border-slate-700 w-24">Trạng thái</th>
+                        <th className="hidden sm:table-cell px-3 py-3 border-b border-slate-200 dark:border-slate-700 text-right w-20">TS đúng</th>
+                        <th className="hidden sm:table-cell px-3 py-3 border-b border-slate-200 dark:border-slate-700 text-right w-20 text-rose-500">TS sai</th>
+                        <th className="hidden sm:table-cell px-3 py-3 border-b border-slate-200 dark:border-slate-700 text-right w-20 text-amber-600">Phạt</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedStudent.responses?.filter(r => r.status === 'wrong' || r.status === 'missing').sort((a,b) => a.question_num - b.question_num).map((r, i) => {
+                        const qKey = `Câu ${r.question_num}`;
+                        const qData = activeQuestions.find(q => q.id === qKey);
+                        return (
+                          <tr key={i} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-indigo-50/40 dark:hover:bg-slate-900/50 transition-colors cursor-pointer" onClick={() => setViewQuestionKey(qKey)}>
+                            <td className="px-4 py-3">
+                              <div className="font-bold text-slate-800 dark:text-slate-100 mb-0.5 text-xs sm:text-sm">{qKey} <span className="text-[11px] font-normal text-slate-500 ml-1.5 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{qData?.subject || ''}</span></div>
+                              <div className="text-slate-500 dark:text-slate-400 text-xs line-clamp-1">{currentTexts[qKey] || "Chưa có dữ liệu nội dung câu hỏi."}</div>
+                            </td>
+                            <td className="px-3 py-3">
+                              <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap ${r.status === 'wrong' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'}`}>
+                                {r.status === 'wrong' ? 'Làm Sai' : 'Bỏ Trống'}
+                              </span>
+                            </td>
+                            <td className="hidden sm:table-cell px-3 py-3 text-right tabular-nums text-emerald-600 font-bold text-xs">{qData?.correct ?? '-'}</td>
+                            <td className="hidden sm:table-cell px-3 py-3 text-right tabular-nums text-rose-500 font-bold text-xs">{qData?.incorrect ?? '-'}</td>
+                            <td className="hidden sm:table-cell px-3 py-3 text-right tabular-nums text-amber-600 font-bold text-xs">
+                              {qData?.penaltyScore !== null && qData?.penaltyScore !== undefined ? qData.penaltyScore.toFixed(3) : '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {(!selectedStudent.responses || selectedStudent.responses.filter(r => r.status === 'wrong' || r.status === 'missing').length === 0) && (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-6 text-center text-slate-400 italic text-xs">Không có lỗi sai nào.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Ma Trận Kiến Thức */}
+            <div className="card overflow-hidden w-full min-w-0">
+              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-indigo-500" />
+                  Ma Trận Kiến Thức Cần Ôn Tập
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Ô tô <span className="text-rose-500 font-bold">Đỏ</span>: Làm sai. Ô tô <span className="text-amber-500 font-bold">Vàng</span>: Bỏ trống.
+                </p>
+              </div>
+              <div className="p-4 overflow-x-auto bg-white dark:bg-slate-900/60">
+                <div className="min-w-[650px]">
+                  <Suspense fallback={<div className="h-40 flex items-center justify-center text-slate-400 text-xs">Đang tải ma trận kiến thức...</div>}>
+                    <KnowledgeMatrix 
+                      wrongQuestions={selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []} 
+                      missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []}
+                      topicMap={topicMap || undefined}
+                    />
+                  </Suspense>
+                </div>
               </div>
             </div>
-          );
-        })()}
-
-        <div className="mt-6 sm:mt-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden w-full min-w-0">
-          <div className="p-5 border-b border-slate-200 dark:border-slate-700">
-            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-indigo-500" />
-              Ma Trận Kiến Thức Cần Ôn Tập
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-              Phần tô <span className="text-rose-500 font-semibold">Đỏ</span>: Thí sinh làm sai. 
-              Phần tô <span className="text-amber-500 font-semibold">Vàng</span>: Thí sinh bỏ trống.
-            </p>
           </div>
-          <div className="p-4 sm:p-5 overflow-x-auto bg-white dark:bg-slate-800">
-            <div className="min-w-[700px]">
-              <Suspense fallback={<div className="h-48 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">Đang tải ma trận kiến thức...</div>}>
-                <KnowledgeMatrix 
-                  wrongQuestions={selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []} 
-                  missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []}
-                  topicMap={topicMap || undefined}
-                />
-              </Suspense>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Charts */}
-      <div className={`grid grid-cols-1 gap-4 sm:gap-5 md:gap-6 ${studentHistory.length > 1 ? 'lg:grid-cols-2' : ''}`}>
-        <section className="card p-4 sm:p-5">
-          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-            <span className="icon-box bg-indigo-50 text-indigo-600"><BarChartIcon className="w-[18px] h-[18px]" /></span>
-            Điểm Số Thí Sinh
-          </h2>
-          <div className="h-[260px] sm:h-[300px] w-full -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '16px', fontSize: '13px' }} />
-                {visibleParts?.tv !== false && <Bar dataKey="Tiếng Việt" fill="#06b6d4" radius={[6,6,0,0]} maxBarSize={50} />}
-                {visibleParts?.ta !== false && <Bar dataKey="Tiếng Anh" fill="#ec4899" radius={[6,6,0,0]} maxBarSize={50} />}
-                {visibleParts?.toan !== false && <Bar dataKey="Toán" fill="#6366f1" radius={[6,6,0,0]} maxBarSize={50} />}
-                {visibleParts?.tdkh !== false && <Bar dataKey="TDKH" fill="#0ea5e9" radius={[6,6,0,0]} maxBarSize={50} />}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        {studentHistory.length > 1 && (
-        <section className="card p-4 sm:p-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span className="icon-box bg-rose-50 text-rose-500"><TrendingUp className="w-[18px] h-[18px]" /></span>
-              Tiến Bộ Cá Nhân
-            </h2>
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                <button 
-                  onClick={() => setProgressSubject('Toán')} 
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${progressSubject === 'Toán' ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200'}`}
-                >
-                  Môn Toán
-                </button>
-                <button 
-                  onClick={() => setProgressSubject('TDKH')} 
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${progressSubject === 'TDKH' ? 'bg-white dark:bg-slate-800 text-sky-600 shadow-sm' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-200'}`}
-                >
-                  Môn TDKH
-                </button>
-              </div>
-              <select className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                value={progressMetric} onChange={(e) => setProgressMetric(e.target.value as any)}>
-                <option value="tho">Điểm Thô</option>
-                <option value="irt">Điểm IRT</option>
-                <option value="tp">Thưởng Phạt</option>
-              </select>
-            </div>
-          </div>
-          <div className="h-[280px] sm:h-[320px] w-full -ml-4 sm:-ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={progressChartData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9'} stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor={progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9'} stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '13px' }} />
-                
-                <Area 
-                  type="monotone" 
-                  name={`Điểm ${progressSubject} (Cá nhân)`} 
-                  dataKey={progressSubject} 
-                  stroke={progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9'} 
-                  strokeWidth={3} 
-                  fillOpacity={1} 
-                  fill="url(#colorScore)" 
-                  dot={{ r: 4, fill: '#fff', strokeWidth: 2, stroke: progressSubject === 'Toán' ? '#6366f1' : '#0ea5e9' }} 
-                  activeDot={{ r: 6 }} 
-                />
-                <Line 
-                  type="monotone" 
-                  name={`Trung bình chung ${progressSubject}`} 
-                  dataKey={`TB Chung ${progressSubject}`} 
-                  stroke="#94a3b8" 
-                  strokeDasharray="5 5" 
-                  strokeWidth={2} 
-                  dot={false} 
-                  activeDot={false} 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
         )}
-      </div>
-      
-      {studentHistory.length > 1 && (
-        <section className="card overflow-hidden mt-4 sm:mt-5 md:mt-6 w-full min-w-0">
-          <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700/50">
-            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span className="icon-box bg-emerald-50 text-emerald-600"><FileSpreadsheet className="w-[18px] h-[18px]" /></span>
-              Bảng So Sánh Các Lần Thi
-            </h2>
-          </div>
-          <div className="p-4 sm:p-5 overflow-x-auto bg-white dark:bg-slate-800">
-            <table className="w-full text-sm text-left border-collapse border border-slate-200 dark:border-slate-700">
-              <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold">
-                <tr>
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" rowSpan={2}>Lần Thi</th>
-                  {visibleParts?.tv !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Tiếng Việt</th>}
-                  {visibleParts?.ta !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Tiếng Anh</th>}
-                  {visibleParts?.toan !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Toán</th>}
-                  {visibleParts?.tdkh !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>TDKH</th>}
-                  <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center bg-indigo-50/50" rowSpan={2}>Tổng<br/>Thưởng Phạt</th>
-                </tr>
-                <tr>
-                  {visibleParts?.tv !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
-                  {visibleParts?.ta !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
-                  {visibleParts?.toan !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
-                  {visibleParts?.tdkh !== false && <><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm Thô</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs">Điểm IRT</th><th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center text-xs text-amber-700">Thưởng Phạt</th></>}
-                </tr>
-              </thead>
-              <tbody>
-                {studentHistory.map((s, i) => (
-                  <tr key={i} className="hover:bg-slate-50 dark:bg-slate-900/50 transition-colors">
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-bold text-slate-700 dark:text-slate-200">Lần {i + 1}</td>
-                    {visibleParts?.tv !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.tv?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.tv?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.tv?.toFixed(2) ?? '-'}</td></>}
-                    {visibleParts?.ta !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.ta?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.ta?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.ta?.toFixed(2) ?? '-'}</td></>}
-                    {visibleParts?.toan !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.toan?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.toan?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.toan?.toFixed(2) ?? '-'}</td></>}
-                    {visibleParts?.tdkh !== false && <><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.tho.tdkh?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center">{s.irt.tdkh?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.tdkh?.toFixed(2) ?? '-'}</td></>}
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-bold text-indigo-600 bg-indigo-50/30">
-                      {((visibleParts?.tv !== false ? (s.thuongPhat.tv || 0) : 0) + (visibleParts?.ta !== false ? (s.thuongPhat.ta || 0) : 0) + (visibleParts?.toan !== false ? (s.thuongPhat.toan || 0) : 0) + (visibleParts?.tdkh !== false ? (s.thuongPhat.tdkh || 0) : 0)).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
 
-      {/* Full Analytics — moved inside student view */}
-      <div className="mt-8 flex flex-col gap-8 sm:gap-10">
-        <Suspense fallback={<LazyFallback />}>
-          <AbilityDistribution students={activeStudents} metric={classMetric} onMetricChange={setClassMetric} />
-        </Suspense>
-        <Suspense fallback={<LazyFallback />}>
-          <ClassAnalytics
-            students={activeStudents}
-            questions={activeQuestions}
-            metric={classMetric}
-            onSelectStudent={s => setSelectedStudent(s)}
-          />
-        </Suspense>
+        {/* TAB 3: HISTORY (Multi-attempt comparison) */}
+        {studentTab === 'history' && studentHistory.length > 1 && (
+          <div className="card p-4 sm:p-6 fade-in overflow-hidden">
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <span className="icon-box bg-emerald-50 text-emerald-600"><FileSpreadsheet className="w-[18px] h-[18px]" /></span>
+              Bảng So Sánh Chi Tiết Các Lần Thi
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs sm:text-sm text-left border-collapse border border-slate-200 dark:border-slate-700">
+                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold">
+                  <tr>
+                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" rowSpan={2}>Lần Thi</th>
+                    {visibleParts?.tv !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Tiếng Việt</th>}
+                    {visibleParts?.ta !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Tiếng Anh</th>}
+                    {visibleParts?.toan !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>Toán</th>}
+                    {visibleParts?.tdkh !== false && <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center" colSpan={3}>TDKH</th>}
+                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center bg-indigo-50/50 dark:bg-indigo-950/30" rowSpan={2}>Tổng<br/>Thưởng Phạt</th>
+                  </tr>
+                  <tr>
+                    {visibleParts?.tv !== false && <><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">Thô</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">IRT</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px] text-amber-700">T.Phạt</th></>}
+                    {visibleParts?.ta !== false && <><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">Thô</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">IRT</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px] text-amber-700">T.Phạt</th></>}
+                    {visibleParts?.toan !== false && <><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">Thô</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">IRT</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px] text-amber-700">T.Phạt</th></>}
+                    {visibleParts?.tdkh !== false && <><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">Thô</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px]">IRT</th><th className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center text-[11px] text-amber-700">T.Phạt</th></>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {studentHistory.map((s, i) => (
+                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                      <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-bold text-slate-800 dark:text-slate-100">Lần {i + 1}</td>
+                      {visibleParts?.tv !== false && <><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.tho.tv?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.irt.tv?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.tv?.toFixed(2) ?? '-'}</td></>}
+                      {visibleParts?.ta !== false && <><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.tho.ta?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.irt.ta?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.ta?.toFixed(2) ?? '-'}</td></>}
+                      {visibleParts?.toan !== false && <><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.tho.toan?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.irt.toan?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.toan?.toFixed(2) ?? '-'}</td></>}
+                      {visibleParts?.tdkh !== false && <><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.tho.tdkh?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center">{s.irt.tdkh?.toFixed(2) ?? '-'}</td><td className="border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-center font-medium text-amber-600 bg-amber-50/30">{s.thuongPhat.tdkh?.toFixed(2) ?? '-'}</td></>}
+                      <td className="border border-slate-200 dark:border-slate-700 px-3 py-2 text-center font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50/40 dark:bg-indigo-950/20">
+                        {((visibleParts?.tv !== false ? (s.thuongPhat.tv || 0) : 0) + (visibleParts?.ta !== false ? (s.thuongPhat.ta || 0) : 0) + (visibleParts?.toan !== false ? (s.thuongPhat.toan || 0) : 0) + (visibleParts?.tdkh !== false ? (s.thuongPhat.tdkh || 0) : 0)).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: CLASS ANALYTICS */}
+        {studentTab === 'class' && (
+          <div className="flex flex-col gap-6 fade-in">
+            <Suspense fallback={<LazyFallback />}>
+              <AbilityDistribution students={activeStudents} metric={classMetric} onMetricChange={setClassMetric} />
+            </Suspense>
+            <Suspense fallback={<LazyFallback />}>
+              <ClassAnalytics
+                students={activeStudents}
+                questions={activeQuestions}
+                metric={classMetric}
+                onSelectStudent={s => setSelectedStudent(s)}
+              />
+            </Suspense>
+          </div>
+        )}
+
       </div>
 
       {/* Info Section */}
