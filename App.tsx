@@ -269,15 +269,7 @@ export default function App() {
         className="fixed inset-0 w-full h-full pointer-events-none z-[1] bg-gradient-to-b from-slate-950/20 via-transparent to-slate-950/40"
       />
 
-      {/* Theme Toggle Button */}
-      <button 
-        onClick={() => setIsDark(!isDark)} 
-        aria-label="Chuyển chế độ sáng/tối"
-        title={isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
-        className="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 p-2.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 shadow-lg shadow-slate-900/5 dark:shadow-black/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-      >
-        {isDark ? <Sun className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-400" /> : <Moon className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-700" />}
-      </button>
+
 
       {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
