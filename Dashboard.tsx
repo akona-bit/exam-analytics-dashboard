@@ -1533,27 +1533,56 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
         </div>
       )}
 
-      {/* Feedback Section */}
-      <div className="mt-6 bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-indigo-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      {/* Feedback & Support Section */}
+      <div className="mt-6 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl p-5 sm:p-6 border border-white/90 dark:border-slate-700/80 shadow-md flex flex-col gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base">Góp ý & Giải đáp</h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">Nếu có bất kỳ thắc mắc hoặc góp ý nào về kết quả thi, hãy liên hệ với chúng tôi.</p>
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base">Góp ý &amp; Giải đáp</h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              Nếu có bất kỳ thắc mắc hoặc góp ý nào về kết quả thi, hãy liên hệ với ban hỗ trợ qua Discord:
+            </p>
           </div>
         </div>
-        <a 
-          href="https://discordapp.com/users/734403880208564235" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-xl transition-colors whitespace-nowrap w-full sm:w-auto text-center"
-        >
-          Liên hệ Discord
-        </a>
+
+        {/* Supporter Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+          {[
+            { name: 'Haruki', username: 'basten_8386', id: '1244623512958795879' },
+            { name: 'nicotine', username: 'warlock2712_', id: '1402670067132665886' },
+            { name: 'nmk', username: 'ongcocchumsever', id: '998823224269877268' },
+            { name: 'duc', username: 'akona_e', id: '734403880208564235' },
+          ].map(s => (
+            <a
+              key={s.id}
+              href={`https://discord.com/users/${s.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border border-slate-200/80 dark:border-slate-700/60 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-[#5865F2]/10 text-[#5865F2] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" className="w-4.5 h-auto" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {s.name}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
+                    @{s.username}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-md shrink-0 ml-1">
+                Nhắn tin
+              </span>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   );
