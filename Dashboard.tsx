@@ -377,18 +377,16 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           
 
           {/* TITLE & DESCRIPTION */}
-          <div className="text-center mb-8 flex flex-col items-center">
-            <div className="mb-6 fade-in transform transition-all hover:scale-105 duration-500">
-              <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl rounded-full ring-4 ring-white dark:ring-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] bg-white" />
+          <div className="text-center mb-6 flex flex-col items-center">
+            <div className="mb-4 fade-in transform transition-all hover:scale-105 duration-500">
+              <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-[0_10px_25px_rgba(244,63,94,0.35)] rounded-full ring-4 ring-white/90 dark:ring-purple-400/50 shadow-2xl bg-white/90" />
             </div>
-            <div className="relative inline-block mt-1 fade-in">
-              <div className="glass-panel px-6 sm:px-10 py-3 sm:py-4 rounded-3xl shadow-xl inline-flex items-center justify-center">
-                <h1 
-                  className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight z-10 relative premium-title"
-                >
-                  {examName}
-                </h1>
-              </div>
+            <div className="relative inline-block fade-in">
+              <h1 
+                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-4 z-10 relative premium-title pb-2"
+              >
+                {examName}
+              </h1>
             </div>
           </div>
 
@@ -398,13 +396,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
           
           {/* FORM */}
           <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-6">
-            <div className="w-full rounded-[32px] glass-panel p-6 sm:p-8 flex flex-col gap-6 fade-in transform transition-all duration-300">
+            <div className="w-full rounded-[32px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-6 sm:p-8 flex flex-col gap-6 fade-in transform transition-all duration-300 border border-white/60 dark:border-purple-500/20 shadow-[0_20px_50px_-10px_rgba(15,23,42,0.3)] hover:shadow-[0_25px_60px_-10px_rgba(168,85,247,0.3)]">
               <div className="flex flex-col gap-2 w-full">
               
               <div className="flex-1 flex flex-col gap-3 relative w-full">
-                <label htmlFor="lookup-name" className="pl-2 text-sm font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300">Tra cứu điểm thi</label>
+                <label htmlFor="lookup-name" className="pl-2 text-xs sm:text-sm font-black uppercase tracking-widest text-indigo-950 dark:text-purple-200">Tra cứu điểm thi</label>
                 <div className="relative group">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors duration-300 pointer-events-none" />
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-purple-400 group-focus-within:text-purple-600 dark:group-focus-within:text-purple-400 transition-colors duration-300 pointer-events-none" />
                   <input
                     id="lookup-name"
                     type="text"
@@ -413,13 +411,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
                     autoComplete="off"
-                    className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-900 dark:text-white placeholder:text-slate-400 font-bold text-lg transition-all bg-white/70 dark:bg-slate-800/70 hover:bg-white dark:hover:bg-slate-800 outline-none shadow-inner"
+                    className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-slate-200/90 dark:border-purple-500/30 focus:border-purple-600 dark:focus:border-purple-400 focus:ring-4 focus:ring-purple-500/20 text-slate-900 dark:text-white placeholder:text-slate-400 font-bold text-lg transition-all bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 outline-none shadow-inner"
                   />
                 </div>
                 
                 {/* Suggestions Dropdown */}
                 {searchQuery.trim() && searchResults.type === 'success' && searchResults.data.length > 0 && (
-                  <div className="absolute top-[100%] mt-3 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
+                  <div className="absolute top-[100%] mt-3 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-100 dark:border-purple-500/30 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
                     {searchResults.data.map((student, idx) => (
                       <button
                         key={idx}
@@ -428,13 +426,13 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                           setSelectedStudent(student);
                           setSearchQuery('');
                         }}
-                        className="w-full text-left px-5 sm:px-6 py-3 sm:py-4 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all border-b border-slate-100 dark:border-slate-700/60 last:border-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 group/item"
+                        className="w-full text-left px-5 sm:px-6 py-3.5 sm:py-4 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all border-b border-slate-100 dark:border-slate-700/60 last:border-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 group/item"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover/item:scale-110 group-hover/item:bg-indigo-600 group-hover/item:text-white transition-all duration-300 shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 dark:text-purple-300 group-hover/item:scale-110 group-hover/item:bg-purple-600 group-hover/item:text-white transition-all duration-300 shrink-0">
                             <Search className="w-4 h-4" />
                           </div>
-                          <span className="font-bold text-slate-800 dark:text-slate-200 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors truncate">{student.name}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200 group-hover/item:text-purple-600 dark:group-hover/item:text-purple-400 transition-colors truncate">{student.name}</span>
                         </div>
                       </button>
                     ))}
@@ -447,7 +445,7 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
             <button 
               type="submit"
               disabled={!searchQuery.trim()}
-              className="w-full sm:w-auto sm:mx-auto mt-2 px-12 py-4 sm:py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:translate-y-0 text-base sm:text-lg tracking-widest flex items-center gap-3 justify-center group"
+              className="w-full sm:w-auto sm:mx-auto mt-2 px-12 py-4 sm:py-5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-black rounded-2xl transition-all shadow-[0_10px_25px_-5px_rgba(168,85,247,0.5)] hover:shadow-[0_15px_30px_-5px_rgba(244,63,94,0.6)] hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:translate-y-0 text-base sm:text-lg tracking-widest flex items-center gap-3 justify-center group"
             >
               <Search className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
               XEM KẾT QUẢ

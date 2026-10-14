@@ -250,17 +250,17 @@ export default function App() {
       <div 
         className="fixed inset-0 w-full h-full pointer-events-none"
         style={{
-          backgroundImage: 'url("/bg.jpg?v=4")',
+          backgroundImage: 'url("/bg.jpg?v=5")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          filter: 'contrast(1.02) saturate(1.05)',
+          filter: 'contrast(1.04) saturate(1.12) brightness(1.02)',
           imageRendering: 'crisp-edges',
           zIndex: 0
         }}
       />
-      {/* Soft Ambient Overlay for enhanced text readability & contrast */}
+      {/* Subtle Cinematic Vignette for readability */}
       <div 
-        className="fixed inset-0 w-full h-full pointer-events-none z-[1] bg-white/20 dark:bg-slate-950/45 backdrop-blur-[0.5px]"
+        className="fixed inset-0 w-full h-full pointer-events-none z-[1] bg-gradient-to-b from-slate-950/20 via-transparent to-slate-950/40"
       />
       {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
