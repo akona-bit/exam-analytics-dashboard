@@ -1144,7 +1144,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                         <div className="flex items-center gap-2">
                           <Target className="w-5 h-5 text-emerald-500 shrink-0" />
                           <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base">
-                            Số Câu Đúng Theo Vùng Kiến Thức (Ma Trận CSV)
+                            Số Câu Đúng Theo Vùng Kiến Thức
                           </h3>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
