@@ -179,6 +179,13 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
         logging: false,
         backgroundColor: '#ffffff',
         windowWidth: 1200,
+        imageTimeout: 6000,
+        onclone: (clonedDoc) => {
+          const img = clonedDoc.querySelector('img[alt="Avatar"]') as HTMLImageElement | null;
+          if (img) {
+            img.crossOrigin = 'anonymous';
+          }
+        },
         ignoreElements: (element) => {
           return element.classList.contains('no-pdf') || element.getAttribute('data-no-pdf') === 'true';
         }
@@ -607,15 +614,32 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
           {/* Profile Details Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3.5">
-              <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl overflow-hidden shrink-0 shadow-md border-2 border-indigo-200 dark:border-purple-500/40 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center">
+              <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl overflow-hidden shrink-0 shadow-md border-2 border-indigo-200 dark:border-purple-500/40 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center relative">
                 {studentRankInfo && (studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1) ? (
                   <span className="text-3xl">👑</span>
                 ) : studentRankInfo && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2) ? (
                   <span className="text-3xl">🥈</span>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center font-black text-lg sm:text-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-inner">
-                    {selectedStudent.name.trim().split(/\s+/).map(n => n[0]).slice(-2).join('').toUpperCase()}
-                  </div>
+                  <>
+                    <img 
+                      src={`https://robohash.org/${encodeURIComponent(selectedStudent.name)}?set=set4&bgset=bg1`}
+                      alt="Avatar" 
+                      crossOrigin="anonymous"
+                      className="w-full h-full object-cover scale-110"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement | null;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                    <div 
+                      style={{ display: 'none' }}
+                      className="w-full h-full items-center justify-center font-black text-lg sm:text-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-inner"
+                    >
+                      {selectedStudent.name.trim().split(/\s+/).map(n => n[0]).slice(-2).join('').toUpperCase()}
+                    </div>
+                  </>
                 )}
               </div>
               <div>
