@@ -10,7 +10,6 @@ import { CelebrationOverlay } from './CelebrationOverlay';
 import questionTexts from './question_texts.json';
 import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV, DomainCategory, defaultTopicMap } from './lib/knowledgeStructure';
 
-const KnowledgeMatrix = lazy(() => import('./KnowledgeMatrix').then(m => ({ default: m.KnowledgeMatrix })));
 const AbilityDistribution = lazy(() => import('./AbilityDistribution').then(m => ({ default: m.AbilityDistribution })));
 const ClassAnalytics = lazy(() => import('./ClassAnalytics').then(m => ({ default: m.ClassAnalytics })));
 
@@ -851,7 +850,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
               }`}
             >
               <Target className="w-4 h-4 text-emerald-500" />
-              <span>Câu Hỏi & Ma Trận Kiến Thức</span>
+              <span>Câu Hỏi & Vùng Kiến Thức</span>
             </button>
 
             {studentHistory.length > 1 && (
@@ -1472,34 +1471,6 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                   </table>
                 </div>
               )}
-            </div>
-
-            {/* Ma Trận Kiến Thức */}
-            <div className="card overflow-hidden w-full min-w-0">
-              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-indigo-500" />
-                  Ma Trận Kiến Thức Cần Ôn Tập
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Ô tô <span className="text-rose-500 font-bold">Đỏ</span>: Làm sai. Ô tô <span className="text-amber-500 font-bold">Vàng</span>: Bỏ trống.
-                </p>
-              </div>
-              <div className="p-4 overflow-x-auto bg-white dark:bg-slate-900/60">
-                <div className="min-w-[650px]">
-                  <Suspense fallback={<div className="h-40 flex items-center justify-center text-slate-400 text-xs">Đang tải ma trận kiến thức...</div>}>
-                    <KnowledgeMatrix 
-                      wrongQuestions={selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []} 
-                      missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []}
-                      topicMap={topicMap || undefined}
-                      knowledgeCsv={knowledgeCsv}
-                      domains={knowledgeStructure.domains}
-                      maxQuestionNum={maxExamQuestionNum}
-                      onQuestionClick={(qNum) => setViewQuestionKey(`Câu ${qNum}`)}
-                    />
-                  </Suspense>
-                </div>
-              </div>
             </div>
           </div>
         )}
