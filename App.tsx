@@ -10,6 +10,7 @@ import { QuestionData, StudentData } from './types';
 import { normalizeExamType } from './analytics';
 import defaultQuestionTexts from './question_texts.json';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
 
 /* ──────────── Supabase → App type mapping ──────────── */
 
@@ -130,6 +131,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [examName, setExamName] = useState('Kì Thi Khảo Sát');
   const [topicMap, setTopicMap] = useState<Record<string, number[]> | null>(null);
+  const [knowledgeCsv, setKnowledgeCsv] = useState<string>(() => localStorage.getItem('knowledge_csv') || DEFAULT_KNOWLEDGE_CSV);
   const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(defaultQuestionTexts as Record<string, string>);
   const [answerLink, setAnswerLink] = useState('');
   const [nextExamDate, setNextExamDate] = useState('');
@@ -154,13 +156,17 @@ export default function App() {
     return () => window.removeEventListener('hashchange', checkHash);
   }, []);
 
-  // Fetch exam settings from Supabase (name, topic map, question texts)
+  // Fetch exam settings from Supabase (name, topic map, question texts, knowledge csv)
   useEffect(() => {
     if (!supabase) return;
     supabase.from('exam_settings').select('key, value').then(({ data }) => {
       if (!data) return;
       for (const row of data) {
         if (row.key === 'exam_name' && row.value) setExamName(row.value);
+        if (row.key === 'knowledge_csv' && row.value) {
+          setKnowledgeCsv(row.value);
+          try { localStorage.setItem('knowledge_csv', row.value); } catch {}
+        }
         if (row.key === 'topic_map') try { setTopicMap(JSON.parse(row.value)); } catch {}
         if (row.key === 'question_texts') try { setQuestionTexts(JSON.parse(row.value)); } catch {}
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
@@ -275,6 +281,7 @@ export default function App() {
             students={studentData} 
             examName={examName} 
             topicMap={topicMap} 
+            knowledgeCsv={knowledgeCsv}
             questionTexts={questionTexts} 
             answerLink={answerLink} 
             nextExamDate={nextExamDate}

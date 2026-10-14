@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import defaultQuestionTexts from './question_texts.json';
-import { defaultTopicMap } from './KnowledgeMatrix';
+import { defaultTopicMap } from './lib/knowledgeStructure';
+import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
 import { ABILITY_BANDS, EXAM_TYPES, EXAM_TYPE_LABEL, MAX_TOTAL_SCORE, normalizeExamType } from './analytics';
 
 /* ──────────── CSV Parser ──────────── */
@@ -351,6 +352,11 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilityStatus, setVisibilityStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  // Settings: Knowledge CSV
+  const [knowledgeCsvStr, setKnowledgeCsvStr] = useState<string>(DEFAULT_KNOWLEDGE_CSV);
+  const [knowledgeCsvSaving, setKnowledgeCsvSaving] = useState(false);
+  const [knowledgeCsvStatus, setKnowledgeCsvStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
   // Settings: Topic Map
   const [topicMapStr, setTopicMapStr] = useState(JSON.stringify(defaultTopicMap, null, 2));
   const [topicMapSaving, setTopicMapSaving] = useState(false);
@@ -393,6 +399,7 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
       if (!data) return;
       for (const row of data) {
         if (row.key === 'exam_name' && row.value) setExamName(row.value);
+        if (row.key === 'knowledge_csv' && row.value) setKnowledgeCsvStr(row.value);
         if (row.key === 'topic_map' && row.value) setTopicMapStr(row.value);
         if (row.key === 'question_texts' && row.value) setQuestionTextsStr(row.value);
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
@@ -545,6 +552,46 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
       setSbdMapStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
     }
     setSbdMapSaving(false);
+  };
+
+  const handleSaveKnowledgeCsv = async () => {
+    if (!knowledgeCsvStr.trim()) return;
+    setKnowledgeCsvSaving(true);
+    setKnowledgeCsvStatus(null);
+    try {
+      const parsed = parseKnowledgeCSV(knowledgeCsvStr);
+      if (parsed.domains.length === 0) {
+        throw new Error('Không phân tích được vùng kiến thức nào từ nội dung CSV.');
+      }
+
+      try {
+        localStorage.setItem('knowledge_csv', knowledgeCsvStr.trim());
+      } catch {}
+
+      if (supabase) {
+        const { error: err1 } = await supabase.from('exam_settings').upsert(
+          { key: 'knowledge_csv', value: knowledgeCsvStr.trim(), updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
+        if (err1) throw err1;
+
+        // Also update topic_map to keep synced
+        const { error: err2 } = await supabase.from('exam_settings').upsert(
+          { key: 'topic_map', value: JSON.stringify(parsed.topicMap, null, 2), updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
+        if (err2) throw err2;
+      }
+
+      setKnowledgeCsvStatus({
+        type: 'success',
+        msg: `Đã lưu ma trận kiến thức thành công! (${parsed.domains.length} vùng, ${parsed.totalQuestions} câu hỏi)`
+      });
+      setTimeout(() => setKnowledgeCsvStatus(null), 4000);
+    } catch (err: any) {
+      setKnowledgeCsvStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
+    }
+    setKnowledgeCsvSaving(false);
   };
 
   const handleSaveTopicMap = async () => {
@@ -1048,6 +1095,100 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           >
             {sbdMapSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Lưu danh sách SBD
+          </button>
+        </div>
+      </div>
+
+      {/* Knowledge CSV Settings (Khuyên dùng) */}
+      <div className="card p-5 sm:p-6 border-2 border-indigo-100 dark:border-indigo-900/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-indigo-600" />
+              Cấu hình Vùng Kiến Thức theo CSV (Khuyên dùng)
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Hệ thống sẽ tự động nhóm số câu đúng theo từng Vùng kiến thức và Chuyên đề chi tiết theo file CSV này.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="px-3.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs cursor-pointer border border-indigo-200 transition-all flex items-center gap-1.5">
+              <Upload className="w-3.5 h-3.5" /> Tải lên CSV
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const text = await file.text();
+                    setKnowledgeCsvStr(text);
+                  }
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setKnowledgeCsvStr(DEFAULT_KNOWLEDGE_CSV)}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition-all"
+            >
+              Đặt lại mẫu 120 câu
+            </button>
+          </div>
+        </div>
+
+        {/* Live Preview Bar */}
+        {(() => {
+          try {
+            const preview = parseKnowledgeCSV(knowledgeCsvStr);
+            return (
+              <div className="mb-3.5 p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-xs">
+                <div className="flex items-center justify-between font-bold text-indigo-900 dark:text-indigo-200 mb-2">
+                  <span>Đã nhận diện: {preview.domains.length} Vùng kiến thức · {preview.totalQuestions} câu hỏi</span>
+                  <span className="text-[11px] font-normal text-indigo-600 dark:text-indigo-400">
+                    {preview.is120Mode ? 'Chế độ 120 câu' : 'Chế độ 60 câu Toán + TDKH'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                  {preview.domains.map(d => (
+                    <span
+                      key={d.domain}
+                      className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-800 text-[11px] font-medium text-slate-700 dark:text-slate-200"
+                    >
+                      {d.domain}: <b>{d.total} câu</b> ({d.qNums[0]}..{d.qNums[d.qNums.length - 1]})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          } catch {
+            return null;
+          }
+        })()}
+
+        {/* Textarea */}
+        <div className="flex flex-col gap-3">
+          <textarea
+            value={knowledgeCsvStr}
+            onChange={e => setKnowledgeCsvStr(e.target.value)}
+            placeholder="Dán nội dung CSV vùng kiến thức vào đây..."
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white h-48 font-mono text-xs"
+          />
+
+          {knowledgeCsvStatus && (
+            <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg ${knowledgeCsvStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+              {knowledgeCsvStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+              {knowledgeCsvStatus.msg}
+            </div>
+          )}
+
+          <button
+            onClick={handleSaveKnowledgeCsv}
+            disabled={knowledgeCsvSaving || !knowledgeCsvStr.trim()}
+            className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2"
+          >
+            {knowledgeCsvSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Lưu ma trận CSV
           </button>
         </div>
       </div>

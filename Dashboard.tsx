@@ -2,15 +2,15 @@ import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { ExamType, MetricKey, QuestionData, StudentData } from './types';
 import { EXAM_TYPES, EXAM_TYPE_LABEL, countByExamType, examTypeOf, filterByExamType } from './analytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon } from 'lucide-react';
+import { Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, FileSpreadsheet, Key, Target, PieChart as PieChartIcon, Check, CheckCircle2, Layers, Filter, LayoutGrid, Table } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Download } from 'lucide-react';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import questionTexts from './question_texts.json';
+import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV, DomainCategory, defaultTopicMap } from './lib/knowledgeStructure';
 
 const KnowledgeMatrix = lazy(() => import('./KnowledgeMatrix').then(m => ({ default: m.KnowledgeMatrix })));
-import { defaultTopicMap } from './KnowledgeMatrix';
 const AbilityDistribution = lazy(() => import('./AbilityDistribution').then(m => ({ default: m.AbilityDistribution })));
 const ClassAnalytics = lazy(() => import('./ClassAnalytics').then(m => ({ default: m.ClassAnalytics })));
 
@@ -22,6 +22,7 @@ interface Props {
   students: StudentData[]; 
   examName: string; 
   topicMap?: Record<string, number[]> | null;
+  knowledgeCsv?: string;
   questionTexts?: Record<string, string>;
   answerLink?: string;
   nextExamDate?: string;
@@ -86,7 +87,7 @@ const maskEmail = (email: string | null | undefined) => {
   return `${maskedName}@${maskedDomain}.${dExt}`;
 };
 
-export function Dashboard({ questions, students, examName, topicMap, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap, visibleParts }: Props) {
+export function Dashboard({ questions, students, examName, topicMap, knowledgeCsv, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap, visibleParts }: Props) {
   const currentTexts = propQuestionTexts || texts;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
@@ -99,11 +100,29 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
   const [examType, setExamType] = useState<ExamType>('survey');
   const [studentTab, setStudentTab] = useState<'overview' | 'review' | 'history' | 'class'>('overview');
   const [radarMode, setRadarMode] = useState<'compare' | 'parts'>('compare');
+  const [knowledgeFilter, setKnowledgeFilter] = useState<'all' | 'strong' | 'medium' | 'weak'>('all');
+  const [knowledgeViewMode, setKnowledgeViewMode] = useState<'cards' | 'table'>('cards');
   const celebratedRef = React.useRef<Set<string>>(new Set());
 
   const examCounts = useMemo(() => countByExamType(students), [students]);
   const activeStudents = useMemo(() => filterByExamType(students, examType), [students, examType]);
   const activeQuestions = useMemo(() => filterByExamType(questions, examType), [questions, examType]);
+
+  // Determine max question number in active exam / student data
+  const maxExamQuestionNum = useMemo(() => {
+    let max = 60;
+    if (activeQuestions.length > max) max = activeQuestions.length;
+    if (selectedStudent?.responses && selectedStudent.responses.length > 0) {
+      const studentMax = Math.max(...selectedStudent.responses.map(r => r.question_num));
+      if (studentMax > max) max = studentMax;
+    }
+    return max;
+  }, [activeQuestions, selectedStudent]);
+
+  // Parse knowledge structure based on CSV and active question scale
+  const knowledgeStructure = useMemo(() => {
+    return parseKnowledgeCSV(knowledgeCsv || DEFAULT_KNOWLEDGE_CSV, maxExamQuestionNum);
+  }, [knowledgeCsv, maxExamQuestionNum]);
 
   const handleExamTypeChange = (next: ExamType) => {
     setSearchQuery('');
@@ -932,41 +951,55 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
         {/* TAB 2: REVIEW QUESTIONS & KNOWLEDGE MATRIX */}
         {studentTab === 'review' && (
           <div className="flex flex-col gap-4 sm:gap-5 fade-in">
-            {/* Vùng kiến thức */}
+            {/* Vùng kiến thức theo CSV chuẩn */}
             {(() => {
-              const activeTopicMap = topicMap || defaultTopicMap;
               const wrongSet = new Set(selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []);
               const missingSet = new Set(selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []);
 
-              const categoryGroups: { category: string; topics: string[]; color: string; bgColor: string; barColor: string }[] = [
-                { category: 'Đại số', topics: ['Hệ bất phương trình bậc nhất 2 ẩn', 'Hàm số bậc 2', 'Lượng giác', 'Dãy số', 'Giới hạn & Hàm số liên tục', 'Số mũ & Logarit', 'Đạo hàm', 'Xác suất & Tổ hợp'], color: 'text-indigo-700 dark:text-indigo-300', bgColor: 'bg-indigo-50 dark:bg-indigo-900/30', barColor: 'bg-indigo-500' },
-                { category: 'Hình học', topics: ['Hệ thức lượng trong tam giác & Vecto', 'Toạ độ Oxy', 'Hình học không gian'], color: 'text-violet-700 dark:text-violet-300', bgColor: 'bg-violet-50 dark:bg-violet-900/30', barColor: 'bg-violet-500' },
-                { category: 'Logic', topics: ['Logic sắp xếp', 'Logic phân nhóm'], color: 'text-cyan-700 dark:text-cyan-300', bgColor: 'bg-cyan-50 dark:bg-cyan-900/30', barColor: 'bg-cyan-500' },
-                { category: 'PTSL', topics: ['Dữ liệu bảng', 'Dữ liệu biểu đồ cột', 'Dữ liệu biểu đồ tròn'], color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-50 dark:bg-amber-900/30', barColor: 'bg-amber-500' },
-                { category: 'SLKH', topics: ['Đọc hiểu KHTN', 'Đọc hiểu KHXH'], color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-50 dark:bg-emerald-900/30', barColor: 'bg-emerald-500' },
-              ];
+              // Compute stats for each domain and topic
+              const parsedDomains = knowledgeStructure.domains.map(dom => {
+                const topics = dom.topics.map(t => {
+                  const wrong = t.qNums.filter(q => wrongSet.has(q)).length;
+                  const missing = t.qNums.filter(q => missingSet.has(q)).length;
+                  const correct = t.count - wrong - missing;
+                  const pct = t.count > 0 ? Math.round((correct / t.count) * 100) : 0;
+                  return {
+                    ...t,
+                    correct,
+                    wrong,
+                    missing,
+                    pct,
+                  };
+                });
 
-              const topicData = Object.entries(activeTopicMap).map(([topic, qNums]) => {
-                const total = qNums.length;
-                const wrong = qNums.filter(q => wrongSet.has(q)).length;
-                const missing = qNums.filter(q => missingSet.has(q)).length;
+                const total = dom.total;
+                const wrong = dom.qNums.filter(q => wrongSet.has(q)).length;
+                const missing = dom.qNums.filter(q => missingSet.has(q)).length;
                 const correct = total - wrong - missing;
                 const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-                return { topic, qNums, total, correct, wrong, missing, pct };
+
+                return {
+                  ...dom,
+                  topics,
+                  correct,
+                  wrong,
+                  missing,
+                  pct,
+                };
               });
 
-              const catData = categoryGroups.map(g => {
-                const topics = g.topics
-                  .map(t => topicData.find(td => td.topic === t))
-                  .filter(Boolean) as typeof topicData;
-                const total = topics.reduce((s, t) => s + t.total, 0);
-                const correct = topics.reduce((s, t) => s + t.correct, 0);
-                const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-                return { ...g, topics, total, correct, pct };
-              }).filter(c => c.total > 0);
+              // Filter domains according to knowledgeFilter
+              const filteredDomains = parsedDomains.filter(d => {
+                if (knowledgeFilter === 'strong') return d.pct >= 80;
+                if (knowledgeFilter === 'medium') return d.pct >= 50 && d.pct < 80;
+                if (knowledgeFilter === 'weak') return d.pct < 50;
+                return true;
+              });
 
-              const overallTotal = topicData.reduce((s, t) => s + t.total, 0);
-              const overallCorrect = topicData.reduce((s, t) => s + t.correct, 0);
+              const overallTotal = parsedDomains.reduce((s, d) => s + d.total, 0);
+              const overallCorrect = parsedDomains.reduce((s, d) => s + d.correct, 0);
+              const overallWrong = parsedDomains.reduce((s, d) => s + d.wrong, 0);
+              const overallMissing = parsedDomains.reduce((s, d) => s + d.missing, 0);
               const overallPct = overallTotal > 0 ? Math.round((overallCorrect / overallTotal) * 100) : 0;
 
               const getPctColor = (pct: number) => {
@@ -975,45 +1008,272 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                 return 'text-rose-600 dark:text-rose-400';
               };
 
+              const getBarGradient = (pct: number) => {
+                if (pct >= 80) return 'bg-gradient-to-r from-emerald-500 to-teal-400';
+                if (pct >= 50) return 'bg-gradient-to-r from-amber-500 to-yellow-400';
+                return 'bg-gradient-to-r from-rose-500 to-pink-500';
+              };
+
               return (
-                <div className="card overflow-hidden w-full min-w-0">
-                  <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
-                        <Target className="w-5 h-5 text-emerald-500" />
-                        Số Câu Đúng Theo Vùng Kiến Thức
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Tổng cộng: <span className={`font-bold ${getPctColor(overallPct)}`}>{overallCorrect}/{overallTotal} câu đúng ({overallPct}%)</span>
-                      </p>
+                <div className="card overflow-hidden w-full min-w-0 shadow-lg border border-slate-200/80 dark:border-slate-800">
+                  {/* Card Header & Filter Bar */}
+                  <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex flex-col gap-3.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Target className="w-5 h-5 text-emerald-500 shrink-0" />
+                          <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base">
+                            Số Câu Đúng Theo Vùng Kiến Thức (Ma Trận CSV)
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Tổng số câu đúng: <span className={`font-black text-sm ${getPctColor(overallPct)}`}>{overallCorrect}/{overallTotal} câu ({overallPct}%)</span>
+                        </p>
+                      </div>
+
+                      {/* Summary Stat Badges */}
+                      <div className="flex items-center flex-wrap gap-2 text-xs font-bold">
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" /> {overallCorrect} Đúng
+                        </span>
+                        <span className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/80 flex items-center gap-1">
+                          <X className="w-3.5 h-3.5" /> {overallWrong} Sai
+                        </span>
+                        <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 flex items-center gap-1">
+                          - {overallMissing} Bỏ trống
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Filter Pills and View Mode Toggle */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                      {/* Filter Pills */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs font-semibold">
+                        <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1 mr-1">
+                          <Filter className="w-3.5 h-3.5" /> Lọc:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setKnowledgeFilter('all')}
+                          className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
+                        >
+                          Tất cả ({parsedDomains.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKnowledgeFilter('strong')}
+                          className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'strong' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
+                        >
+                          Tốt (≥80%) ({parsedDomains.filter(d => d.pct >= 80).length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKnowledgeFilter('medium')}
+                          className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'medium' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
+                        >
+                          Khá (50-79%) ({parsedDomains.filter(d => d.pct >= 50 && d.pct < 80).length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKnowledgeFilter('weak')}
+                          className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'weak' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
+                        >
+                          Yếu (&lt;50%) ({parsedDomains.filter(d => d.pct < 50).length})
+                        </button>
+                      </div>
+
+                      {/* View Mode Toggle */}
+                      <div className="flex items-center gap-1 self-end sm:self-auto bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setKnowledgeViewMode('cards')}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all font-medium ${knowledgeViewMode === 'cards' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+                        >
+                          <LayoutGrid className="w-3.5 h-3.5" /> Dạng Thẻ
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKnowledgeViewMode('table')}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all font-medium ${knowledgeViewMode === 'table' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+                        >
+                          <Table className="w-3.5 h-3.5" /> Dạng Bảng
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="p-4 sm:p-5 flex flex-col gap-4">
-                    {catData.map(cat => (
-                      <div key={cat.category} className="p-3 sm:p-4 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className={`font-black text-xs sm:text-sm uppercase tracking-wide ${cat.color}`}>{cat.category}</h4>
-                          <div className="flex items-center gap-2.5">
-                            <span className={`text-xs font-bold ${getPctColor(cat.pct)}`}>{cat.correct}/{cat.total} đúng</span>
-                            <span className={`text-xs sm:text-sm font-black tabular-nums ${getPctColor(cat.pct)}`}>{cat.pct}%</span>
-                          </div>
-                        </div>
-                        <div className="w-full h-2 bg-slate-200/80 dark:bg-slate-700/80 rounded-full mb-3 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-700 ease-out ${cat.barColor}`}
-                            style={{ width: `${cat.pct}%` }}
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {cat.topics.map(t => (
-                            <div key={t.topic} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-white/70 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50 text-xs">
-                              <span className="flex-1 truncate text-slate-700 dark:text-slate-200 font-medium">{t.topic}</span>
-                              <span className={`font-bold tabular-nums ${getPctColor(t.pct)}`}>{t.correct}/{t.total} ({t.pct}%)</span>
-                            </div>
-                          ))}
-                        </div>
+
+                  {/* Body Content */}
+                  <div className="p-4 sm:p-5 bg-slate-50/50 dark:bg-slate-900/40">
+                    {filteredDomains.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-slate-400 italic">
+                        Không có vùng kiến thức nào phù hợp với bộ lọc đã chọn.
                       </div>
-                    ))}
+                    ) : knowledgeViewMode === 'cards' ? (
+                      /* Grid Cards View */
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {filteredDomains.map(dom => (
+                          <div
+                            key={dom.domain}
+                            className="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white/90 dark:bg-slate-800/80 shadow-xs flex flex-col gap-3"
+                          >
+                            {/* Domain Header */}
+                            <div>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <h4 className={`font-black text-xs sm:text-sm uppercase tracking-wide ${dom.color || 'text-indigo-700'}`}>
+                                    {dom.domain}
+                                  </h4>
+                                  <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700/60 px-1.5 py-0.5 rounded">
+                                    {dom.total} câu ({dom.qNums[0]} - {dom.qNums[dom.qNums.length - 1]})
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs font-bold ${getPctColor(dom.pct)}`}>
+                                    {dom.correct}/{dom.total} đúng
+                                  </span>
+                                  <span className={`text-xs sm:text-sm font-black tabular-nums ${getPctColor(dom.pct)}`}>
+                                    {dom.pct}%
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Progress bar */}
+                              <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ${getBarGradient(dom.pct)}`}
+                                  style={{ width: `${dom.pct}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Subtopics and Question Badges */}
+                            <div className="flex flex-col gap-2 pt-1">
+                              {dom.topics.map(t => (
+                                <div
+                                  key={t.name}
+                                  className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-xs flex flex-col gap-1.5"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{t.name}</span>
+                                    <span className={`font-bold tabular-nums shrink-0 ${getPctColor(t.pct)}`}>
+                                      {t.correct}/{t.count} ({t.pct}%)
+                                    </span>
+                                  </div>
+                                  {/* Clickable Question Badges */}
+                                  <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                                    {t.qNums.map(q => {
+                                      const isWrong = wrongSet.has(q);
+                                      const isMissed = missingSet.has(q);
+                                      let badgeStyle = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 hover:bg-emerald-100';
+                                      let symbol = '✓';
+                                      if (isWrong) {
+                                        badgeStyle = 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 hover:bg-rose-200 font-bold';
+                                        symbol = '✗';
+                                      } else if (isMissed) {
+                                        badgeStyle = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 hover:bg-amber-200 font-bold';
+                                        symbol = '-';
+                                      }
+
+                                      return (
+                                        <button
+                                          key={q}
+                                          type="button"
+                                          onClick={() => setViewQuestionKey(`Câu ${q}`)}
+                                          className={`px-1.5 py-0.5 rounded text-[10.5px] border transition-all active:scale-95 cursor-pointer flex items-center gap-1 ${badgeStyle}`}
+                                          title={`Câu ${q}: ${isWrong ? 'Làm sai' : isMissed ? 'Bỏ trống' : 'Làm đúng'} - Nhấp để xem chi tiết`}
+                                        >
+                                          <span>Câu {q}</span>
+                                          <span className="text-[10px] opacity-80">{symbol}</span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Table View */
+                      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        <table className="w-full text-xs text-left border-collapse">
+                          <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider">
+                            <tr>
+                              <th className="px-3.5 py-3 border-b border-slate-200 dark:border-slate-700">Vùng Kiến Thức</th>
+                              <th className="px-3 py-3 border-b border-slate-200 dark:border-slate-700">Chuyên Đề</th>
+                              <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center">Tổng câu</th>
+                              <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center text-emerald-600">Đúng</th>
+                              <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center text-rose-500">Sai</th>
+                              <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center text-amber-600">Bỏ trống</th>
+                              <th className="px-3 py-3 border-b border-slate-200 dark:border-slate-700 w-36">Tỷ lệ đúng</th>
+                              <th className="px-3.5 py-3 border-b border-slate-200 dark:border-slate-700">Câu hỏi (nhấp xem đề)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {filteredDomains.map(dom => {
+                              return dom.topics.map((t, idx) => (
+                                <tr key={`${dom.domain}-${t.name}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                  {idx === 0 && (
+                                    <td
+                                      rowSpan={dom.topics.length}
+                                      className="px-3.5 py-2.5 font-bold text-slate-800 dark:text-slate-100 bg-slate-50/40 dark:bg-slate-800/40 align-middle border-r border-slate-200/60 dark:border-slate-700/60"
+                                    >
+                                      <div className={`${dom.color || 'text-indigo-600'} font-black text-xs uppercase`}>
+                                        {dom.domain}
+                                      </div>
+                                      <div className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                                        {dom.correct}/{dom.total} ({dom.pct}%)
+                                      </div>
+                                    </td>
+                                  )}
+                                  <td className="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-200">{t.name}</td>
+                                  <td className="px-2.5 py-2.5 text-center font-semibold">{t.count}</td>
+                                  <td className="px-2.5 py-2.5 text-center font-bold text-emerald-600">{t.correct}</td>
+                                  <td className="px-2.5 py-2.5 text-center font-bold text-rose-500">{t.wrong}</td>
+                                  <td className="px-2.5 py-2.5 text-center font-bold text-amber-600">{t.missing}</td>
+                                  <td className="px-3 py-2.5">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <div className={`h-full ${getBarGradient(t.pct)}`} style={{ width: `${t.pct}%` }} />
+                                      </div>
+                                      <span className={`font-bold tabular-nums text-[11px] ${getPctColor(t.pct)}`}>{t.pct}%</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-3.5 py-2.5">
+                                    <div className="flex items-center flex-wrap gap-1">
+                                      {t.qNums.map(q => {
+                                        const isWrong = wrongSet.has(q);
+                                        const isMissed = missingSet.has(q);
+                                        let style = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                        let sym = '✓';
+                                        if (isWrong) {
+                                          style = 'bg-rose-100 text-rose-700 border-rose-300 font-bold';
+                                          sym = '✗';
+                                        } else if (isMissed) {
+                                          style = 'bg-amber-100 text-amber-700 border-amber-300 font-bold';
+                                          sym = '-';
+                                        }
+                                        return (
+                                          <button
+                                            key={q}
+                                            type="button"
+                                            onClick={() => setViewQuestionKey(`Câu ${q}`)}
+                                            className={`px-1.5 py-0.5 rounded text-[10px] border transition-transform hover:scale-110 ${style}`}
+                                            title={`Câu ${q}: Nhấp xem chi tiết`}
+                                          >
+                                            {q} {sym}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ));
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -1111,6 +1371,10 @@ export function Dashboard({ questions, students, examName, topicMap, questionTex
                       wrongQuestions={selectedStudent.responses?.filter(r => r.status === 'wrong').map(r => r.question_num) || []} 
                       missingQuestions={selectedStudent.responses?.filter(r => r.status === 'missing').map(r => r.question_num) || []}
                       topicMap={topicMap || undefined}
+                      knowledgeCsv={knowledgeCsv}
+                      domains={knowledgeStructure.domains}
+                      maxQuestionNum={maxExamQuestionNum}
+                      onQuestionClick={(qNum) => setViewQuestionKey(`Câu ${qNum}`)}
                     />
                   </Suspense>
                 </div>
