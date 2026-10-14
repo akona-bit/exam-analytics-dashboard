@@ -3,27 +3,186 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#cfe0ff" />
+    <meta name="theme-color" content="#161a3f" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https: wss:;" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát</title>
+    <meta name="title" content="Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát" />
+    <meta name="description" content="Hệ thống tra cứu điểm thi khảo sát Toán &amp; Khoa Học Tự Nhiên. Xem chi tiết điểm Thô, IRT, Thưởng Phạt, thứ hạng thí sinh, phổ điểm và ma trận năng lực kiến thức." />
+    <meta name="keywords" content="tra cứu điểm thi, kết quả khảo sát, điểm thi thử, đánh giá năng lực, đánh giá tư duy, điểm IRT, điểm thô, phổ điểm, ma trận kiến thức" />
+    <meta name="author" content="Ban Tổ Chức Khảo Sát" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ketquathithumitht.pages.dev/" />
+
+    <!-- Open Graph / Facebook / Messenger / Zalo -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ketquathithumitht.pages.dev/" />
+    <meta property="og:site_name" content="Hệ Thống Tra Cứu Điểm Thi" />
+    <meta property="og:title" content="Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát" />
+    <meta property="og:description" content="Hệ thống tra cứu điểm thi khảo sát Toán &amp; Khoa Học Tự Nhiên. Xem chi tiết điểm Thô, IRT, Thưởng Phạt, thứ hạng thí sinh, phổ điểm và ma trận năng lực kiến thức." />
+    <meta property="og:image" content="https://ketquathithumitht.pages.dev/og-banner.jpg" />
+    <meta property="og:image:secure_url" content="https://ketquathithumitht.pages.dev/og-banner.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1920" />
+    <meta property="og:image:height" content="1080" />
+    <meta property="og:image:alt" content="Banner Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát" />
+    <meta property="og:locale" content="vi_VN" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://ketquathithumitht.pages.dev/" />
+    <meta name="twitter:title" content="Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát" />
+    <meta name="twitter:description" content="Hệ thống tra cứu điểm thi khảo sát Toán &amp; Khoa Học Tự Nhiên. Xem chi tiết điểm Thô, IRT, Thưởng Phạt, thứ hạng thí sinh, phổ điểm và ma trận năng lực." />
+    <meta name="twitter:image" content="https://ketquathithumitht.pages.dev/og-banner.jpg" />
+    <meta name="twitter:image:alt" content="Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát" />
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/png" href="/logo.png?v=5" />
+    <link rel="apple-touch-icon" href="/logo.png?v=5" />
+
+    <!-- Fonts Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" fetchpriority="high">
-    <link rel="icon" type="image/png" href="/logo.png?v=4" />
-    <link rel="apple-touch-icon" href="/logo.png?v=4" />
-    <title>Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát</title>
-    <meta name="description" content="Hệ thống tra cứu điểm thi và phân tích kết quả khảo sát Toán &amp; Tư Duy Khoa Học. Xem điểm Thô, IRT, Thưởng Phạt, ma trận kiến thức và thống kê chung." />
-    <meta property="og:title" content="Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát" />
-    <meta property="og:description" content="Tra cứu điểm thi cá nhân, xem biểu đồ tiến bộ, ma trận kiến thức và phân tích thống kê chung." />
-    <meta property="og:image" content="/logo.png?v=4" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="vi_VN" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Tra Cứu Điểm Thi &amp; Phân Tích Khảo Sát" />
-    <meta name="twitter:description" content="Tra cứu điểm thi cá nhân và phân tích thống kê chung." />
+
+    <!-- Structured Data (JSON-LD) for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Tra Cứu Điểm Thi & Phân Tích Kết Quả Khảo Sát",
+      "url": "https://ketquathithumitht.pages.dev/",
+      "description": "Hệ thống tra cứu điểm thi và phân tích kết quả khảo sát Toán & Khoa Học Tự Nhiên. Xem chi tiết điểm Thô, IRT, Thưởng Phạt, thứ hạng thí sinh, phổ điểm và ma trận năng lực kiến thức.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "inLanguage": "vi-VN"
+    }
+    </script>
+
+    <!-- Initial Body and Loader CSS (Runs before any external JS or CSS downloads) -->
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        background-color: #161a3f;
+        background: radial-gradient(circle at 50% 20%, #252b66 0%, #161a3f 70%, #0e112b 100%);
+        color: #ffffff;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      @keyframes loaderPulse {
+        0%, 100% { transform: scale(1); opacity: 0.95; }
+        50% { transform: scale(1.06); opacity: 1; }
+      }
+      @keyframes loaderSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .initial-splash {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+        text-align: center;
+        position: relative;
+        z-index: 10;
+      }
+      .initial-logo-box {
+        position: relative;
+        margin-bottom: 22px;
+        animation: loaderPulse 2.4s ease-in-out infinite;
+      }
+      .initial-logo-card {
+        width: 84px;
+        height: 84px;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 16px 40px -8px rgba(16, 20, 60, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        box-sizing: border-box;
+      }
+      .initial-logo-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .initial-ring {
+        position: absolute;
+        inset: -6px;
+        border-radius: 32px;
+        border: 2px dashed rgba(165, 180, 252, 0.5);
+        animation: loaderSpin 14s linear infinite;
+        pointer-events: none;
+      }
+      .initial-title {
+        margin: 0 0 8px 0;
+        font-size: 19px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+      }
+      .initial-subtitle {
+        margin: 0 0 24px 0;
+        font-size: 13px;
+        color: #c7d2fe;
+        font-weight: 500;
+      }
+      .initial-spinner {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.15);
+        border-top-color: #818cf8;
+        border-right-color: #c084fc;
+        animation: loaderSpin 0.85s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- SEO Fallback Content for Crawlers & Non-JS Clients -->
+    <noscript>
+      <div style="max-width: 680px; margin: 40px auto; padding: 32px; background: #ffffff; color: #1e293b; border-radius: 24px; font-family: sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; border: 1px solid #e2e8f0;">
+        <h1 style="color: #1e1b4b; font-size: 24px; margin-bottom: 12px; font-weight: 800;">
+          Hệ Thống Tra Cứu Điểm Thi &amp; Phân Tích Kết Quả Khảo Sát
+        </h1>
+        <p style="font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 20px;">
+          Trang web chính thức hỗ trợ thí sinh tra cứu kết quả khảo sát các môn Toán, Tư duy Khoa học tự nhiên (KHTN), Tiếng Việt và Tiếng Anh. Cung cấp báo cáo phổ điểm chi tiết, điểm chuẩn hoá IRT, điểm Thưởng Phạt và ma trận năng lực theo từng chuyên đề kiến thức.
+        </p>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 16px; color: #1e40af; font-size: 14px; font-weight: 600;">
+          ℹ️ Vui lòng bật JavaScript trên trình duyệt của bạn để sử dụng đầy đủ các tính năng tìm kiếm tên thí sinh, xem bảng điểm chi tiết và xuất phiếu điểm PDF.
+        </div>
+      </div>
+    </noscript>
+
+    <!-- Root Element with Initial Loading Splash Screen -->
+    <div id="root">
+      <div class="initial-splash">
+        <div class="initial-logo-box">
+          <div class="initial-logo-card">
+            <img src="/logo.png" alt="Logo" width="60" height="60" />
+          </div>
+          <div class="initial-ring"></div>
+        </div>
+        <h2 class="initial-title">Đang tải kết quả thi...</h2>
+        <p class="initial-subtitle">Hệ thống phân tích &amp; tra cứu khảo sát</p>
+        <div class="initial-spinner"></div>
+      </div>
+    </div>
+
     <script type="module" src="/main.tsx"></script>
     <script>
       // Unregister any existing service workers to remove PWA cache
