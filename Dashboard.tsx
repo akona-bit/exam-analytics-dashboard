@@ -446,10 +446,6 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
               </div>
             </div>
             
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800/50 text-blue-700 dark:text-blue-300 text-xs font-bold tracking-wider uppercase mb-3 shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              Hệ Thống Tra Cứu Điểm &amp; Phân Tích Đề Thi
-            </div>
 
             <div className="relative inline-block fade-in">
               <h1 
