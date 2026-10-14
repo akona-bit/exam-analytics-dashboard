@@ -251,51 +251,23 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full relative bg-[#F8FAFC] dark:bg-[#07090E] text-slate-900 dark:text-slate-100 overflow-x-hidden font-sans selection:bg-blue-500 selection:text-white transition-colors duration-500">
-      {/* Dark Tech Mesh Glow Background System (No dots/textures) */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        {/* Deep Obsidian Space Base */}
-        <div className="absolute inset-0 bg-[#F8FAFC] dark:bg-[#07090E] transition-colors duration-500" />
-
-        {/* Top-Center Electric Blue & Indigo Aurora Dome */}
-        <div 
-          className="absolute -top-[25%] left-1/2 -translate-x-1/2 w-[900px] sm:w-[1300px] h-[650px] rounded-full pointer-events-none opacity-80 dark:opacity-100"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 30%, rgba(37, 99, 235, 0.22) 0%, rgba(99, 102, 241, 0.12) 45%, transparent 70%)',
-            filter: 'blur(100px)'
-          }}
-        />
-
-        {/* Top-Right Cyan Glow Accent */}
-        <div 
-          className="absolute top-[5%] -right-[10%] w-[500px] sm:w-[700px] h-[550px] rounded-full pointer-events-none opacity-70 dark:opacity-90"
-          style={{
-            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(14, 165, 233, 0.05) 50%, transparent 70%)',
-            filter: 'blur(110px)'
-          }}
-        />
-
-        {/* Bottom-Left Royal Indigo Accent */}
-        <div 
-          className="absolute -bottom-[15%] -left-[10%] w-[600px] sm:w-[800px] h-[600px] rounded-full pointer-events-none opacity-70 dark:opacity-90"
-          style={{
-            background: 'radial-gradient(circle, rgba(79, 70, 229, 0.14) 0%, rgba(67, 56, 202, 0.06) 50%, transparent 70%)',
-            filter: 'blur(120px)'
-          }}
-        />
-
-        {/* Center Atmospheric Depth Glow */}
-        <div 
-          className="absolute top-[40%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full pointer-events-none opacity-40 dark:opacity-60"
-          style={{
-            background: 'radial-gradient(ellipse, rgba(30, 58, 138, 0.15) 0%, transparent 70%)',
-            filter: 'blur(80px)'
-          }}
-        />
-
-        {/* Top Precision Horizon Line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 dark:via-blue-400/35 to-transparent" />
-      </div>
+    <div className="min-h-[100dvh] w-full relative bg-[#f8fafc] dark:bg-[#0f172a] overflow-x-hidden font-sans">
+      {/* Background Image Layer */}
+      <div 
+        className="fixed inset-0 w-full h-full pointer-events-none"
+        style={{
+          backgroundImage: 'url("/bg.jpg?v=5")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'contrast(1.04) saturate(1.12) brightness(1.02)',
+          imageRendering: 'crisp-edges',
+          zIndex: 0
+        }}
+      />
+      {/* Subtle Cinematic Vignette for readability */}
+      <div 
+        className="fixed inset-0 w-full h-full pointer-events-none z-[1] bg-gradient-to-b from-slate-950/20 via-transparent to-slate-950/40"
+      />
 
       {/* Theme Toggle Button */}
       <button 
