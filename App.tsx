@@ -251,23 +251,39 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full relative bg-[#f8fafc] dark:bg-[#0f172a] overflow-x-hidden font-sans">
-      {/* Background Image Layer */}
-      <div 
-        className="fixed inset-0 w-full h-full pointer-events-none"
-        style={{
-          backgroundImage: 'url("/bg.jpg?v=5")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'contrast(1.04) saturate(1.12) brightness(1.02)',
-          imageRendering: 'crisp-edges',
-          zIndex: 0
-        }}
-      />
-      {/* Subtle Cinematic Vignette for readability */}
-      <div 
-        className="fixed inset-0 w-full h-full pointer-events-none z-[1] bg-gradient-to-b from-slate-950/20 via-transparent to-slate-950/40"
-      />
+    <div className="min-h-[100dvh] w-full relative bg-[#F8FAFC] dark:bg-[#07090E] text-slate-900 dark:text-slate-100 overflow-x-hidden font-sans selection:bg-blue-500 selection:text-white transition-colors duration-500">
+      {/* High-End Procedural Background System */}
+      <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
+        {/* Soft Ambient Aurora Diffuse Orbs */}
+        <div className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[700px] sm:w-[900px] h-[500px] rounded-full bg-gradient-to-b from-blue-500/12 via-indigo-500/8 to-transparent dark:from-blue-600/15 dark:via-indigo-600/10 dark:to-transparent blur-[120px] pointer-events-none" />
+        <div className="absolute top-[8%] right-[-10%] w-[450px] sm:w-[600px] h-[450px] rounded-full bg-cyan-400/8 dark:bg-sky-500/10 blur-[130px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] sm:w-[700px] h-[500px] rounded-full bg-indigo-500/8 dark:bg-indigo-700/10 blur-[140px] pointer-events-none" />
+        
+        {/* Crisp Micro-Dot Matrix Overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.4] dark:opacity-[0.22] pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(currentColor 1.2px, transparent 1.2px)`,
+            backgroundSize: '24px 24px',
+            maskImage: 'radial-gradient(ellipse 85% 70% at 50% 25%, black 25%, transparent 85%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 85% 70% at 50% 25%, black 25%, transparent 85%)'
+          }}
+        />
+
+        {/* Top Edge Horizon Highlight */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 dark:via-blue-400/25 to-transparent" />
+      </div>
+
+      {/* Theme Toggle Button */}
+      <button 
+        onClick={() => setIsDark(!isDark)} 
+        aria-label="Chuyển chế độ sáng/tối"
+        title={isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
+        className="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 p-2.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 shadow-lg shadow-slate-900/5 dark:shadow-black/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+      >
+        {isDark ? <Sun className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-400" /> : <Moon className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-700" />}
+      </button>
+
       {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
         {isLoading ? (
@@ -292,9 +308,12 @@ export default function App() {
 
         {/* Footer */}
         {!isLoading && (
-          <div className="mt-auto pt-8 pb-4 w-full text-center flex-shrink-0 relative z-20">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800/80 backdrop-blur-md inline-block px-5 py-2.5 rounded-full shadow-sm border border-white/50">
-              Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center translate-y-1.5 ml-2 hover:scale-110 transition-transform"><img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" className="h-6 w-auto" /></a>
+          <div className="mt-auto pt-10 pb-6 w-full text-center flex-shrink-0 relative z-20">
+            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md inline-flex items-center gap-1.5 px-4 py-2 rounded-full shadow-xs border border-slate-200/80 dark:border-slate-800">
+              <span>Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua</span>
+              <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center hover:scale-110 transition-transform">
+                <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" className="h-4.5 w-auto" />
+              </a>
             </p>
           </div>
         )}

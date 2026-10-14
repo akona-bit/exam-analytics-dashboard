@@ -440,46 +440,56 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
 
           {/* TITLE & DESCRIPTION */}
           <div className="text-center mb-6 flex flex-col items-center">
-            <div className="mb-4 fade-in transform transition-all hover:scale-105 duration-500">
-              <img src="/logo.png" alt="Logo" className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-[0_10px_25px_rgba(244,63,94,0.35)] rounded-full ring-4 ring-white/90 dark:ring-purple-400/50 shadow-2xl bg-white/90" />
+            <div className="mb-4 fade-in transform transition-all hover:scale-105 duration-300">
+              <div className="p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-900/5 dark:shadow-black/40 ring-1 ring-slate-100 dark:ring-white/10">
+                <img src="/logo.png" alt="Logo" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" />
+              </div>
             </div>
+            
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800/50 text-blue-700 dark:text-blue-300 text-xs font-bold tracking-wider uppercase mb-3 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              Hệ Thống Tra Cứu Điểm &amp; Phân Tích Đề Thi
+            </div>
+
             <div className="relative inline-block fade-in">
               <h1 
-                className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight px-4 z-10 relative premium-title pb-2"
+                className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight px-4 z-10 relative modern-title pb-2 max-w-4xl"
               >
                 {examName}
               </h1>
             </div>
           </div>
 
-          <div className="mb-10">
+          <div className="mb-8">
             <ExamTypeTabs active={examType} onChange={handleExamTypeChange} counts={examCounts} />
           </div>
           
           {/* FORM */}
-          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-6">
-            <div className="w-full rounded-[32px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-6 sm:p-8 flex flex-col gap-6 fade-in transform transition-all duration-300 border border-white/60 dark:border-purple-500/20 shadow-[0_20px_50px_-10px_rgba(15,23,42,0.3)] hover:shadow-[0_25px_60px_-10px_rgba(168,85,247,0.3)]">
+          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl px-2 flex flex-col items-center gap-5">
+            <div className="w-full rounded-3xl bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl p-6 sm:p-8 flex flex-col gap-6 fade-in border border-slate-200/80 dark:border-slate-800/90 shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/60 transition-all duration-300 hover:border-blue-500/30">
               <div className="flex flex-col gap-2 w-full">
               
-              <div className="flex-1 flex flex-col gap-3 relative w-full">
-                <label htmlFor="lookup-name" className="pl-2 text-xs sm:text-sm font-black uppercase tracking-widest text-indigo-950 dark:text-purple-200">Tra cứu điểm thi</label>
+              <div className="flex-1 flex flex-col gap-2.5 relative w-full">
+                <label htmlFor="lookup-name" className="pl-1 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                  Tra cứu kết quả thí sinh
+                </label>
                 <div className="relative group">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-purple-400 group-focus-within:text-purple-600 dark:group-focus-within:text-purple-400 transition-colors duration-300 pointer-events-none" />
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors duration-200 pointer-events-none" />
                   <input
                     id="lookup-name"
                     type="text"
-                    placeholder="Nhập họ và tên thí sinh..."
+                    placeholder="Nhập họ và tên thí sinh (ví dụ: Nguyễn Văn A)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
                     autoComplete="off"
-                    className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-slate-200/90 dark:border-purple-500/30 focus:border-purple-600 dark:focus:border-purple-400 focus:ring-4 focus:ring-purple-500/20 text-slate-900 dark:text-white placeholder:text-slate-400 font-bold text-lg transition-all bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 outline-none shadow-inner"
+                    className="w-full pl-14 pr-5 py-4 sm:py-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 font-semibold text-base sm:text-lg transition-all bg-slate-50/80 dark:bg-slate-950/60 hover:bg-white dark:hover:bg-slate-950/90 outline-none shadow-xs"
                   />
                 </div>
                 
                 {/* Suggestions Dropdown */}
                 {searchQuery.trim() && searchResults.type === 'success' && searchResults.data.length > 0 && (
-                  <div className="absolute top-[100%] mt-3 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-100 dark:border-purple-500/30 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-200">
+                  <div className="absolute top-[100%] mt-2 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200 divide-y divide-slate-100 dark:divide-slate-800">
                     {searchResults.data.map((student, idx) => (
                       <button
                         key={idx}
@@ -488,14 +498,15 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                           setSelectedStudent(student);
                           setSearchQuery('');
                         }}
-                        className="w-full text-left px-5 sm:px-6 py-3.5 sm:py-4 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all border-b border-slate-100 dark:border-slate-700/60 last:border-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 group/item"
+                        className="w-full text-left px-5 sm:px-6 py-3.5 hover:bg-blue-50/70 dark:hover:bg-slate-800/70 transition-all flex items-center justify-between gap-3 group/item cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 dark:text-purple-300 group-hover/item:scale-110 group-hover/item:bg-purple-600 group-hover/item:text-white transition-all duration-300 shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover/item:scale-105 group-hover/item:bg-blue-600 group-hover/item:text-white transition-all duration-200 shrink-0">
                             <Search className="w-4 h-4" />
                           </div>
-                          <span className="font-bold text-slate-800 dark:text-slate-200 group-hover/item:text-purple-600 dark:group-hover/item:text-purple-400 transition-colors truncate">{student.name}</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors truncate">{student.name}</span>
                         </div>
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">#{student.stt}</span>
                       </button>
                     ))}
                   </div>
@@ -507,9 +518,9 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
             <button 
               type="submit"
               disabled={!searchQuery.trim()}
-              className="w-full sm:w-auto sm:mx-auto mt-2 px-12 py-4 sm:py-5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-black rounded-2xl transition-all shadow-[0_10px_25px_-5px_rgba(168,85,247,0.5)] hover:shadow-[0_15px_30px_-5px_rgba(244,63,94,0.6)] hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:translate-y-0 text-base sm:text-lg tracking-widest flex items-center gap-3 justify-center group"
+              className="w-full sm:w-auto sm:min-w-[220px] sm:mx-auto mt-1 px-8 py-3.5 sm:py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl sm:rounded-2xl transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 hover:-translate-y-0.5 active:scale-98 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:translate-y-0 text-sm sm:text-base tracking-wider flex items-center gap-2.5 justify-center group cursor-pointer"
             >
-              <Search className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform duration-300" />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-200" />
               XEM KẾT QUẢ
             </button>
             </div>
@@ -614,7 +625,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
           {/* Profile Details Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3.5">
-              <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl overflow-hidden shrink-0 shadow-md border-2 border-indigo-200 dark:border-purple-500/40 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center relative">
+              <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl overflow-hidden shrink-0 shadow-sm border border-slate-200/90 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 flex items-center justify-center relative">
                 {studentRankInfo && (studentRankInfo.rankTp === 1 || studentRankInfo.rankTho === 1 || studentRankInfo.rankIrt === 1) ? (
                   <span className="text-3xl">👑</span>
                 ) : studentRankInfo && (studentRankInfo.rankTp === 2 || studentRankInfo.rankTho === 2 || studentRankInfo.rankIrt === 2) ? (
@@ -635,7 +646,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                     />
                     <div 
                       style={{ display: 'none' }}
-                      className="w-full h-full items-center justify-center font-black text-lg sm:text-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-inner"
+                      className="w-full h-full items-center justify-center font-black text-lg sm:text-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-inner"
                     >
                       {selectedStudent.name.trim().split(/\s+/).map(n => n[0]).slice(-2).join('').toUpperCase()}
                     </div>
@@ -648,7 +659,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                     {selectedStudent.name}
                   </h2>
                   {sbdMap?.[selectedStudent.name] && (
-                    <span className="px-2 py-0.5 text-xs font-black rounded-lg bg-indigo-100 dark:bg-purple-900/50 text-indigo-700 dark:text-purple-300 border border-indigo-200 dark:border-purple-700">
+                    <span className="px-2 py-0.5 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60">
                       SBD: {sbdMap[selectedStudent.name]}
                     </span>
                   )}
@@ -656,7 +667,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
                   <span>Mã thí sinh: #{selectedStudent.stt.toString().padStart(4, '0')}</span>
                   {studentHistory.length > 1 && (
-                    <span className="text-indigo-600 dark:text-purple-400 font-bold">
+                    <span className="text-blue-600 dark:text-blue-400 font-bold">
                       · {studentHistory.length} lần thi
                     </span>
                   )}
@@ -1068,7 +1079,7 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
               const getBarGradient = (pct: number) => {
                 if (pct >= 80) return 'bg-gradient-to-r from-emerald-500 to-teal-400';
                 if (pct >= 50) return 'bg-gradient-to-r from-amber-500 to-yellow-400';
-                return 'bg-gradient-to-r from-rose-500 to-pink-500';
+                return 'bg-gradient-to-r from-rose-500 to-rose-600';
               };
 
               return (
