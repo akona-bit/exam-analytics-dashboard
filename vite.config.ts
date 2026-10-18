@@ -19,7 +19,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
-      emptyOutDir: false,
+      emptyOutDir: true,
       target: 'esnext',
       minify: 'esbuild',
       cssCodeSplit: true,
