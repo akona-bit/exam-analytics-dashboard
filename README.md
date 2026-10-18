@@ -66,11 +66,12 @@ Web app cho phép học sinh tra cứu điểm thi và giáo viên phân tích k
 
 > Lưu ý: `package-lock.json` là lockfile duy nhất. CI và mọi lệnh trong tài liệu này dùng **npm**.
 >
-> `xlsx` được cài từ **CDN chính thức của SheetJS**, không phải npm registry:
-> `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`. Bản trên registry bị stale
-> (0.18.5) và có lỗ hổng prototype pollution đã vá từ 0.19.3. Hệ quả: `npm ci` ở CI
-> cần truy cập được `cdn.sheetjs.com`. Nếu môi trường build chặn network ra ngoài, hãy
-> vendor tarball về `vendor/` rồi đổi sang `file:vendor/xlsx-0.20.3.tgz`.
+> `xlsx` được **vendor sẵn** trong repo tại `vendor/xlsx-0.20.3.tgz` và khai báo bằng
+> `file:vendor/xlsx-0.20.3.tgz`, nên `npm ci` không cần mạng ra `cdn.sheetjs.com`.
+> Bắt buộc phải vendor vì bản trên npm registry bị stale (0.18.5) và có lỗ hổng
+> prototype pollution đã vá từ 0.19.3 — CDN của SheetJS là nguồn chính thức.
+> Khi nâng version: tải tarball mới từ `https://cdn.sheetjs.com/`, đặt vào `vendor/`,
+> rồi đổi `file:` trong `package.json`.
 
 ---
 
