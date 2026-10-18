@@ -17,8 +17,11 @@
  *   SUPABASE_EMAIL + SUPABASE_PASSWORD  nếu không có service role key
  *
  * ── Cờ an toàn ─────────────────────────────────────────────────────────────
- *   --dry-run    chỉ đọc và in ra số liệu, KHÔNG ghi gì
- *   --no-delete  không xoá dữ liệu cũ của exam type (mặc định có xoá)
+ *   --dry-run        chỉ đọc và in ra số liệu, KHÔNG ghi gì
+ *   --no-delete      không xoá dữ liệu cũ của exam type (mặc định có xoá)
+ *   --prune-unknown  đọc schema thật trên PostgREST rồi bỏ mọi cột mà database
+ *                   không có. Cần khi database chưa chạy đủ migration, ví dụ
+ *                   thiếu exam_type hoặc thiếu nhóm cột tv/ta.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -41,6 +44,7 @@ const value = (name: string, fallback?: string) => {
 
 const dryRun = flag('dry-run');
 const allowDelete = !flag('no-delete');
+const pruneUnknown = flag('prune-unknown');
 const examType = (value('type', 'survey') as ExamType) === 'mock' ? 'mock' : 'survey';
 
 /** .env chỉ chứa biến VITE_*; đọc thẳng để script Node không cần dotenv. */
@@ -78,7 +82,34 @@ const students = parseStudentsCsv(readCsv('raw_students.csv'));
 const responses = failedOnly(parseResponsesCsv(readCsv('raw_student_responses.csv'), students));
 const questions = parseQuestionsCsv(readCsv('questions.csv'));
 
-const withType = (rows: unknown[]) => rows.map(r => ({ ...(r as object), exam_type: examType }));
+/** Cột thực sự tồn tại trên database, đọc từ OpenAPI của PostgREST. */
+const liveColumns = new Map<string, Set<string>>();
+
+if (pruneUnknown) {
+  const spec = await fetch(`${url}/rest/v1/`, {
+    headers: { apikey: serviceRoleKey || anonKey, Accept: 'application/openapi+json' },
+  }).then(r => r.json());
+  for (const [name, def] of Object.entries<any>(spec.definitions || {})) {
+    liveColumns.set(name, new Set(Object.keys(def.properties || {})));
+  }
+  console.log(
+    'Schema thật: ' +
+    [...liveColumns].map(([t, c]) => `${t}(${c.size})`).join(' · ')
+  );
+}
+
+const withType = (rows: unknown[]) =>
+  rows.map(r => ({ ...(r as object), exam_type: examType }));
+
+/** Bỏ mọi key không có giá trị, và bỏ cột database không có (nếu --prune-unknown). */
+const sanitize = (row: object, table: string) => {
+  const known = liveColumns.get(table);
+  return Object.fromEntries(
+    Object.entries(row).filter(
+      ([k, v]) => v !== undefined && (!known || known.has(k))
+    )
+  );
+};
 
 console.log(`Đọc từ CSV: ${students.length} học sinh · ${questions.length} câu hỏi · ${responses.length} câu sai/bỏ trống`);
 console.log(`Exam type: ${examType}`);
@@ -120,13 +151,23 @@ for (const [table, rows] of [
   ['questions', questions],
   ['student_responses', responses],
 ] as const) {
-  if (allowDelete) {
+  const known = liveColumns.get(table);
+  const hasExamType = !known || known.has('exam_type');
+
+  if (allowDelete && hasExamType) {
     const { error } = await supabase.from(table).delete().eq('exam_type', examType);
     if (error) throw new Error(`xoá ${table}: ${error.message}`);
     console.log(`Đã xoá ${table} cũ của exam_type="${examType}"`);
+  } else if (allowDelete) {
+    console.log(`⚠ ${table} không có cột exam_type — bỏ qua bước xoá, dữ liệu sẽ chồng lên nhau nếu chạy lại.`);
   }
-  await insertChunked(table, withType(rows));
-  console.log(`✓ ${table}: ${rows.length} dòng`);
+
+  const payload = withType(rows).map(r => sanitize(r, table));
+  const dropped = Object.keys(withType(rows)[0]).length - Object.keys(payload[0]).length;
+  if (dropped > 0) console.log(`  (bỏ ${dropped} cột không có trong database: ${table})`);
+
+  await insertChunked(table, payload);
+  console.log(`✓ ${table}: ${payload.length} dòng`);
 }
 
 console.log(`\nXong. Kiểm tra lại trang tra cứu.`);
