@@ -8,6 +8,9 @@ public/data/
 .env*
 !.env.example
 *.csv
+# Bản đồ Vùng kiến thức là cấu hình app, không phải dữ liệu thi — cần commit
+# để build/CI không phụ thuộc file cục bộ.
+!knowledge_structure.csv
 response.json
 api_data.json
 question_texts.json

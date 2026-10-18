@@ -7,20 +7,19 @@ import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 import { Download } from 'lucide-react';
 import { CelebrationOverlay } from './CelebrationOverlay';
-import questionTexts from './question_texts.json';
-import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV, DomainCategory, defaultTopicMap } from './lib/knowledgeStructure';
+import { questionTextsFile } from './lib/contentFiles';
+import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV, DomainCategory } from './lib/knowledgeStructure';
 
 const AbilityDistribution = lazy(() => import('./AbilityDistribution').then(m => ({ default: m.AbilityDistribution })));
 const ClassAnalytics = lazy(() => import('./ClassAnalytics').then(m => ({ default: m.ClassAnalytics })));
 
 type QuestionTextsType = { [key: string]: string };
-const texts = questionTexts as QuestionTextsType;
+const texts = questionTextsFile as QuestionTextsType;
 
 interface Props { 
   questions: QuestionData[]; 
   students: StudentData[]; 
   examName: string; 
-  topicMap?: Record<string, number[]> | null;
   knowledgeCsv?: string;
   questionTexts?: Record<string, string>;
   answerLink?: string;
@@ -70,7 +69,7 @@ function ExamTypeTabs({ active, onChange, counts }: { active: ExamType; onChange
     </div>
   );
 }
-export function Dashboard({ questions, students, examName, topicMap, knowledgeCsv, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap, visibleParts }: Props) {
+export function Dashboard({ questions, students, examName, knowledgeCsv, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap, visibleParts }: Props) {
   const currentTexts = propQuestionTexts || texts;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);

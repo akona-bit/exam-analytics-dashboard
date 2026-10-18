@@ -8,7 +8,7 @@ import { Dashboard } from './Dashboard';
 import { AdminPage } from './AdminPage';
 import { QuestionData, StudentData } from './types';
 import { normalizeExamType } from './analytics';
-import defaultQuestionTexts from './question_texts.json';
+import { questionTextsFile } from './lib/contentFiles';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
 import { SkyBackground } from './SkyBackground';
@@ -175,9 +175,8 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [examName, setExamName] = useState('Kì Thi Khảo Sát');
-  const [topicMap, setTopicMap] = useState<Record<string, number[]> | null>(null);
   const [knowledgeCsv, setKnowledgeCsv] = useState<string>(() => localStorage.getItem('knowledge_csv') || DEFAULT_KNOWLEDGE_CSV);
-  const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(defaultQuestionTexts as Record<string, string>);
+  const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(questionTextsFile);
   const [answerLink, setAnswerLink] = useState('');
   const [nextExamDate, setNextExamDate] = useState('');
   const [examUrl, setExamUrl] = useState('');
@@ -217,7 +216,6 @@ export default function App() {
           setKnowledgeCsv(row.value);
           try { localStorage.setItem('knowledge_csv', row.value); } catch {}
         }
-        if (row.key === 'topic_map') try { setTopicMap(JSON.parse(row.value)); } catch {}
         if (row.key === 'question_texts') try { setQuestionTexts(JSON.parse(row.value)); } catch {}
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
@@ -321,7 +319,6 @@ export default function App() {
             questions={data} 
             students={studentData} 
             examName={examName} 
-            topicMap={topicMap} 
             knowledgeCsv={knowledgeCsv}
             questionTexts={questionTexts} 
             answerLink={answerLink} 

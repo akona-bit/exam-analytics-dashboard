@@ -85,7 +85,7 @@ location.hash === "#admin"  →  <AdminPage/>                       (bảng đi�
 ```
 
 ### `App.tsx` — root component
-- Giữ **toàn bộ state dùng chung**: `examName`, `topicMap`, `knowledgeCsv`, `questionTexts`, `answerLink`, `nextExamDate`, `examUrl`, `sbdMap`, `visibleParts`, `isDark`.
+- Giữ **toàn bộ state dùng chung**: `examName`, `knowledgeCsv`, `questionTexts`, `answerLink`, `nextExamDate`, `examUrl`, `sbdMap`, `visibleParts`, `isDark`.
 - Hydrate từ bảng key-value `exam_settings` (Supabase) + seed từ `question_texts.json`.
 - Dark mode: class `dark` trên `<html>`, lưu `localStorage.theme`.
 - Một hotspot 48×48 `opacity-0` ở góc trên phải mở `#admin`; card QR sinh từ `examUrl` qua `api.qrserver.com`.
@@ -131,7 +131,8 @@ Bước 2 có kiểm tra content-type để tránh nuốt phải `index.html` do
 | `analytics.ts` | Toàn bộ hàm thống kê thuần JS: `latestAttempts`, `mean`, `quantile`, `stdDev`, `describe`, `rankList`, `bandOf`, `thresholdRows`, `attemptAverages`… + hằng số `MAX_SUBJECT_SCORE = 25`, `MAX_TOTAL_SCORE = 50`, `ABILITY_BANDS` |
 | `types.ts` | `StudentData`, `QuestionData`, `MetricKey`, `SubjectKey`, `ExamType` |
 | `lib/supabase.ts` | Khởi tạo client, export `isSupabaseConfigured` + `supabase` (hoặc `null`) |
-| `lib/knowledgeStructure.ts` | Mô hình ma trận kiến thức: `parseKnowledgeCSV`, `DEFAULT_KNOWLEDGE_CSV` (mẫu 120 câu / 14 vùng), `DOMAIN_PALETTES`, `getPalette`, `defaultTopicMap` |
+| `lib/contentFiles.ts` | Nạp nội dung tĩnh từ file: `knowledgeCsvFile` (CSV vùng kiến thức), `questionTextsFile` — qua `import.meta.glob` nên thiếu file vẫn build được |
+| `lib/knowledgeStructure.ts` | Mô hình ma trận kiến thức: `parseKnowledgeCSV`, `DEFAULT_KNOWLEDGE_CSV` (đọc từ `knowledge_structure.csv`), `DOMAIN_PALETTES`, `getPalette` |
 | `scripts/export-data.ts` | Build-time exporter: đọc 3 CSV → ghi `public/data/students.json` + `questions.json` |
 
 ### Ghi chú về `lib/csvParser.ts`
@@ -188,7 +189,8 @@ Hai hàm dùng nhiều nhất:
 ├── raw_students.csv             # ⛔ gitignored
 ├── raw_student_responses.csv    # ⛔ gitignored
 ├── questions.csv                # ⛔ gitignored
-├── question_texts.json          # ⛔ gitignored — BẮT BUỘC cho build
+├── question_texts.json          # ⛔ gitignored — tuỳ chọn (seed, runtime lấy từ Supabase)
+├── knowledge_structure.csv      # ✅ commit — bản đồ Vùng kiến thức / Chuyên đề
 │
 ├── schema.sql                   # Schema Supabase đầy đủ — CHỈ cho DB trống
 ├── schema_migrate.sql           # Migration idempotent cho DB đang chạy
@@ -219,10 +221,13 @@ Ba file CSV và `question_texts.json` **không** được commit (xem `.gitignor
 raw_students.csv
 raw_student_responses.csv
 questions.csv
-question_texts.json
+question_texts.json          # tuỳ chọn — xem ghi chú bên dưới
 ```
 
-> `question_texts.json` được `import` tĩnh trong `App.tsx` và `Dashboard.tsx` → **thiếu file này thì build fail ngay**.
+> Cả `question_texts.json` và `knowledge_structure.csv` đều được nạp qua `import.meta.glob`
+> trong `lib/contentFiles.ts`, **không** import tĩnh. Thiếu file vẫn `npm run lint` và
+> `npm run build` chạy bình thường — app chỉ khởi động rỗng rồi lấy nội dung từ Supabase
+> (`exam_settings.question_texts` / `exam_settings.knowledge_csv`).
 
 ### 3. Cấu hình biến môi trường
 ```bash
@@ -309,8 +314,8 @@ FileReader (3 file CSV)  →  parseStudents / parseResponses / parseQuestions  (
 4. **Cài đặt kỳ thi** — `exam_name` + 4 cờ hiển thị: `show_tv`, `show_ta`, `show_toan`, `show_tdkh` (thiếu thì mặc định `true`).
 5. **Cài đặt hiển thị phụ** — `answer_link`, `next_exam_date`, `exam_url` (sinh QR).
 6. **Danh sách SBD** — textarea dạng `Tên<TAB>SBD`, lưu vào `sbd_map`.
-7. **Knowledge CSV** — upload / textarea / nút *Đặt lại mẫu 120 câu*, có **preview sống** (số vùng, số câu, badge 120-câu hay 60-câu). Lưu vào cả `knowledge_csv` (Supabase) và `localStorage`.
-8. **JSON thủ công** — sửa trực tiếp `topic_map` và `question_texts`.
+7. **Knowledge CSV** — upload / textarea / nút *Đặt lại mẫu 120 câu*, có **preview sống** (số vùng, số câu, badge 120-câu hay 60-câu). Lưu vào cả `knowledge_csv` (Supabase) và `localStorage`. Đây là nguồn duy nhất của ma trận kiến thức.
+8. **Nội dung câu hỏi** — textarea JSON cho `question_texts`, seed từ `question_texts.json`.
 9. **Vùng nguy hiểm** — xoá một loại kỳ thi hoặc xoá toàn bộ.
 
 Mọi cài đặt đều `upsert` vào `exam_settings` theo khoá `key`, kèm `updated_at`.
@@ -417,6 +422,9 @@ Những thứ sau đã bị xoá vì là dead code / gây rối:
 |---|---|
 | `KnowledgeMatrix.tsx` | Không nơi nào import — `Dashboard.tsx` đã nội tuyến lại |
 | `AdminPage.handleUploadOld` (~55 dòng) | Nhánh upload song song không bao giờ được gọi |
+| Editor "Ma trận kiến thức (JSON)" + khoá `exam_settings.topic_map` | Trùng lặp với Knowledge CSV — CSV đã tự sinh `topicMap`, và `Dashboard` có nhận prop `topicMap` nhưng **không dùng ở đâu cả** |
+| `lib/knowledgeStructure.defaultTopicMap` | Chỉ tồn tại để seed cho editor JSON đã xoá |
+| `topicMap` trong `ParsedKnowledgeStructure` | Không còn nơi nào tiêu thụ sau khi bỏ prop `Dashboard.topicMap` |
 | `Dashboard.maskEmail` | Định nghĩa nhưng không dùng (email đã bị ẩn khỏi UI) |
 | `AdminPage` props `questions/students/topicMap/questionTexts` | Khai báo nhưng không dùng |
 | `ClassAnalytics.onSelectStudent`, `QuestionTable.onRowClick` | Khai báo nhưng không dùng |

@@ -3,6 +3,8 @@
  * Parses CSV mapping of domains, topics, question counts, and question numbers.
  */
 
+import { knowledgeCsvFile } from './contentFiles';
+
 export interface TopicItem {
   name: string;
   count: number;
@@ -21,133 +23,11 @@ export interface DomainCategory {
 
 export interface ParsedKnowledgeStructure {
   domains: DomainCategory[];
-  topicMap: Record<string, number[]>;
   totalQuestions: number;
   is120Mode: boolean;
 }
 
-export const DEFAULT_KNOWLEDGE_CSV = `,Kiến thức,,
-Tri thức ngữ văn,Văn học cổ đại và sân khấu,2,12
-,,,
-,"Thơ (trung đại, hiện đại, cận đại)",5,
-,,,
-,,,
-,"Văn xuôi, kịch, kí, tri thức ngữ văn khác",5,
-,,,
-Ngữ pháp,Chỉnh tả,2,8
-,,,
-,,,
-,Chữa lỗi trong câu/từ,2,
-,,,
-,,,
-,,,
-,,,
-,Nghĩa hoặc cấu trúc của từ hoặc câu,4,
-,,,
-,,,
-,,,
-,,,
-Đọc hiểu văn bản,Văn bản thông tin,5,10
-,,,
-,,,
-,,,
-,,,
-,,,
-,,,
-,,,
-,,,
-,Văn bản nghị luận (xã hội/văn học),5,
-,,,
-,,,
-,,,
-,,,
-,,,
-,,,
-,,,
-Ngữ pháp,Điền khuyết,5,15
-,,,
-,,,
-,,,
-,,,
-,Tìm lỗi sai,5,
-,,,
-,,,
-,,,
-,,,
-,Viết lại câu,5,
-,,,
-,,,
-,,,
-,,,
-Đọc hiểu,Đọc hiểu đời sống,7,15
-,,,
-,,,
-,,,
-,,,
-,,,
-,Đọc hiểu học thuật,8,
-,,,
-,,,
-,,,
-,,,
-,,,
-,,,
-,,,
-Giải tích,"Nguyên hàm, tích phân",2,9
-,,,
-,"Giới hạn, hàm số liên tục",2,
-,,,
-,"Khảo sát hàm số (bậc 3, phân thức). Có thể có tham số",3,
-,,,
-,,,
-,,,
-,,,
-,"Cấp số cộng/nhân, dãy số",1,
-,,,
-,,1,
-Đại số,"Số mũ, logarit",2,7
-,,,
-,,,
-,"Giải, xét dấu, biện luận phương trình/bất phương trình/Hệ phương trình",2,
-,,,
-,,,
-,Quy hoạch tuyến tính,2,
-,,,
-,Lượng giác,1,
-,,,
-Hình học,Hinh học phẳng,1,9
-,,,
-,,,
-,,,
-,Hệ toạ độ Oxy,3,
-,,,
-,,,
-,,,
-,Hệ toạ độ Oxyz,2,
-,,,
-,,,
-,,,
-,Hình học không gian,3,
-,,,
-,,,
-,,,
-Toán rời rạc và xác suất,Xác suất,3,5
-,,,
-,,,
-,,,
-,,,
-,Lý thuyết đồ thị,2,
-,,,
-Logic & PTSL,Logic đơn nhóm,3,6
-,Logic đa nhóm,3,
-,PTSL bảng,3,6
-,PTSL biểu đồ,3,
-SLKH (KHTN),Lý,3,9
-,Hoá,3,
-,Sinh,3,
-SLKH (KHXH),Địa,3,9
-,Sử,3,
-,KTPL,3,`;
+export const DEFAULT_KNOWLEDGE_CSV = knowledgeCsvFile;
 
 const DOMAIN_PALETTES: Record<string, { color: string; bgColor: string; barColor: string }> = {
   'Tri thức ngữ văn': { color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-500/10 border-amber-500/20', barColor: 'bg-amber-500' },
@@ -285,7 +165,6 @@ export function parseKnowledgeCSV(csvText: string, examMaxQuestion = 120): Parse
   const domainGroups: DomainGroup[] = [];
   let currentGroup: DomainGroup | null = null;
   let currentQNum = 1;
-  const topicMap: Record<string, number[]> = {};
 
   for (const entry of entriesToUse) {
     if (!currentGroup || currentGroup.domain !== entry.domain) {
@@ -304,12 +183,6 @@ export function parseKnowledgeCSV(csvText: string, examMaxQuestion = 120): Parse
       count: entry.count,
       qNums,
     });
-
-    if (topicMap[entry.topic]) {
-      topicMap[entry.topic] = [...topicMap[entry.topic], ...qNums];
-    } else {
-      topicMap[entry.topic] = qNums;
-    }
   }
 
   const domains: DomainCategory[] = domainGroups.map(group => {
@@ -326,11 +199,8 @@ export function parseKnowledgeCSV(csvText: string, examMaxQuestion = 120): Parse
 
   return {
     domains,
-    topicMap,
     totalQuestions: currentQNum - 1,
     is120Mode: !is60MathExam && totalQuestionsInCSV >= 120,
   };
 }
-
-export const defaultTopicMap: Record<string, number[]> = parseKnowledgeCSV(DEFAULT_KNOWLEDGE_CSV, 60).topicMap;
 

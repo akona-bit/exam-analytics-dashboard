@@ -6,8 +6,7 @@ import {
   FileSpreadsheet, Users, BookOpen, ChevronLeft, Loader2, Settings, Save, Download
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import defaultQuestionTexts from './question_texts.json';
-import { defaultTopicMap } from './lib/knowledgeStructure';
+import { questionTextsFile } from './lib/contentFiles';
 import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
 import { EXAM_TYPES, EXAM_TYPE_LABEL, GIOI_MIN, MAX_ALL_SUBJECT_SCORE, normalizeExamType } from './analytics';
 import {
@@ -308,13 +307,8 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
   const [knowledgeCsvSaving, setKnowledgeCsvSaving] = useState(false);
   const [knowledgeCsvStatus, setKnowledgeCsvStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
-  // Settings: Topic Map
-  const [topicMapStr, setTopicMapStr] = useState(JSON.stringify(defaultTopicMap, null, 2));
-  const [topicMapSaving, setTopicMapSaving] = useState(false);
-  const [topicMapStatus, setTopicMapStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
-
   // Settings: Question Texts
-  const [questionTextsStr, setQuestionTextsStr] = useState(JSON.stringify(defaultQuestionTexts, null, 2));
+  const [questionTextsStr, setQuestionTextsStr] = useState(JSON.stringify(questionTextsFile, null, 2));
   const [questionTextsSaving, setQuestionTextsSaving] = useState(false);
   const [questionTextsStatus, setQuestionTextsStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
@@ -352,7 +346,6 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
       for (const row of data) {
         if (row.key === 'exam_name' && row.value) setExamName(row.value);
         if (row.key === 'knowledge_csv' && row.value) setKnowledgeCsvStr(row.value);
-        if (row.key === 'topic_map' && row.value) setTopicMapStr(row.value);
         if (row.key === 'question_texts' && row.value) setQuestionTextsStr(row.value);
         if (row.key === 'answer_link' && row.value) setAnswerLink(row.value);
         if (row.key === 'next_exam_date' && row.value) setNextExamDate(row.value);
@@ -531,13 +524,6 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
           { onConflict: 'key' }
         );
         if (err1) throw err1;
-
-        // Also update topic_map to keep synced
-        const { error: err2 } = await supabase.from('exam_settings').upsert(
-          { key: 'topic_map', value: JSON.stringify(parsed.topicMap, null, 2), updated_at: new Date().toISOString() },
-          { onConflict: 'key' }
-        );
-        if (err2) throw err2;
       }
 
       setKnowledgeCsvStatus({
@@ -549,30 +535,6 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
       setKnowledgeCsvStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
     }
     setKnowledgeCsvSaving(false);
-  };
-
-  const handleSaveTopicMap = async () => {
-    if (!supabase || !topicMapStr.trim()) return;
-    try {
-      JSON.parse(topicMapStr);
-    } catch {
-      setTopicMapStatus({ type: 'error', msg: 'Lỗi: Chuỗi JSON không hợp lệ!' });
-      return;
-    }
-    setTopicMapSaving(true);
-    setTopicMapStatus(null);
-    try {
-      const { error } = await supabase.from('exam_settings').upsert(
-        { key: 'topic_map', value: topicMapStr.trim(), updated_at: new Date().toISOString() },
-        { onConflict: 'key' }
-      );
-      if (error) throw error;
-      setTopicMapStatus({ type: 'success', msg: 'Đã lưu ma trận kiến thức thành công!' });
-      setTimeout(() => setTopicMapStatus(null), 3000);
-    } catch (err: any) {
-      setTopicMapStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
-    }
-    setTopicMapSaving(false);
   };
 
   const handleSaveQuestionTexts = async () => {
@@ -1142,38 +1104,6 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           >
             {knowledgeCsvSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Lưu ma trận CSV
-          </button>
-        </div>
-      </div>
-
-      {/* Topic Map Settings */}
-      <div className="card p-5 sm:p-6">
-        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-indigo-500" />
-          Ma trận kiến thức (JSON)
-        </h2>
-        <div className="flex flex-col gap-3">
-          <div>
-            <textarea
-              value={topicMapStr}
-              onChange={e => setTopicMapStr(e.target.value)}
-              placeholder='Ví dụ: { "Hàm số bậc 2": [6, 14] }'
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-slate-700 transition-all bg-white h-48 font-mono text-xs"
-            />
-          </div>
-          {topicMapStatus && (
-            <div className={`flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg ${topicMapStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-              {topicMapStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-              {topicMapStatus.msg}
-            </div>
-          )}
-          <button
-            onClick={handleSaveTopicMap}
-            disabled={topicMapSaving || !topicMapStr.trim()}
-            className="w-fit px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center gap-2"
-          >
-            {topicMapSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Lưu ma trận
           </button>
         </div>
       </div>
