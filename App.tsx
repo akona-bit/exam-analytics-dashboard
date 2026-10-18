@@ -36,47 +36,90 @@ interface SupabaseResponse {
   exam_type?: string | null;
 }
 
-/** Fetch all data from Supabase, return null if it fails or is empty */
+/**
+ * Bọc một promise để nó không bao giờ treo vô hạn.
+ * Trả về `null` khi hết thời gian — promise gốc vẫn chạy nền nhưng không ai chờ nó nữa.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T | null> {
+  return new Promise<T | null>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      console.warn(`${label}: quá ${Math.round(ms / 1000)}s, bỏ qua và dùng nguồn dữ liệu dự phòng.`);
+      resolve(null);
+    }, ms);
+    promise.then(
+      value => { clearTimeout(timer); resolve(value); },
+      error => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
+/**
+ * Thời gian chờ tối đa cho Supabase. Bảng `student_responses` có ~42k dòng và được
+ * đọc với RLS cho phép anonymous, nên cần đủ rộng cho mạng chậm — nhưng không được
+ * để người dùng nhìn "Đang tải dữ liệu..." mãi. Hết giờ sẽ fallback sang
+ * `/api/*` rồi tới file JSON tĩnh trong `public/data/`.
+ */
+const SUPABASE_TIMEOUT_MS = 12000;
+
+/** Fetch all data from Supabase. Returns null ONLY if Supabase connection/query failed. */
 async function fetchFromSupabase(): Promise<{ questions: QuestionData[]; students: StudentData[] } | null> {
   if (!supabase) return null;
 
   try {
-    const [studentsRes, questionsRes, responsesRes] = await Promise.all([
+    const pending = await withTimeout(Promise.all([
       supabase.from('students').select('*').order('stt', { ascending: true }),
       supabase.from('questions').select('*'),
       supabase.from('student_responses').select('*'),
-    ]);
+    ]), SUPABASE_TIMEOUT_MS, 'Tải dữ liệu từ Supabase');
+    if (pending === null) return null;
+    const [studentsRes, questionsRes, responsesRes] = pending;
 
-    // If any error or no students data, fall back
-    if (studentsRes.error || questionsRes.error || responsesRes.error) return null;
-    if (!studentsRes.data || studentsRes.data.length === 0) return null;
+    // If query failed with error, return null to fall back
+    if (studentsRes.error || questionsRes.error || responsesRes.error) {
+      console.warn('Lỗi truy vấn Supabase:', studentsRes.error || questionsRes.error || responsesRes.error);
+      return null;
+    }
+
+    const rawStudents = (studentsRes.data || []) as SupabaseStudent[];
+    const rawQuestions = (questionsRes.data || []) as SupabaseQuestion[];
+    const rawResponses = (responsesRes.data || []) as SupabaseResponse[];
+
+    // Supabase trả về 200 + mảng rỗng khi bảng chưa được nạp dữ liệu. Đó KHÔNG phải
+    // lỗi, nhưng nếu chấp nhận thì dashboard sẽ trống và fallback sang file JSON tĩnh
+    // (public/data/*.json) không bao giờ chạy. Coi như "chưa có dữ liệu" để rơi xuống.
+    if (rawStudents.length === 0 || rawQuestions.length === 0) {
+      console.warn(
+        `Supabase trả về 0 dòng (students=${rawStudents.length}, questions=${rawQuestions.length}) — dùng dữ liệu tĩnh.`
+      );
+      return null;
+    }
 
     // Group responses by exam type + student_stt
     const responsesByKey = new Map<string, { question_num: number; status: string }[]>();
-    for (const r of (responsesRes.data || []) as SupabaseResponse[]) {
+    for (const r of rawResponses) {
       const key = `${normalizeExamType(r.exam_type)}::${r.student_stt}`;
       if (!responsesByKey.has(key)) responsesByKey.set(key, []);
       responsesByKey.get(key)!.push({ question_num: r.question_num, status: r.status });
     }
 
     // Map students
-    const students: StudentData[] = (studentsRes.data as SupabaseStudent[]).map(s => {
+    const students: StudentData[] = rawStudents.map(s => {
       const examType = normalizeExamType(s.exam_type);
       return {
-      stt: s.stt,
-      name: s.name,
-      email: s.email || undefined,
-      examType,
-      tho: { toan: s.tho_toan, tdkh: s.tho_tdkh, tv: s.tho_tv ?? null, ta: s.tho_ta ?? null },
-      irt: { toan: s.irt_toan, tdkh: s.irt_tdkh, tv: s.irt_tv ?? null, ta: s.irt_ta ?? null },
-      thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh, tv: s.tp_tv ?? null, ta: s.tp_ta ?? null },
-      note: s.note || undefined,
-      responses: responsesByKey.get(`${examType}::${s.stt}`),
+        stt: s.stt,
+        name: s.name,
+        email: s.email || undefined,
+        examType,
+        tho: { toan: s.tho_toan, tdkh: s.tho_tdkh, tv: s.tho_tv ?? null, ta: s.tho_ta ?? null },
+        irt: { toan: s.irt_toan, tdkh: s.irt_tdkh, tv: s.irt_tv ?? null, ta: s.irt_ta ?? null },
+        thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh, tv: s.tp_tv ?? null, ta: s.tp_ta ?? null },
+        note: s.note || undefined,
+        responses: responsesByKey.get(`${examType}::${s.stt}`),
       };
     });
 
     // Map questions
-    const questions: QuestionData[] = (questionsRes.data as SupabaseQuestion[]).map(q => ({
+    const questions: QuestionData[] = rawQuestions.map(q => ({
       id: q.question_id,
       subject: q.subject,
       examType: normalizeExamType(q.exam_type),
@@ -92,7 +135,8 @@ async function fetchFromSupabase(): Promise<{ questions: QuestionData[]; student
     }));
 
     return { questions, students };
-  } catch {
+  } catch (err) {
+    console.error('Lỗi phân tích dữ liệu Supabase:', err);
     return null;
   }
 }
@@ -160,9 +204,14 @@ export default function App() {
   // Fetch exam settings from Supabase (name, topic map, question texts, knowledge csv)
   useEffect(() => {
     if (!supabase) return;
-    supabase.from('exam_settings').select('key, value').then(({ data }) => {
-      if (!data) return;
-      for (const row of data) {
+    const pending = withTimeout(
+      Promise.resolve(supabase.from('exam_settings').select('key, value')).then(({ data }) => data),
+      SUPABASE_TIMEOUT_MS,
+      'Tải cài đặt kỳ thi từ Supabase',
+    );
+    pending.then(rows => {
+      if (!rows) return;
+      for (const row of rows) {
         if (row.key === 'exam_name' && row.value) setExamName(row.value);
         if (row.key === 'knowledge_csv' && row.value) {
           setKnowledgeCsv(row.value);
@@ -179,6 +228,8 @@ export default function App() {
         if (row.key === 'show_toan') setShowToan(row.value !== 'false');
         if (row.key === 'show_tdkh') setShowTdkh(row.value !== 'false');
       }
+    }).catch(err => {
+      console.warn('Không tải được cài đặt kỳ thi từ Supabase:', err);
     });
   }, []);
 
@@ -189,7 +240,7 @@ export default function App() {
     // Try Supabase first (if configured)
     if (isSupabaseConfigured) {
       const supa = await fetchFromSupabase();
-      if (supa) {
+      if (supa !== null) {
         setData(supa.questions);
         setStudentData(supa.students);
         setIsLoading(false);
@@ -197,13 +248,13 @@ export default function App() {
       }
     }
 
-    // Fall back to static JSON files
+    // Fall back to static JSON files only if Supabase is NOT configured or had query error
     try {
       const { questions, students } = await fetchFromStatic();
       setData(questions);
       setStudentData(students);
       setIsLoading(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
       setLoadError(err?.message || 'Đã có lỗi xảy ra khi tải dữ liệu.');
       setIsLoading(false);
@@ -221,7 +272,7 @@ export default function App() {
         </button>
         <main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
           <AdminPage 
-            onExit={() => { window.location.hash = ''; setIsAdmin(false); }} 
+            onExit={() => { window.location.hash = ''; setIsAdmin(false); loadData(); }} 
             visibleParts={{ tv: showTv, ta: showTa, toan: showToan, tdkh: showTdkh }}
           />
         </main>
