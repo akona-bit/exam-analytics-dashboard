@@ -1,124 +1,387 @@
-# 🎓 Hệ Thống Tra Cứu & Phân Tích Điểm Thi (Exam Analytics Dashboard)
+# 🎓 Kết Quả Thi THPT — Bảng Điều Khiển Tra Cứu & Phân Tích Điểm
 
-Hệ thống cung cấp một bảng điều khiển (dashboard) toàn diện giúp học sinh và giáo viên tra cứu điểm thi, phân tích sự tiến bộ qua từng đợt kiểm tra và đánh giá chi tiết lỗ hổng kiến thức.
+Web app cho phép học sinh tra cứu điểm thi và giáo viên phân tích kết quả toàn khóa: xếp loại năng lực, phân tích độ khó từng câu, ma trận kiến thức và xuất PDF phiếu điểm.
 
-## ✨ Tính Năng Nổi Bật
+- **Deploy:** Cloudflare Pages — <https://ketquathithumitht.pages.dev>
+- **Trang quản trị:** mở `#admin` trên URL (góc trên bên phải có nút ẩn dẫn tới).
 
-### 1. Dành cho Học sinh (Tra cứu cá nhân)
-- **Tra cứu thông minh:** Tìm kiếm nhanh chóng qua Tên hoặc Email. Hỗ trợ gộp chung lịch sử của các thí sinh đã thi nhiều lần.
-- **Biểu đồ đa dạng:** 
-  - Trực quan hóa điểm số (Điểm Thô, Điểm IRT, Điểm Thưởng Phạt) của hai môn Toán và Tư Duy Khoa Học (TDKH).
-  - So sánh trực tiếp tiến độ cá nhân với điểm trung bình của toàn lớp qua từng đợt thi.
-- **Bảng so sánh lịch sử thi:** Đánh giá chi tiết sự tiến bộ qua các lần thi khác nhau (Lần 1, Lần 2, v.v.).
-- **Ma trận kiến thức:** Chỉ rõ những câu hỏi học sinh làm sai hoặc bỏ trống, giúp nhanh chóng xác định các phần kiến thức cần ôn tập lại.
+---
 
-### 2. Dành cho Giáo viên (Thống kê lớp học)
-- **Tóm tắt nhanh:** Nắm bắt ngay lập tức tổng số thí sinh tham gia, số lần thi trung bình và điểm trung bình của toàn khóa.
-- **Phân tích câu hỏi (Item Analysis):** Bảng phân tích tỷ lệ làm Đúng/Sai/Bỏ trống của từng câu hỏi, kèm theo điểm phạt để xác định mức độ khó của đề thi.
-- **Vinh danh xuất sắc:** Tự động phát hiện và hiển thị bảng chúc mừng (kèm hiệu ứng pháo hoa) cho Thủ khoa và Á khoa. Hiệu ứng được thiết kế tối giản, tinh tế mang phong cách bằng khen sang trọng và được tối ưu hóa chỉ xuất hiện 1 lần cho mỗi lượt truy cập để không làm phiền người dùng.
+## 📋 Mục lục
 
-### 3. Tab Thống Kê & Phân Tích (tách khỏi màn hình tra cứu)
-Màn hình tra cứu chỉ giữ hero + ô tìm kiếm. Toàn bộ số liệu nằm ở tab **Thống Kê & Phân Tích**:
-- **Chuyển đổi chỉ số:** Mọi biểu đồ/bảng cập nhật tức thì theo Điểm Thô / Điểm IRT / Thưởng Phạt.
-- **KPI tổng quan:** Tổng thí sinh, điểm trung bình Toán/TDKH, trung vị tổng điểm, tỷ lệ đạt ≥ 60%.
-- **Histogram phân bố điểm:** Phân bố Toán và TDKH theo khoảng điểm (bước 2.5), lần thi mới nhất.
-- **Xếp loại năng lực (Donut):** 5 mức Yếu → Xuất sắc, % trên vòng trống + số thí sinh ở chú giải.
-- **Scatter Toán – TDKH:** Mối quan hệ hai môn từng thí sinh, kèm đường trung bình lớp.
-- **Tỷ lệ đạt ngưỡng:** Thanh ngang các ngưỡng 40%–80% trên thang 50 điểm.
-- **Bảng thống kê phân tán:** Số TS, Min, Q1, Trung vị, Q3, Q90, Max, Trung bình, STĐ từng môn.
-- **Xu hướng & cơ cấu:** Điểm TB toàn khóa qua từng lần thi, phân bố số lần thi.
-- **Bảng xếp hạng:** Top 10 điểm cao nhất và Top 10 cần cải thiện (nhấp để mở hồ sơ thí sinh).
-- **Phân tích câu hỏi:** Histogram độ khó 60 câu, 5 câu dễ/khó nhất, bảng thống kê từng câu (lọc theo môn).
+- [Tính năng](#-tính-năng)
+- [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
+- [Kiến trúc tổng thể](#-kiến-trúc-tổng-thể)
+- [Luồng dữ liệu](#-luồng-dữ-liệu)
+- [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+- [Cài đặt & chạy](#-cài-đặt--chạy)
+- [Dữ liệu đầu vào](#-dữ-liệu-đầu-vào)
+- [Trang quản trị](#-trang-quản-trị)
+- [Supabase](#-supabase)
+- [Deploy](#-deploy)
+- [Ghi chú bảo mật](#-ghi-chú-bảo-mật)
+- [Đã dọn trong lần refactor gần nhất](#-đã-dọn-trong-lần-refactor-gần-nhất)
 
-## 🎨 Thiết Kế Giao Diện & Trải Nghiệm Người Dùng (UI/UX)
+---
 
-Hệ thống được thiết kế với triết lý tối giản (minimalism), tập trung tối đa vào dữ liệu và tối ưu hóa luồng tương tác của người dùng.
+## ✨ Tính năng
 
-### Trải Nghiệm Người Dùng (UX - User Experience)
-- **Tìm kiếm tức thì (Real-time Search):** Thanh tìm kiếm phản hồi ngay lập tức khi người dùng gõ phím, tự động nhóm và gợi ý kết quả hợp lý nhất mà không cần tải lại trang.
-- **Storytelling qua dữ liệu:** Biến bảng số liệu khô khan thành các biểu đồ xu hướng trực quan và các con số tóm tắt, giúp giáo viên và học sinh nắm bắt bức tranh toàn cảnh chỉ trong vài giây.
-- **Luồng thao tác không gián đoạn:** Toàn bộ ứng dụng là một Single Page Application (SPA). Việc chuyển đổi, cuộn trang hay tra cứu giữa các học sinh diễn ra mượt mà, không độ trễ.
-- **Chống làm phiền (Anti-annoyance):** Hiệu ứng chúc mừng (Celebration) được giới hạn xuất hiện **chỉ 1 lần duy nhất** cho mỗi thí sinh trong cùng một phiên sử dụng, bảo vệ sự tập trung khi học sinh muốn xem lại điểm nhiều lần.
+### Với học sinh
+- **Tra cứu tức thì** theo tên (email bị ẩn hoàn toàn khỏi giao diện), tự gộp lịch sử các lần thi của cùng một thí sinh.
+- **4 tab hồ sơ:**
+  - **Tổng quan** — Radar so sánh với điểm TB lớp, thang điểm Thô / IRT / Thưởng–Phạt, biểu đồ cột tổng điểm từng môn, Area "Tiến bộ qua các lần thi".
+  - **Vùng kiến thức** — số câu đúng theo vùng, filter pill (Tất cả / ≥80% / 50–79% / <50%), chuyển đổi giữa dạng thẻ và bảng, bảng chi tiết câu sai & bỏ trống.
+  - **Lịch sử thi** — ma trận so sánh nhiều lần thi (chỉ hiện khi có từ 2 lần).
+  - **Lớp học** — phân bổ năng lực + phân tích toàn khóa (lazy-load).
+- **Xuất PDF** — `html2canvas-pro` (hỗ trợ OKLCH) + `jsPDF`, tự chia nhiều trang, nhúng avatar thành dataURL.
+- **Vinh danh** — overlay Thủ Khoa / Á Khoa kèm pháo hoa, **chỉ hiện 1 lần mỗi phiên** (`celebratedRef`).
+- **Xem đáp án** từng câu qua modal, lấy nội dung từ `question_texts.json`.
 
-### Giao Diện Người Dùng (UI - User Interface)
-- **Hệ thống màu sắc ngữ nghĩa (Semantic Colors):**
-  - 🔵 **Indigo/Blue:** Màu chủ đạo, mang lại cảm giác học thuật, hiện đại và tin cậy.
-  - 🔴 **Rose (Đỏ hồng):** Nhấn mạnh các cảnh báo lỗi sai, câu trả lời sai.
-  - 🟡 **Amber (Vàng hổ phách):** Biểu thị các điểm phạt, câu bỏ trống, hoặc được dùng tinh tế trong thiết kế bằng khen Thủ khoa.
-  - 🟢 **Emerald (Xanh lục):** Thể hiện sự tiến bộ, thành tích tốt và câu trả lời đúng.
-- **Bố cục "Bento Box" (Card-based Layout):** Các thành phần chức năng (biểu đồ, bảng, thống kê) được phân chia rõ ràng vào từng ô thẻ (card) bo góc mềm mại, kết hợp đổ bóng nhẹ (soft shadow) giúp giao diện rất thoáng và dễ quét (scannable).
-- **Responsive hoàn hảo (Mobile-First):** Giao diện tự động thích ứng với mọi kích thước màn hình từ điện thoại di động (stacked layouts) cho đến Desktop (side-by-side charts).
-- **Typography & Khoảng trắng:** Sử dụng bộ phông chữ hiện đại, không chân (sans-serif) với khoảng trắng (negative space) hào phóng, giúp giảm tải sự mệt mỏi cho mắt khi phải đọc một lượng lớn dữ liệu phân tích.
+### Với giáo viên (tab Lớp học)
+- **KPI tổng quan:** tổng thí sinh, điểm TB Toán / TDKH, trung vị tổng, tỷ lệ đạt ≥ 60%.
+- **Histogram** phân bố điểm Toán & TDKH (10 nhóm, bước 2.5), lần thi mới nhất.
+- **Donut xếp loại** 5 mức Yếu → Xuất sắc.
+- **Scatter Toán – TDKH** kèm đường tham chiếu điểm TB lớp.
+- **Tỷ lệ đạt ngưỡng** 20/25/30/35/40 trên thang 50.
+- **Bảng thống kê mô tả:** n, min, Q1, trung vị, Q3, P90, max, TB, STĐ.
+- **Xu hướng:** điểm TB toàn khóa qua từng lần thi + phân bố số lần thi.
+- **Bảng xếp hạng:** Top 10 cao nhất / Top 10 cần cải thiện.
+- **Phân tích câu hỏi:** histogram độ khó 60 câu, 5 câu khó nhất / dễ nhất, bảng chi tiết có filter môn.
 
-## 🛠 Công Nghệ Sử Dụng
+---
 
-- **Frontend:**
-  - **Framework:** React 18 + TypeScript + Vite.
-  - **Styling:** Tailwind CSS.
-  - **Biểu đồ (Charts):** Recharts.
-  - **Icons & Animations:** Lucide React, Framer Motion, Canvas Confetti.
-- **Backend & Data:**
-  - **Server:** Node.js + Express (Server phục vụ API và static file cho production).
-  - **Cơ sở dữ liệu:** Hệ thống parse trực tiếp dữ liệu từ file `.csv` (`raw_students.csv`, `raw_student_responses.csv`) và trả về JSON chuẩn hóa cho giao diện.
+## 🛠 Công nghệ sử dụng
 
-## 📂 Cấu Trúc Thư Mục Chính
+| Lớp | Công nghệ |
+|---|---|
+| Frontend | React **19**, TypeScript ~5.8, Vite 6 |
+| Styling | Tailwind CSS **v4** (cấu hình CSS-first trong `index.css`, không có `tailwind.config.js`) |
+| Biểu đồ | Recharts 3 |
+| Icon / chuyển động | Lucide React, `motion` (Motion for React) |
+| Xuất PDF | `html2canvas-pro`, `jspdf` |
+| Export Excel | `xlsx` |
+| Backend | Express 4 (tùy chọn), Cloudflare Pages Functions (không dùng) |
+| Dữ liệu | Supabase (chính) · CSV tĩnh (fallback) · Express `/api` (dev) |
+| Deploy | Cloudflare Pages (`wrangler`), GitHub Actions workflow sẵn có |
+
+> Lưu ý: `package-lock.json` là lockfile duy nhất. CI và mọi lệnh trong tài liệu này dùng **npm**.
+>
+> `xlsx` được cài từ **CDN chính thức của SheetJS**, không phải npm registry:
+> `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`. Bản trên registry bị stale
+> (0.18.5) và có lỗ hổng prototype pollution đã vá từ 0.19.3. Hệ quả: `npm ci` ở CI
+> cần truy cập được `cdn.sheetjs.com`. Nếu môi trường build chặn network ra ngoài, hãy
+> vendor tarball về `vendor/` rồi đổi sang `file:vendor/xlsx-0.20.3.tgz`.
+
+---
+
+## 🏗 Kiến trúc tổng thể
+
+Ứng dụng là **SPA không router**. `App.tsx` chọn view dựa trên `window.location.hash`:
+
+```
+location.hash !== "#admin"  →  <SkyBackground/> + <Dashboard/>   (view công khai)
+location.hash === "#admin"  →  <AdminPage/>                       (bảng điều khiển quản trị)
+```
+
+### `App.tsx` — root component
+- Giữ **toàn bộ state dùng chung**: `examName`, `topicMap`, `knowledgeCsv`, `questionTexts`, `answerLink`, `nextExamDate`, `examUrl`, `sbdMap`, `visibleParts`, `isDark`.
+- Hydrate từ bảng key-value `exam_settings` (Supabase) + seed từ `question_texts.json`.
+- Dark mode: class `dark` trên `<html>`, lưu `localStorage.theme`.
+- Một hotspot 48×48 `opacity-0` ở góc trên phải mở `#admin`; card QR sinh từ `examUrl` qua `api.qrserver.com`.
+- Màn hình splash do `index.html` vẽ sẵn (inline CSS) trước khi bundle JS tải xong → không nháy trắng.
+- Có `<noscript>` chứa nội dung tiếng Việt cho crawler.
+
+> **Timeout bắt buộc.** Cả 3 query Supabase được bọc trong `withTimeout` với `SUPABASE_TIMEOUT_MS = 12000`. Bảng `student_responses` có ~42k dòng và được đọc với RLS cho phép anonymous — nếu mạng chậm hoặc treo, `Promise.all` không bao giờ settle và app sẽ kẹt ở "Đang tài dữ liệu..." **vô hạn**, không kịp fallback. Hết giờ thì trả `null` và rơi xuống `/api/*` → file JSON tĩnh. Tăng hẳn giá trị này nếu mạng nội bộ chậm hơn.
+
+### `server.ts` — API tùy chọn (chỉ dùng khi chạy Node server)
+Chỉ có **2 endpoint**, dữ liệu nạp 1 lần lúc khởi động từ `process.cwd()`:
+
+| Endpoint | Trả về |
+|---|---|
+| `GET /api/students` | Danh sách thí sinh, `responses` **chỉ gồm câu sai/bỏ trống** (`status !== 'correct'`) |
+| `GET /api/questions` | Thống kê từng câu: số lượt làm, đúng, sai, điểm phạt, bước điểm thưởng, cờ `isError` |
+
+Ở `NODE_ENV !== 'production'` server gắn `vite.middlewares` (middleware mode) để làm dev server. `PORT` mặc định `3000`. Server **không** tự nạp `.env`.
+
+---
+
+## 🔄 Luồng dữ liệu
+
+`App.tsx` thử **3 nguồn theo thứ tự**, fallback khi nguồn trước lỗi:
+
+```
+1. Supabase        students · questions · student_responses
+      │            (chỉ chạy nếu có VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY)
+      ▼
+2. Express API     /api/students · /api/questions
+      │            (chỉ nhận nếu res.ok && content-type = application/json)
+      ▼
+3. File tĩnh       ${BASE_URL}data/students.json · data/questions.json
+                   (sinh bởi scripts/export-data.ts → public/data/)
+```
+
+Bước 2 có kiểm tra content-type để tránh nuốt phải `index.html` do Cloudflare Pages SPA fallback trả về cho mọi đường dẫn.
+
+### Các lớp module dùng chung
+
+| File | Vai trò |
+|---|---|
+| `lib/csvParser.ts` | **Nguồn sự thật duy nhất** cho việc đọc CSV. Thuần JS logic, không đụng `fs`/mạng nên chạy được ở cả server, script Node lẫn trình duyệt. Xuất ra đúng tên cột trong `schema.sql` (`tp_*`, `student_stt`, `question_id`, `is_error`) |
+| `analytics.ts` | Toàn bộ hàm thống kê thuần JS: `latestAttempts`, `mean`, `quantile`, `stdDev`, `describe`, `rankList`, `bandOf`, `thresholdRows`, `attemptAverages`… + hằng số `MAX_SUBJECT_SCORE = 25`, `MAX_TOTAL_SCORE = 50`, `ABILITY_BANDS` |
+| `types.ts` | `StudentData`, `QuestionData`, `MetricKey`, `SubjectKey`, `ExamType` |
+| `lib/supabase.ts` | Khởi tạo client, export `isSupabaseConfigured` + `supabase` (hoặc `null`) |
+| `lib/knowledgeStructure.ts` | Mô hình ma trận kiến thức: `parseKnowledgeCSV`, `DEFAULT_KNOWLEDGE_CSV` (mẫu 120 câu / 14 vùng), `DOMAIN_PALETTES`, `getPalette`, `defaultTopicMap` |
+| `scripts/export-data.ts` | Build-time exporter: đọc 3 CSV → ghi `public/data/students.json` + `questions.json` |
+
+### Ghi chú về `lib/csvParser.ts`
+
+Cả ba nơi đọc CSV đều import cùng một module:
+
+```
+raw_*.csv ──► lib/csvParser.ts ──► server.ts       → map sang shape API
+                              ├──► export-data.ts  → ghi JSON tĩnh
+                              └──► AdminPage.tsx    → insert thẳng Supabase
+```
+
+Hai hàm dùng nhiều nhất:
+
+- `parseStudentsCsv(csv)` — đọc theo tên cột trước, tự lùi về vị trí cố định nếu header chỉ ghi chung ("Thô", "IRT"). Cần gọi `parseResponsesCsv` **truyền vào kết quả của hàm này** để email được back-fill.
+- `parseResponsesCsv(csv, students)` — trả về **toàn bộ 60 câu** mỗi thí sinh; dùng `failedOnly()` để chỉ giữ câu sai/bỏ trống.
+
+**Quy ước ma trận kiến thức** (`lib/knowledgeStructure.ts`):
+- Các dòng trùng "Ngữ pháp" / "Đọc hiểu" được tách thành `(Tiếng Việt)` / `(Tiếng Anh)`.
+- Các dòng liên tiếp giống nhau được gộp và cộng dồn số câu.
+- Nếu đề thi có **≤ 60 câu** nhưng CSV mẫu có 120 câu, tự động lọc về đúng nhóm Toán/TDKH cộng dồn = 60 câu.
+
+---
+
+## 📂 Cấu trúc thư mục
 
 ```text
 .
-├── src/
-│   ├── App.tsx                 # Entry point của UI, fetch dữ liệu từ API
-│   ├── Dashboard.tsx           # Layout chính, logic tìm kiếm và biểu đồ thống kê
-│   ├── KnowledgeMatrix.tsx     # Ma trận kiến thức (hiển thị câu sai/trống)
-│   ├── AbilityDistribution.tsx # Biểu đồ phân bổ năng lực toàn bộ thí sinh
-│   ├── ClassAnalytics.tsx      # Xu hướng, xếp hạng & phân tích câu hỏi toàn khóa
-│   ├── analytics.ts            # Hàm thống kê dùng chung (percentile, trung bình, nhóm lần thi...)
-│   ├── QuestionTable.tsx       # Bảng phân tích độ khó & tỷ lệ đúng sai từng câu
-│   ├── CelebrationOverlay.tsx  # Giao diện màn hình vinh danh Thủ khoa/Á khoa
-│   ├── types.ts                # Định nghĩa interface TypeScript cho toàn dự án
-│   └── question_texts.json     # File chứa văn bản/nội dung chi tiết của câu hỏi
-├── server.ts                   # Backend Express server (đọc CSV, xử lý logic & tạo REST API)
-├── raw_students.csv            # Dữ liệu điểm số tổng hợp của học viên
-├── raw_student_responses.csv   # Dữ liệu chi tiết từng câu trả lời của bài thi
-└── package.json                # Cấu hình dự án và scripts
+├── App.tsx                  # Root: chọn view theo hash, fetch dữ liệu, state chung
+├── main.tsx                 # createRoot + chặn F12/right-click/view-source
+├── Dashboard.tsx            # ⭐ UI chính: tìm kiếm, hồ sơ 4 tab, xuất PDF
+├── AdminPage.tsx            # Bảng điều khiển quản trị (#admin, đăng nhập Supabase)
+├── ClassAnalytics.tsx       # Xu hướng, xếp hạng, phân tích câu hỏi toàn khóa (lazy)
+├── AbilityDistribution.tsx  # KPI, histogram, donut, scatter, thống kê mô tả (lazy)
+├── QuestionTable.tsx        # Bảng phân tích từng câu (bước điểm phạt / thưởng)
+├── CelebrationOverlay.tsx   # Overlay vinh danh Thủ Khoa / Á Khoa
+├── SkyBackground.tsx        # Nền SVG bầu trời buổi sớm (thuần vector, không ảnh)
+├── analytics.ts             # Hàm thống kê dùng chung
+├── types.ts                 # Interface TypeScript
+├── index.css                # Tailwind v4 + dark variant + keyframes + component layers
+├── index.html               # Shell tĩnh + SEO/OG/Twitter/JSON-LD + splash loader
+├── server.ts                # Express API (tùy chọn)
+├── scripts/export-data.ts   # CSV → public/data/*.json
+│
+├── lib/
+│   ├── csvParser.ts         # ⭐ Bộ đọc CSV duy nhất — dùng bởi server, script, admin
+│   ├── supabase.ts
+│   └── knowledgeStructure.ts
+├── public/
+│   ├── logo.png · og-banner.jpg
+│   ├── _headers             # CSP, HSTS, cache-control cho Cloudflare
+│   └── data/                # ⛔ gitignored — output của export-data
+│
+├── raw_students.csv             # ⛔ gitignored
+├── raw_student_responses.csv    # ⛔ gitignored
+├── questions.csv                # ⛔ gitignored
+├── question_texts.json          # ⛔ gitignored — BẮT BUỘC cho build
+│
+├── schema.sql                   # Schema Supabase đầy đủ (students/questions/responses/settings)
+├── schema_exam_settings.sql     # Migration riêng (đã gộp vào schema.sql)
+├── schema_exam_type.sql         # Migration exam_type (đã gộp vào schema.sql)
+├── wrangler.jsonc               # Cloudflare Pages config
+└── .github/workflows/deploy.yml # Pages deploy (workflow_dispatch)
 ```
 
-## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy
+---
 
-### Cài đặt dependencies
+## 🚀 Cài đặt & chạy
+
+### Yêu cầu
+- **Node.js 22** (theo CI) hoặc Bun
+- Backend Express là **tùy chọn** — chạy static-only cũng được
+
+### 1. Cài dependencies
 ```bash
 npm install
 ```
 
-### Chạy môi trường phát triển (Development)
+### 2. Chuẩn bị dữ liệu ⚠️ bắt buộc
+
+Ba file CSV và `question_texts.json` **không** được commit (xem `.gitignore`). Clone mới phải copy vào thư mục gốc:
+
+```bash
+raw_students.csv
+raw_student_responses.csv
+questions.csv
+question_texts.json
+```
+
+> `question_texts.json` được `import` tĩnh trong `App.tsx` và `Dashboard.tsx` → **thiếu file này thì build fail ngay**.
+
+### 3. Cấu hình biến môi trường
+```bash
+cp .env.example .env
+```
+Điền `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` nếu muốn dùng Supabase. Bỏ trống thì app chạy bằng `/api` hoặc file JSON tĩnh.
+
+### 4. Chạy development
 ```bash
 npm run dev
 ```
-Hệ thống sẽ chạy frontend (Vite) và backend (Express via `tsx`) tại cổng `3000`.
+Chạy `bun run server.ts` — Vite middleware + Express, tải CSV từ `process.cwd()`. Mở <http://localhost:3000>.
 
-### Build & Chạy môi trường sản phẩm (Production)
+> Lệnh `dev` cần **Bun** (`bun install -g bun` hoặc tải từ bun.sh). Các lệnh còn lại (`lint`, `build`, `build:static`, `export-data`, `start`) chỉ cần Node.js.
+
+### 5. Build & chạy production (có backend)
 ```bash
-npm run build
-npm run start
+npm run lint        # tsc --noEmit
+npm run build       # vite build → dist/  +  esbuild server.ts → dist/server.cjs
+npm run start       # node dist/server.cjs
 ```
-Quá trình build sẽ:
-1. Compile Frontend vào thư mục `dist/`.
-2. Đóng gói backend `server.ts` bằng esbuild thành file `dist/server.cjs`.
-Lệnh start sẽ chạy ứng dụng dưới dạng một service độc lập.
 
-### Deploy tĩnh (Cloudflare Pages / GitHub Pages)
+### 6. Build tĩnh (không cần backend)
 ```bash
-npm run build:static   # sinh public/data/*.json rồi build dist/
+npm run build:static   # export-data → public/data/*.json, rồi vite build
+npm run preview
 ```
-- `export-data` đọc 3 file CSV rồi ghi `public/data/students.json` + `questions.json`, nên bản tĩnh không cần backend Express (App.tsx tự fallback sang file JSON khi `/api/*` không có).
-- `vite.config.ts` dùng `base: './'` để chạy được ở cả domain gốc lẫn sub-path.
-- **Cloudflare Pages:** Build command `npm run build:static` · Output dir `dist` · kết nối repo GitHub (private) để auto-deploy mỗi push lên `main`.
-- **GitHub Pages:** workflow `.github/workflows/deploy.yml` sẵn sàng nhưng chỉ chạy `workflow_dispatch` — Pages không hỗ trợ repo Private trên gói Free.
+`vite.config.ts` đặt `base: './'` nên build chạy được cả ở domain gốc lẫn sub-path.
 
-## 📝 Cấu Trúc Dữ Liệu Đầu Vào
+---
 
-1. **`raw_students.csv`**: File chứa thông tin tổng quan của học sinh (STT, Tên, Email, và các cột điểm Thô, IRT, Thưởng phạt của Toán và TDKH).
-2. **`raw_student_responses.csv`**: Chứa ma trận câu trả lời chi tiết (từ Câu 1 đến Câu 60). Hệ thống quy ước:
-   - `1` (hoặc các số > 0): Trả lời đúng.
-   - `0`: Trả lời sai.
-   - Để trống: Bỏ qua câu hỏi.
-   Dữ liệu này được liên kết với `raw_students.csv` thông qua Tên hoặc Email.
+## 📝 Dữ liệu đầu vào
+
+### `raw_students.csv` — điểm tổng hợp
+**2 dòng header**, dữ liệu bắt đầu từ dòng 3.
+
+```
+STT,id,Họ và tên,Email,Thô,,IRT,,Thưởng phạt,
+,,,,Toán,TDKH,Toán,TDKH,Toán,TDKH
+```
+
+Server ưu tiên đọc theo **tên cột**; nếu thiếu cột `tho_toan` thì chuyển sang **chỉ số cố định** (0, 2, 3, 4–9). Loại kỳ thi lấy từ cột đầu khớp trong `EXAM_TYPE_HEADERS` (`exam_type`, `examtype`, `loai_ky_thi`, `loai_ki_thi`, `ky_thi`), mặc định `survey`.
+
+### `raw_student_responses.csv` — ma trận trả lời
+**1 dòng header**, 60 câu mỗi thí sinh. Bỏ qua dòng có `< 74` cột. Vị trí tên/email được dò bằng heuristic (tìm ô bằng `TRUE`, hoặc ô đầu tiên không rỗng trong cột 1–6). Email được back-fill vào danh sách học sinh.
+
+Quy ước trạng thái:
+
+| Giá trị | Trạng thái |
+|---|---|
+| `1`, `1.0`, `1.00`, `0.1`, `0.25`, `0.5` | `correct` |
+| `0`, `0.0`, `0.00` | `wrong` |
+| rỗng, `-1`, `\r`, `\r\n` | `missing` |
+| số > 0 / = 0 / < 0 (khác) | lần lượt `correct` / `wrong` / `missing` |
+
+⚠️ **Câu 4 bị ép cứng thành `correct`** do lỗi đề thi.
+
+### `questions.csv` — thống kê câu hỏi
+**2 dòng header**, dữ liệu từ dòng 3, yêu cầu ≥ 11 cột. Cột 0 forward-fill cho cột `phan_thi` (môn). Cờ `isError = true` khi `parts[2] === 'LỖI ĐỀ THI'` hoặc `parts[1] === 'Câu 4'`.
+
+### `question_texts.json`
+```json
+{ "Câu 1": "<nội dung câu hỏi đầy đủ>", "Câu 2": "..." }
+```
+60 khóa, tải dùng cho modal xem đáp án trong `Dashboard.tsx`.
+
+---
+
+## 🔐 Trang quản trị
+
+Truy cập bằng `#admin`. Nếu chưa cấu hình Supabase sẽ hiện hướng dẫn; ngược lại yêu cầu đăng nhập email/password (`supabase.auth.signInWithPassword`), session được khôi phục qua `getSession()`.
+
+### Luồng nạp dữ liệu
+```
+FileReader (3 file CSV)  →  parseStudents / parseResponses / parseQuestions  (local)
+                         →  xoá toàn bộ row của exam_type đang chọn
+                         →  insert lại theo lô 500 dòng vào Supabase
+```
+
+### Các nhóm chức năng
+1. **Thống kê** — số thí sinh / câu hỏi / dòng trả lời; mở rộng: điểm TB Toán–TDKH, số đạt ≥ 30, câu khó nhất.
+2. **Export Excel** — `BaoCao_DiemThi.xlsx`, 15 cột tiếng Việt.
+3. **Upload CSV** — chọn *Kì Thi Khảo Sát* / *Kì Thi Thử*, hiển thị số row hiện có của từng loại.
+4. **Cài đặt kỳ thi** — `exam_name` + 4 cờ hiển thị: `show_tv`, `show_ta`, `show_toan`, `show_tdkh` (thiếu thì mặc định `true`).
+5. **Cài đặt hiển thị phụ** — `answer_link`, `next_exam_date`, `exam_url` (sinh QR).
+6. **Danh sách SBD** — textarea dạng `Tên<TAB>SBD`, lưu vào `sbd_map`.
+7. **Knowledge CSV** — upload / textarea / nút *Đặt lại mẫu 120 câu*, có **preview sống** (số vùng, số câu, badge 120-câu hay 60-câu). Lưu vào cả `knowledge_csv` (Supabase) và `localStorage`.
+8. **JSON thủ công** — sửa trực tiếp `topic_map` và `question_texts`.
+9. **Vùng nguy hiểm** — xoá một loại kỳ thi hoặc xoá toàn bộ.
+
+Mọi cài đặt đều `upsert` vào `exam_settings` theo khoá `key`, kèm `updated_at`.
+
+---
+
+## 🗄 Supabase
+
+Bảng theo `schema.sql`:
+
+| Bảt | Nội dung |
+|---|---|
+| `students` | Một dòng / thí sinh / kỳ thi, điểm `tho_*`, `irt_*`, `tp_*` |
+| `questions` | Thống kê từng câu |
+| `student_responses` | Một dòng / thí sinh / câu (chỉ ghi câu sai & bỏ trống) |
+| `exam_settings` | Bảng key-value cho toàn bộ cấu hình hiển thị |
+
+RLS: bật cho cả 4 bảng. Có index cho `exam_type` và các cột truy vấn.
+
+---
+
+## 🌐 Deploy
+
+### Cloudflare Pages
+```bash
+npm run deploy
+```
+= `build:static` + `wrangler pages deploy dist --project-name ketquathithumitht --branch main`
+
+| Cấu hình | Giá trị |
+|---|---|
+| Build command | `npm run build:static` |
+| Output directory | `dist` |
+| Project name | `ketquathithumitht` (`wrangler.jsonc`) |
+
+Kết nối repo GitHub (private) để auto-deploy mỗi lần push lên `main`.
+
+### GitHub Pages
+`.github/workflows/deploy.yml` chạy `npm ci → lint → build:static → upload-pages-artifact → deploy`, nhưng trigger là **`workflow_dispatch` thủ công** vì Pages không host repo private trên gói Free.
+
+### Header bảo mật
+`public/_headers` (Cloudflare) + meta tag trong `index.html`: CSP, HSTS, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options`. `index.html` / `logo.png` / `bg.jpg` được đặt `no-cache`, ảnh OG cache 7 ngày.
+
+---
+
+## ⚠️ Ghi chú bảo mật
+
+- **`#admin` không phải route guard.** Chỉ là hash + một hotspot `opacity-0`; bấm ở góc trên phải là vào được. Toàn bộ bảo vệ thực sự nằm ở **Supabase RLS + đăng nhập**.
+- **RLS trong `schema.sql` đang rất rộng:** policy `public_read_*` cho phép `SELECT` vô điều kiện (kể cả `exam_settings`), và `admin_all_*` cho phép `ALL` cho **bất kỳ user nào đã đăng ký** — tức là một tài khoản Supabase Auth bất kỳ có thể xoá sạch dữ liệu. Nên siết lại trước khi dùng thật.
+- **`main.tsx` chặn F12 / Ctrl+U / chuột phải.** Đây chỉ là rào cản tâm lý, không phải bảo mật thực sự.
+- Email thí sinh được **fetch về nhưng không render** — dữ liệu vẫn nằm trong payload JSON tải về trình duyệt.
+
+---
+
+## 🧹 Đã dọn trong lần refactor gần nhất
+
+Những thứ sau đã bị xoá vì là dead code / gây rối:
+
+| Đã xoá | Lý do |
+|---|---|
+| `KnowledgeMatrix.tsx` | Không nơi nào import — `Dashboard.tsx` đã nội tuyến lại |
+| `AdminPage.handleUploadOld` (~55 dòng) | Nhánh upload song song không bao giờ được gọi |
+| `Dashboard.maskEmail` | Định nghĩa nhưng không dùng (email đã bị ẩn khỏi UI) |
+| `AdminPage` props `questions/students/topicMap/questionTexts` | Khai báo nhưng không dùng |
+| `ClassAnalytics.onSelectStudent`, `QuestionTable.onRowClick` | Khai báo nhưng không dùng |
+| `App.tsx → AdminPage.onDataChange` | Prop không tồn tại trong `AdminPageProps` (lỗi TS bị giấu bởi OOM của `tsc`) |
+| `find_top.cjs`, `parse_csv.cjs`, `transform.cjs` | Script một lần; `transform.cjs` còn ghi đè `raw_students.csv` tại chỗ |
+| `modify.cjs` / `modify2.cjs` / `modify3.cjs` / `fix-tags.cjs` | Codemod từng chạy một lần, hardcode absolute path |
+| `remove-bg.cjs` | Xoá nền `public/avatar.png` — file đã bị xoá từ lâu |
+| `scratch.txt`, `temp*.txt` | File nháp |
+| `bun.lock` | Liệt kê dependency đã gỡ, gây mâu thuẫn với `package.json`. `package-lock.json` là nguồn duy nhất |
+| `@google/genai`, `dotenv`, `html2canvas`, `jimp` | Không còn import ở đâu. `html2canvas` giờ chỉ là dependency gián tiếp của `jspdf` |
+
+Các thứ khác vẫn còn nhưng gitignored: `response.json`, `api_data.json` (thực chất là HTML), `.workbuddy-ai/memory/` (ghi chú AI assistant, còn nhắc tên project cũ).
+
+**Bảo trì:** `vite.config.ts` giờ đặt `build.emptyOutDir: true` nên `dist/` không còn tích tụ artifact cũ. `npm run clean` dùng Node thuần, chạy được trên Windows.
