@@ -72,25 +72,40 @@ CREATE TABLE IF NOT EXISTS exam_settings (
 );
 
 -- =====================================================
--- RLS Policies — allow all (admin manages data)
+-- RLS Policies
+-- Đọc: mở cho mọi người, dashboard công khai dùng anon key.
+-- Ghi / sửa / xoá: chỉ email nằm trong public.is_admin().
+-- Thêm email mới thì sửa is_admin() rồi chạy lại schema_migrate.sql.
 -- =====================================================
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) = ANY (ARRAY[
+    'minhducle629@gmail.com'
+  ]::text[]);
+$$;
 
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE student_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_settings ENABLE ROW LEVEL SECURITY;
 
--- Allow anonymous read (the public dashboard needs to fetch data)
 CREATE POLICY "public_read_students" ON students FOR SELECT USING (true);
 CREATE POLICY "public_read_questions" ON questions FOR SELECT USING (true);
 CREATE POLICY "public_read_responses" ON student_responses FOR SELECT USING (true);
 CREATE POLICY "public_read_settings" ON exam_settings FOR SELECT USING (true);
 
--- Allow authenticated users (admins) to do everything
-CREATE POLICY "admin_all_students" ON students FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "admin_all_questions" ON questions FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "admin_all_responses" ON student_responses FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "admin_all_settings" ON exam_settings FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "admin_all_students" ON students
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "admin_all_questions" ON questions
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "admin_all_responses" ON student_responses
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "admin_all_settings" ON exam_settings
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- =====================================================
 -- Indexes for performance

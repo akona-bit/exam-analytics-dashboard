@@ -51,6 +51,19 @@ ALTER TABLE questions         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE student_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_settings     ENABLE ROW LEVEL SECURITY;
 
+-- Danh sách email được quyền ghi. Sửa ở ĐÂY rồi chạy lại file này.
+-- Trước đây policy là `TO authenticated USING (true)`, tức BẤT KỲ tài khoản
+-- nào đăng ký trong Supabase Auth cũng xoá sạch được cả 4 bảng.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) = ANY (ARRAY[
+    'minhducle629@gmail.com'
+  ]::text[]);
+$$;
+
 DROP POLICY IF EXISTS "public_read_students" ON students;
 DROP POLICY IF EXISTS "public_read_questions" ON questions;
 DROP POLICY IF EXISTS "public_read_responses" ON student_responses;
@@ -60,17 +73,25 @@ DROP POLICY IF EXISTS "admin_all_questions" ON questions;
 DROP POLICY IF EXISTS "admin_all_responses" ON student_responses;
 DROP POLICY IF EXISTS "admin_all_settings" ON exam_settings;
 
+-- Dashboard công khai đọc bằng anon key, nên phần đọc phải mở.
 CREATE POLICY "public_read_students" ON students FOR SELECT USING (true);
 CREATE POLICY "public_read_questions" ON questions FOR SELECT USING (true);
 CREATE POLICY "public_read_responses" ON student_responses FOR SELECT USING (true);
 CREATE POLICY "public_read_settings" ON exam_settings FOR SELECT USING (true);
 
--- ⚠️ Xem ghi chú bảo mật trong README: các policy này cho MỌI user đã đăng ký
--- quyền toàn quyền trên cả 4 bảng. Siết lại trước khi dùng thật.
-CREATE POLICY "admin_all_students" ON students FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "admin_all_questions" ON questions FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "admin_all_responses" ON student_responses FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "admin_all_settings" ON exam_settings FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Ghi / sửa / xoá chỉ dành cho email có trong is_admin().
+CREATE POLICY "admin_all_students" ON students
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "admin_all_questions" ON questions
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "admin_all_responses" ON student_responses
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "admin_all_settings" ON exam_settings
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- ⚠️ Phần ĐỌC vẫn mở cho mọi người, kể cả email của thí sinh trong bảng
+-- students. Đó là điều kiện để dashboard chạy không cần backend. Muốn siết
+-- nữa thì phải bỏ email khỏi payload mà App.tsx gọi.
 
 -- ── 5. Dữ liệu mặc định ────────────────────────────────────────────────────
 INSERT INTO exam_settings (key, value) VALUES

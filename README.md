@@ -328,6 +328,24 @@ Mọi cài đặt đều `upsert` vào `exam_settings` theo khoá `key`, kèm `u
 
 RLS: bật cho cả 4 bảng. Có index cho `exam_type` và các cột truy vấn.
 
+| Phép | Chính sách |
+|---|---|
+| **Đọc** | Mở cho mọi người, kể cả anonymous — dashboard công khai dùng anon key |
+| **Ghi / sửa / xoá** | Chỉ email nằm trong `public.is_admin()` |
+
+```sql
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT lower(coalesce(auth.jwt() ->> 'email', '')) = ANY (ARRAY[
+    'minhducle629@gmail.com'
+  ]::text[]);
+$$;
+```
+
+Thêm email mới: sửa mảng trong `is_admin()` rồi chạy lại `schema_migrate.sql`.
+Trước đây policy là `TO authenticated USING (true)` — tức **bất kỳ** tài khoản
+nào đăng ký trong Supabase Auth cũng xoá sạch được cả 4 bảng.
+
 ### Áp schema
 
 | File | Khi nào dùng |
@@ -384,9 +402,10 @@ Kết nối repo GitHub (private) để auto-deploy mỗi lần push lên `main`
 ## ⚠️ Ghi chú bảo mật
 
 - **`#admin` không phải route guard.** Chỉ là hash + một hotspot `opacity-0`; bấm ở góc trên phải là vào được. Toàn bộ bảo vệ thực sự nằm ở **Supabase RLS + đăng nhập**.
-- **RLS trong `schema.sql` đang rất rộng:** policy `public_read_*` cho phép `SELECT` vô điều kiện (kể cả `exam_settings`), và `admin_all_*` cho phép `ALL` cho **bất kỳ user nào đã đăng ký** — tức là một tài khoản Supabase Auth bất kỳ có thể xoá sạch dữ liệu. Nên siết lại trước khi dùng thật.
+- **Quyền ghi đã được siết** theo danh sách email trong `public.is_admin()` — xem [mục Supabase](#-supabase). Đây là điểm yếu đã được xử lý.
+- **Phần đọc vẫn mở cho anonymous**, kể cả cột `email` của thí sinh trong bảng `students`. Đây là điều kiện để dashboard chạy không cần backend, nên email vẫn nằm trong payload JSON tải về trình duyệt dù giao diện không render nó. Muốn đóng thì phải bỏ `email` khỏi `select('*')` trong `App.tsx`.
+- **Key `service_role` bypass hoàn toàn RLS.** Không được commit hay đưa vào client. Nếu từng gửi nó qua kênh không an toàn (shell history, tin nhắn), hãy đổi key ở Supabase → Settings → API.
 - **`main.tsx` chặn F12 / Ctrl+U / chuột phải.** Đây chỉ là rào cản tâm lý, không phải bảo mật thực sự.
-- Email thí sinh được **fetch về nhưng không render** — dữ liệu vẫn nằm trong payload JSON tải về trình duyệt.
 
 ---
 

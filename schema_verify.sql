@@ -5,7 +5,11 @@ WHERE table_schema = 'public'
   AND table_name IN ('students','questions','student_responses','exam_settings')
 ORDER BY table_name, ordinal_position;
 
-SELECT schemaname, tablename, policyname, roles, cmd
+-- Danh sách email được phép ghi
+SELECT prosrc FROM pg_proc WHERE proname = 'is_admin';
+
+-- Phần đọc vẫn mở cho anonymous (dashboard cần), phần ghi thì không
+SELECT schemaname, tablename, policyname, roles, cmd, qual
 FROM pg_policies
 WHERE schemaname = 'public'
 ORDER BY tablename, policyname;
