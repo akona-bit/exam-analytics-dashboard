@@ -62,7 +62,7 @@ Web app cho phép học sinh tra cứu điểm thi và giáo viên phân tích k
 | Export Excel | `xlsx` |
 | Backend | Express 4 (tùy chọn), Cloudflare Pages Functions (không dùng) |
 | Dữ liệu | Supabase (chính) · CSV tĩnh (fallback) · Express `/api` (dev) |
-| Deploy | Cloudflare Pages (`wrangler`), GitHub Actions workflow sẵn có |
+| Deploy | Cloudflare Pages (`npm run deploy`), CI kiểm tra build bằng GitHub Actions |
 
 > Lưu ý: `package-lock.json` là lockfile duy nhất. CI và mọi lệnh trong tài liệu này dùng **npm**.
 >
@@ -197,7 +197,7 @@ Hai hàm dùng nhiều nhất:
 ├── schema_exam_settings.sql     # Migration riêng (đã gộp vào schema.sql)
 ├── schema_exam_type.sql         # Migration exam_type (đã gộp vào schema.sql)
 ├── wrangler.jsonc               # Cloudflare Pages config
-└── .github/workflows/deploy.yml # Pages deploy (workflow_dispatch)
+└── .github/workflows/ci.yml      # lint + build:static mỗi lần push (không deploy)
 ```
 
 ---
@@ -396,8 +396,18 @@ npm run deploy
 
 Kết nối repo GitHub (private) để auto-deploy mỗi lần push lên `main`.
 
-### GitHub Pages
-`.github/workflows/deploy.yml` chạy `npm ci → lint → build:static → upload-pages-artifact → deploy`, nhưng trigger là **`workflow_dispatch` thủ công** vì Pages không host repo private trên gói Free.
+### GitHub Pages — không dùng
+GitHub từ chối bật Pages cho repo này:
+
+```
+POST /repos/akona-bit/exam-analytics-dashboard/pages
+→ 422 "Your current plan does not support GitHub Pages for this repository."
+```
+
+Repo **private** + gói Free nên không có Pages. Workflow `deploy.yml` cũ đã bị xoá.
+`.github/workflows/ci.yml` thay thế, chỉ chạy `npm ci → lint → build:static` mỗi lần
+push lên `main` — giữ vai trò bắt lỗi build mà Cloudflare deploy không phát hiện
+(ví dụ import tĩnh một file đang bị gitignore).
 
 ### Header bảo mật
 `public/_headers` (Cloudflare) + meta tag trong `index.html`: CSP, HSTS, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options`. `index.html` / `logo.png` / `bg.jpg` được đặt `no-cache`, ảnh OG cache 7 ngày.

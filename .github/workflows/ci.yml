@@ -1,0 +1,34 @@
+name: CI
+
+# GitHub Pages không dùng được: repo private + gói Free bị GitHub từ chối
+# ("Your current plan does not support GitHub Pages for this repository", HTTP 422).
+# Deploy thật sự chạy bằng `npm run deploy` → Cloudflare Pages.
+#
+# Workflow này chỉ chạy lint + build mỗi lần push, để bắt lỗi kiểu file
+# gitignore bị import tĩnh — thứ mà môi trường local có file nên không thấy.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build:static
+        env:
+          # CSV gốc bị gitignore nên CI không có `public/data/*.json`; export-data
+          # sẽ bỏ qua. Bản build đọc dữ liệu từ Supabase lúc chạy.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
