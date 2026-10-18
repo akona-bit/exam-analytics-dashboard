@@ -7,6 +7,7 @@
     "dev": "bun run server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "export-data": "esbuild scripts/export-data.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.cache/export-data.mjs && node node_modules/.cache/export-data.mjs",
+    "import:supabase": "esbuild scripts/import-supabase.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.cache/import-supabase.mjs && node node_modules/.cache/import-supabase.mjs",
     "build:static": "npm run export-data && vite build",
     "deploy": "npm run build:static && wrangler pages deploy dist --project-name ketquathithumitht --branch main",
     "start": "node dist/server.cjs",

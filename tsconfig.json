@@ -28,14 +28,14 @@
     "*.ts",
     "*.tsx",
     "lib/**/*.ts",
-    "lib/**/*.js"
+    "lib/**/*.js",
+    "scripts/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "build",
     ".wrangler",
-    ".workbuddy-ai",
-    "scripts"
+    ".workbuddy-ai"
   ]
 }
