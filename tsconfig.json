@@ -23,5 +23,19 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": ["vite/client", "node"]
-  }
+  },
+  "include": [
+    "*.ts",
+    "*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".wrangler",
+    ".workbuddy-ai",
+    "scripts"
+  ]
 }
