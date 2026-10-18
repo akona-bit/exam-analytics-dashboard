@@ -27,6 +27,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build:static
+        env:
+          # CSV gốc bị gitignore nên CI không có `public/data/*.json`.
+          # Bản build đọc dữ liệu từ Supabase lúc chạy — cần 2 secret này.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

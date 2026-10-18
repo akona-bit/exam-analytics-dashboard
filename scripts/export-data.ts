@@ -19,6 +19,20 @@ import {
 
 const root = process.cwd();
 
+const CSV_FILES = ['raw_students.csv', 'raw_student_responses.csv', 'questions.csv'] as const;
+
+const missing = CSV_FILES.filter(name => !fs.existsSync(path.join(root, name)));
+if (missing.length > 0) {
+  // CI và clone mới không có CSV thi (chúng bị gitignore vì chứa SBD/điểm gốc).
+  // Đây chỉ là bản export tĩnh dự phòng — `App.tsx` ưu tiên Supabase, nên bỏ qua
+  // thay vì làm hỏng cả `npm run build:static`.
+  console.warn(
+    `export-data: bỏ qua, thiếu ${missing.join(', ')}. ` +
+      `Bản build sẽ lấy dữ liệu từ Supabase lúc chạy.`
+  );
+  process.exit(0);
+}
+
 const readCsv = (name: string): string => fs.readFileSync(path.join(root, name), 'utf-8');
 
 const students = parseStudentsCsv(readCsv('raw_students.csv'));
