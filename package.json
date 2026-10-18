@@ -1,31 +1,27 @@
 {
-  "name": "react-example",
+  "name": "exam-analytics-dashboard",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "rm -f dist\\\\* 2>/dev/null || true && bun run server.ts",
+    "dev": "bun run server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "export-data": "node scripts/export-data.cjs",
+    "export-data": "esbuild scripts/export-data.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.cache/export-data.mjs && node node_modules/.cache/export-data.mjs",
     "build:static": "npm run export-data && vite build",
     "deploy": "npm run build:static && wrangler pages deploy dist --project-name ketquathithumitht --branch main",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
     "@supabase/supabase-js": "^2.117.2",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "canvas-confetti": "^1.9.4",
-    "dotenv": "^17.2.3",
     "esbuild": "^0.25.0",
     "express": "^4.21.2",
-    "html2canvas": "^1.4.1",
     "html2canvas-pro": "^2.5.2",
-    "jimp": "^1.6.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.35.0",
     "motion": "^12.23.24",
@@ -34,7 +30,7 @@
     "recharts": "^3.10.1",
     "tailwindcss": "^4.1.14",
     "vite": "^6.2.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
