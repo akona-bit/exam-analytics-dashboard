@@ -1,6 +1,14 @@
 -- =====================================================
 -- Exam Analytics Dashboard — Supabase Schema
 -- Run this in Supabase SQL Editor (Dashboard > SQL)
+--
+-- ⚠️  CHỈ dùng cho database TRỐNG (cài mới).
+--     File này dùng CREATE POLICY, mà PostgreSQL không có IF NOT EXISTS cho
+--     câu đó — chạy lại trên database đã có policy sẽ dừng ở:
+--       ERROR 42710: policy "public_read_students" ... already exists
+--
+--     Database đang chạy rồi thì dùng `schema_migrate.sql`, chạy lại vô hạn lần
+--     và không mất dữ liệu.
 -- =====================================================
 
 -- Students table

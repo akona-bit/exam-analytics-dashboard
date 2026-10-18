@@ -190,7 +190,8 @@ Hai hàm dùng nhiều nhất:
 ├── questions.csv                # ⛔ gitignored
 ├── question_texts.json          # ⛔ gitignored — BẮT BUỘC cho build
 │
-├── schema.sql                   # Schema Supabase đầy đủ (students/questions/responses/settings)
+├── schema.sql                   # Schema Supabase đầy đủ — CHỈ cho DB trống
+├── schema_migrate.sql           # Migration idempotent cho DB đang chạy
 ├── schema_exam_settings.sql     # Migration riêng (đã gộp vào schema.sql)
 ├── schema_exam_type.sql         # Migration exam_type (đã gộp vào schema.sql)
 ├── wrangler.jsonc               # Cloudflare Pages config
@@ -318,9 +319,7 @@ Mọi cài đặt đều `upsert` vào `exam_settings` theo khoá `key`, kèm `u
 
 ## 🗄 Supabase
 
-Bảng theo `schema.sql`:
-
-| Bảt | Nội dung |
+| Bảng | Nội dung |
 |---|---|
 | `students` | Một dòng / thí sinh / kỳ thi, điểm `tho_*`, `irt_*`, `tp_*` |
 | `questions` | Thống kê từng câu |
@@ -328,6 +327,33 @@ Bảng theo `schema.sql`:
 | `exam_settings` | Bảng key-value cho toàn bộ cấu hình hiển thị |
 
 RLS: bật cho cả 4 bảng. Có index cho `exam_type` và các cột truy vấn.
+
+### Áp schema
+
+| File | Khi nào dùng |
+|---|---|
+| `schema.sql` | **Database trống, cài mới.** Chạy 1 lần. Dùng `CREATE POLICY` nên chạy lại sẽ lỗi `42710: policy already exists` |
+| `schema_migrate.sql` | **Database đang chạy.** Idempotent — chạy lại bao nhiêu lần cũng được, không mất dữ liệu. Bổ sung cột thiếu (`exam_type`, nhóm `tv`/`ta`), tạo index, và `DROP POLICY IF EXISTS` → `CREATE POLICY` |
+
+Có thể kiểm tra database đã đúng chưa:
+
+```sql
+SELECT table_name, column_name FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name IN ('students','questions','student_responses')
+  AND column_name IN ('exam_type','tho_tv','tho_ta','irt_tv','irt_ta','tp_tv','tp_ta')
+ORDER BY table_name, column_name;
+```
+
+### Nạp dữ liệu từ CSV
+
+```bash
+npm run import:supabase -- --type=survey --prune-unknown
+```
+
+Xem `scripts/import-supabase.ts` để biết các cờ. `--prune-unknown` đọc schema thật
+trên PostgREST và bỏ mọi cột database chưa có — dùng khi migration chưa chạy đủ.
+Sau khi `schema_migrate.sql` đã chạy thì bỏ cờ này đi.
 
 ---
 
