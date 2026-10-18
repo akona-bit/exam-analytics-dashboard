@@ -36,6 +36,8 @@ export const SUBJECT_LABEL: Record<SubjectKey, string> = {
 
 export const MAX_SUBJECT_SCORE = 25;
 export const MAX_TOTAL_SCORE = 50;
+/** Thang điểm khi cộng đủ 4 môn (Toán + TDKH + Tiếng Việt + Tiếng Anh). */
+export const MAX_ALL_SUBJECT_SCORE = MAX_SUBJECT_SCORE * 4;
 
 export const toNumber = (v: number | null | undefined): number | null =>
   typeof v === 'number' && Number.isFinite(v) ? v : null;
@@ -137,6 +139,14 @@ export const ABILITY_BANDS: AbilityBand[] = [
 
 export const bandOf = (total: number): number =>
   ABILITY_BANDS.findIndex(b => total >= b.min && total < b.max);
+
+/**
+ * Ngưỡng "Giỏi" quy đổi từ thang tổng Toán + TDKH sang thang đủ 4 môn,
+ * để cùng một tỉ lệ 60% dùng được trên cả hai cách cộng điểm.
+ */
+export const GIOI_MIN =
+  ((ABILITY_BANDS.find(b => b.short === 'Giỏi')?.min ?? MAX_TOTAL_SCORE * 0.6) / MAX_TOTAL_SCORE) *
+  MAX_ALL_SUBJECT_SCORE;
 
 export interface ThresholdRow {
   name: string;

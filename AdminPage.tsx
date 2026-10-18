@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 import defaultQuestionTexts from './question_texts.json';
 import { defaultTopicMap } from './lib/knowledgeStructure';
 import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
-import { ABILITY_BANDS, EXAM_TYPES, EXAM_TYPE_LABEL, MAX_TOTAL_SCORE, normalizeExamType } from './analytics';
+import { EXAM_TYPES, EXAM_TYPE_LABEL, GIOI_MIN, MAX_ALL_SUBJECT_SCORE, normalizeExamType } from './analytics';
 import {
   parseStudentsCsv,
   parseResponsesCsv,
@@ -49,60 +49,116 @@ async function uploadToSupabase(
 }
 
 /* ──────────── Helper: fetch stats ──────────── */
-const GIOI_MIN = ABILITY_BANDS.find(b => b.short === 'Giỏi')?.min ?? MAX_TOTAL_SCORE * 0.6;
+/** Đọc số từ dữ liệu Supabase, trả null nếu rỗng/không phải số (không coi null là 0). */
+const num = (v: unknown): number | null => {
+  if (v === null || v === undefined || v === '') return null;
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
-async function fetchStats() {
+interface AttemptRow {
+  stt: number;
+  tv: number | null;
+  ta: number | null;
+  toan: number | null;
+  tdkh: number | null;
+}
+
+interface Stats {
+  students: number;
+  questions: number;
+  responses: number;
+  avgToan: number | null;
+  avgTdkh: number | null;
+  goodCount: number;
+  goodTotal: number;
+  hardestQ: string;
+  examCounts: Record<ExamType, number>;
+}
+
+async function fetchStats(examType: ExamType): Promise<Stats | null> {
   if (!supabase) return null;
-  const [{ count: studentCount }, { count: questionCount }, { count: responseCount }, { data: typeRows }] = await Promise.all([
-    supabase.from('students').select('*', { count: 'exact', head: true }),
-    supabase.from('questions').select('*', { count: 'exact', head: true }),
-    supabase.from('student_responses').select('*', { count: 'exact', head: true }),
+
+  const [studentsRes, questionsRes, responsesRes, typeRows, studentsData, questionsData] = await Promise.all([
+    supabase.from('students').select('*', { count: 'exact', head: true }).eq('exam_type', examType),
+    supabase.from('questions').select('*', { count: 'exact', head: true }).eq('exam_type', examType),
+    supabase.from('student_responses').select('*', { count: 'exact', head: true }).eq('exam_type', examType),
+    // Đếm toàn bộ loại kì thi cho tab chọn, không lọc
     supabase.from('students').select('exam_type'),
+    supabase
+      .from('students')
+      .select('stt, name, email, tho_tv, tho_ta, tho_toan, tho_tdkh')
+      .eq('exam_type', examType),
+    supabase
+      .from('questions')
+      .select('question_id, incorrect, correct, total_attempts, is_error')
+      .eq('exam_type', examType),
   ]);
 
   const examCounts: Record<ExamType, number> = { survey: 0, mock: 0 };
-  for (const r of (typeRows as { exam_type?: string }[]) || []) {
+  for (const r of (typeRows.data as { exam_type?: string }[]) || []) {
     examCounts[normalizeExamType(r.exam_type)] += 1;
   }
 
-  // Thống kê nâng cao đợt thi này — không dùng ngưỡng/cột nào hardcode
-  let avgToan = 0, avgTdkh = 0, highScores = 0, hardestQ = '';
-  try {
-    const { data: studentsData } = await supabase.from('students').select('stt, name, email, tho_tv, tho_ta, tho_toan, tho_tdkh');
-    if (studentsData && studentsData.length > 0) {
-      const latest = new Map<string, { stt: number; tv: number; ta: number; toan: number; tdkh: number }>();
-      for (const s of studentsData) {
-        const key = s.email || s.name;
-        const prev = latest.get(key);
-        if (!prev || (s.stt || 0) > prev.stt) {
-          latest.set(key, { stt: s.stt || 0, tv: s.tho_tv || 0, ta: s.tho_ta || 0, toan: s.tho_toan || 0, tdkh: s.tho_tdkh || 0 });
-        }
-      }
-      const rows = Array.from(latest.values());
-      avgToan = rows.reduce((sum, r) => sum + r.toan, 0) / (rows.length || 1);
-      avgTdkh = rows.reduce((sum, r) => sum + r.tdkh, 0) / (rows.length || 1);
-      highScores = rows.filter(r => (r.tv + r.ta + r.toan + r.tdkh) >= GIOI_MIN).length;
+  // Thống kê nâng cao — chỉ trong loại kì thi đang xem, lấy lần thi mới nhất của mỗi học sinh
+  const latest = new Map<string, AttemptRow>();
+  for (const s of (studentsData.data ?? []) as any[]) {
+    const key = s.email || s.name;
+    const prev = latest.get(key);
+    if (!prev || (num(s.stt) ?? 0) > prev.stt) {
+      latest.set(key, {
+        stt: num(s.stt) ?? 0,
+        tv: num(s.tho_tv),
+        ta: num(s.tho_ta),
+        toan: num(s.tho_toan),
+        tdkh: num(s.tho_tdkh),
+      });
     }
+  }
 
-    // Câu sai nhiều nhất: bỏ câu lỗi đề (is_error) và câu không có số liệu
-    const { data: questionsData } = await supabase.from('questions').select('question_id, incorrect, is_error');
-    if (questionsData && questionsData.length > 0) {
-      const hardest = questionsData
-        .filter(q => !q.is_error && q.incorrect !== null && q.incorrect !== undefined && Number.isFinite(Number(q.incorrect)))
-        .sort((a, b) => Number(b.incorrect) - Number(a.incorrect))[0];
-      if (hardest) hardestQ = `${hardest.question_id} (${hardest.incorrect} bạn sai)`;
-    }
-  } catch {}
+  const rows = [...latest.values()];
+  // Trung bình chỉ tính học sinh có điểm ở môn đó, không dùng 0 cho môn thiếu
+  const avgOf = (pick: (r: AttemptRow) => number | null): number | null => {
+    const vals = rows.map(pick).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  };
+  const avgToan = avgOf(r => r.toan);
+  const avgTdkh = avgOf(r => r.tdkh);
 
-  return { 
-    students: studentCount ?? 0, 
-    questions: questionCount ?? 0, 
-    responses: responseCount ?? 0,
-    avgToan: avgToan,
-    avgTdkh: avgTdkh,
-    highScores: highScores,
-    hardestQ: hardestQ,
-    examCounts: examCounts,
+  // Điểm Giỏi tính trên thang 4 môn — chỉ xếp loại thí sinh đủ cả 4 món
+  const scored = rows.filter((r): r is AttemptRow & { tv: number; ta: number; toan: number; tdkh: number } =>
+    r.tv !== null && r.ta !== null && r.toan !== null && r.tdkh !== null,
+  );
+  const goodCount = scored.filter(r => r.tv + r.ta + r.toan + r.tdkh >= GIOI_MIN).length;
+
+  // Câu sai nhiều nhất: so tỉ lệ sai (câu có số lượt làm khác nhau thì số tuyệt đối không tương đương),
+  // bỏ câu lỗi đề (is_error) và câu không có số liệu
+  const ranked = ((questionsData.data ?? []) as any[])
+    .filter(q => !q.is_error)
+    .map(q => {
+      const incorrect = num(q.incorrect);
+      const correct = num(q.correct);
+      const attempts = num(q.total_attempts) ?? (correct !== null ? correct + (incorrect ?? 0) : null);
+      if (incorrect === null || !attempts) return null;
+      return { id: String(q.question_id), incorrect, attempts, rate: incorrect / attempts };
+    })
+    .filter((q): q is { id: string; incorrect: number; attempts: number; rate: number } => q !== null)
+    .sort((a, b) => b.rate - a.rate);
+
+  const hardestQ = ranked.length
+    ? `${ranked[0].id} (${(ranked[0].rate * 100).toFixed(0)}% sai · ${ranked[0].incorrect}/${ranked[0].attempts} bạn)`
+    : '';
+
+  return {
+    students: studentsRes.count ?? 0,
+    questions: questionsRes.count ?? 0,
+    responses: responsesRes.count ?? 0,
+    avgToan,
+    avgTdkh,
+    goodCount,
+    goodTotal: scored.length,
+    hardestQ,
+    examCounts,
   };
 }
 
@@ -167,7 +223,8 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
   const [uploadProgress, setUploadProgress] = useState('');
 
   // Stats
-  const [stats, setStats] = useState<{ students: number; questions: number; responses: number; avgToan?: number; avgTdkh?: number; highScores?: number; hardestQ?: string; examCounts?: Record<ExamType, number> } | null>(null);
+  const [statsExamType, setStatsExamType] = useState<ExamType>('survey');
+  const [stats, setStats] = useState<Stats | null>(null);
   const [clearConfirm, setClearConfirm] = useState<false | 'all' | ExamType>(false);
   const [clearStatus, setClearStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [uploadExamType, setUploadExamType] = useState<ExamType>('survey');
@@ -280,13 +337,14 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
   const [sbdMapStatus, setSbdMapStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   const refreshStats = useCallback(async () => {
-    try { setStats(await fetchStats()); } catch { /* ignore */ }
-  }, []);
+    try { setStats(await fetchStats(statsExamType)); } catch { /* ignore */ }
+  }, [statsExamType]);
 
+  // Phiên đăng nhập + cài đặt kì thi — chỉ chạy một lần khi vào trang
   React.useEffect(() => {
     if (!isSupabaseConfigured) return;
     supabase?.auth.getSession().then(({ data }) => {
-      if (data.session) { setAuthed(true); refreshStats(); }
+      if (data.session) setAuthed(true);
     });
     // Fetch exam settings
     supabase?.from('exam_settings').select('key, value').then(({ data }) => {
@@ -313,7 +371,12 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
         }
       }
     });
-  }, [refreshStats]);
+  }, []);
+
+  // Số liệu thống kê: chạy lại khi đăng nhập và mỗi khi đổi loại kì thi đang xem
+  React.useEffect(() => {
+    if (authed) refreshStats();
+  }, [authed, refreshStats]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -322,7 +385,7 @@ export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) setAuthError(error.message);
-    else { setAuthed(true); refreshStats(); }
+    else setAuthed(true);
   };
 
   const handleLogout = async () => {
@@ -651,29 +714,62 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
-          <StatCard icon={<Users className="w-5 h-5" />} label="Học sinh" value={stats.students} color="indigo" />
-          <StatCard icon={<BookOpen className="w-5 h-5" />} label="Câu hỏi" value={stats.questions} color="sky" />
-          <StatCard icon={<FileSpreadsheet className="w-5 h-5" />} label="Bản ghi câu sai" value={stats.responses} color="amber" />
-          
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col sm:col-span-3">
-            <h3 className="text-sm font-bold text-slate-700 mb-3 border-b pb-2">Thống kê nâng cao đợt thi này</h3>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-slate-700">
+              Thống kê nâng cao · {EXAM_TYPE_LABEL[statsExamType]}
+            </h3>
+            <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 self-start" role="group" aria-label="Loại kì thi">
+              {EXAM_TYPES.map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={t === statsExamType}
+                  onClick={() => setStatsExamType(t)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    t === statsExamType
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:bg-white hover:text-indigo-600'
+                  }`}
+                >
+                  {EXAM_TYPE_LABEL[t]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard icon={<Users className="w-5 h-5" />} label="Học sinh" value={stats.students} color="indigo" />
+            <StatCard icon={<BookOpen className="w-5 h-5" />} label="Câu hỏi" value={stats.questions} color="sky" />
+            <StatCard icon={<FileSpreadsheet className="w-5 h-5" />} label="Bản ghi câu sai" value={stats.responses} color="amber" />
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+            <p className="text-xs text-slate-500 mb-3 border-b pb-2">
+              Lấy lần thi mới nhất của {stats.students.toLocaleString('vi-VN')} học sinh trong {EXAM_TYPE_LABEL[statsExamType].toLowerCase()}
+            </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs text-slate-500 uppercase font-semibold">TB Điểm Toán</p>
-                <p className="text-xl font-bold text-indigo-600">{stats.avgToan?.toFixed(1) || 0}</p>
+                <p className="text-xl font-bold text-indigo-600">{stats.avgToan === null ? '—' : stats.avgToan.toFixed(2)}</p>
+                <p className="text-[11px] text-slate-400">thang 25đ</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase font-semibold">TB Điểm TDKH</p>
-                <p className="text-xl font-bold text-sky-600">{stats.avgTdkh?.toFixed(1) || 0}</p>
+                <p className="text-xl font-bold text-sky-600">{stats.avgTdkh === null ? '—' : stats.avgTdkh.toFixed(2)}</p>
+                <p className="text-[11px] text-slate-400">thang 25đ</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase font-semibold">Điểm Giỏi (≥{GIOI_MIN}/{MAX_TOTAL_SCORE}đ)</p>
-                <p className="text-xl font-bold text-emerald-600">{stats.highScores || 0} bạn</p>
+                <p className="text-xs text-slate-500 uppercase font-semibold">Điểm Giỏi · 4 môn</p>
+                <p className="text-xl font-bold text-emerald-600">
+                  {stats.goodCount}<span className="text-sm font-bold text-slate-400">/{stats.goodTotal}</span>
+                </p>
+                <p className="text-[11px] text-slate-400">tổng ≥ {GIOI_MIN}/{MAX_ALL_SUBJECT_SCORE}đ</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase font-semibold">Câu sai nhiều nhất</p>
-                <p className="text-sm font-bold text-rose-600 mt-1">{stats.hardestQ || 'Chưa có'}</p>
+                <p className="text-sm font-bold text-rose-600 mt-1 leading-snug">{stats.hardestQ || 'Chưa có'}</p>
+                <p className="text-[11px] text-slate-400">theo tỉ lệ sai</p>
               </div>
             </div>
           </div>
