@@ -1,204 +1,57 @@
-function parseCSVLine(text: string): string[] { const result: string[] = []; let current = ""; let inQuotes = false; for (let i = 0; i < text.length; i++) { const char = text[i]; if (char === "\"" && text[i+1] === "\"") { current += "\""; i++; } else if (char === "\"") { inQuotes = !inQuotes; } else if (char === "," && !inQuotes) { result.push(current); current = ""; } else { current += char; } } result.push(current); return result; }
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import {
+  parseStudentsCsv,
+  parseResponsesCsv,
+  parseQuestionsCsv,
+  failedOnly,
+  type ParsedStudent,
+  type ParsedResponse,
+  type ParsedQuestion,
+} from './lib/csvParser.js';
 
 const __filename = typeof import.meta !== "undefined" && typeof import.meta.url === "string" ? fileURLToPath(import.meta.url) : "";
 const __dirname = __filename ? path.dirname(__filename) : process.cwd();
 
-let memStudents: any[] = [];
-let memResponses: any[] = [];
-let memQuestions: any[] = [];
+let memStudents: ParsedStudent[] = [];
+let memResponses: ParsedResponse[] = [];
+let memQuestions: ParsedQuestion[] = [];
 
-const EXAM_TYPE_HEADERS = ['exam_type', 'examtype', 'loai_ky_thi', 'loai_ki_thi', 'ky_thi'];
-
-const normalizeExamType = (v: unknown): 'survey' | 'mock' => {
-  const raw = String(v == null ? '' : v).trim().toLowerCase();
-  return raw === 'mock' || raw === 'thi_thu' || raw === 'thu' || raw === 'kì thi thử' ? 'mock' : 'survey';
-};
-
-const findExamTypeIndex = (headers: string[]): number => {
-  for (const h of EXAM_TYPE_HEADERS) {
-    const i = headers.indexOf(h);
-    if (i !== -1) return i;
+async function readCsv(name: string): Promise<string | null> {
+  try {
+    return await fs.readFile(path.join(process.cwd(), name), 'utf-8');
+  } catch (e) {
+    console.error(`Failed to load ${name}:`, e);
+    return null;
   }
-  return -1;
-};
+}
 
 async function loadData() {
   console.log('Loading CSV data into memory...');
-  
-  // Load students
-  try {
-    const rawStudentsPath = path.join(process.cwd(), 'raw_students.csv');
-    const rawStudents = await fs.readFile(rawStudentsPath, 'utf-8');
-    const lines = rawStudents.split('\n').map(l => l.trim()).filter(l => l);
-    if (lines.length > 0) {
-      const headers = parseCSVLine(lines[0]).map(s => s.toLowerCase().trim());
-      const idx = {
-        stt: headers.indexOf('stt'),
-        name: headers.indexOf('name') !== -1 ? headers.indexOf('name') : headers.indexOf('id'),
-        email: headers.indexOf('email'),
-        tho_tv: headers.indexOf('tho_tv'), tho_ta: headers.indexOf('tho_ta'), tho_toan: headers.indexOf('tho_toan'), tho_tdkh: headers.indexOf('tho_tdkh'),
-        irt_tv: headers.indexOf('irt_tv'), irt_ta: headers.indexOf('irt_ta'), irt_toan: headers.indexOf('irt_toan'), irt_tdkh: headers.indexOf('irt_tdkh'),
-        tp_tv: headers.indexOf('tp_tv'), tp_ta: headers.indexOf('tp_ta'), tp_toan: headers.indexOf('tp_toan'), tp_tdkh: headers.indexOf('tp_tdkh'),
-      };
-      const useFallback = idx.tho_toan === -1;
-      const examIdx = findExamTypeIndex(headers);
-      
-      for (let i = 2; i < lines.length; i++) {
-        const parts = parseCSVLine(lines[i]);
-        if (useFallback) {
-          if (parts.length >= 8) {
-            memStudents.push({
-              stt: parseInt(parts[0], 10),
-              name: parts[2] || parts[1],
-              email: parts[3] || null,
-              tho_toan: parseFloat(parts[4]), tho_tdkh: parseFloat(parts[5]),
-              irt_toan: parseFloat(parts[6]), irt_tdkh: parseFloat(parts[7]),
-              thuong_phat_toan: parseFloat(parts[8]), thuong_phat_tdkh: parseFloat(parts[9]),
-              note: '',
-              exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
-            });
-          }
-        } else {
-           const getVal = (idxKey: number) => (idxKey !== -1 && parts[idxKey]) ? parseFloat(parts[idxKey]) : null;
-           memStudents.push({
-              stt: idx.stt !== -1 ? parseInt(parts[idx.stt], 10) : i,
-              name: (idx.name !== -1 ? parts[idx.name] : parts[0]) || parts[1],
-              email: idx.email !== -1 ? parts[idx.email] : null,
-              tho_tv: getVal(idx.tho_tv), tho_ta: getVal(idx.tho_ta), tho_toan: getVal(idx.tho_toan), tho_tdkh: getVal(idx.tho_tdkh),
-              irt_tv: getVal(idx.irt_tv), irt_ta: getVal(idx.irt_ta), irt_toan: getVal(idx.irt_toan), irt_tdkh: getVal(idx.irt_tdkh),
-              thuong_phat_tv: getVal(idx.tp_tv), thuong_phat_ta: getVal(idx.tp_ta), thuong_phat_toan: getVal(idx.tp_toan), thuong_phat_tdkh: getVal(idx.tp_tdkh),
-              note: '',
-              exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
-           });
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Failed to load students:', e);
+
+  const studentsCsv = await readCsv('raw_students.csv');
+  if (studentsCsv !== null) {
+    memStudents = parseStudentsCsv(studentsCsv);
   }
 
-  // Load responses
-  try {
-    const rawResponsesPath = path.join(process.cwd(), 'raw_student_responses.csv');
-    const rawResponses = await fs.readFile(rawResponsesPath, 'utf-8');
-    const lines = rawResponses.split('\n').map(l => l.trim()).filter(l => l);
-    const dataLines = lines.slice(1);
-    
-    let stt = 1;
-    for (const line of dataLines) {
-      const parts = parseCSVLine(line);
-      if (parts.length >= 74) {
-        let name = parts[0] || parts[1];
-        let email = parts[3] || parts[9] || null;
-        let qStartIdx = 14;
-
-        const checkIdx = parts.findIndex(p => p && p.trim().toUpperCase() === 'TRUE');
-        if (checkIdx !== -1) {
-          name = parts[checkIdx - 10] || parts[checkIdx - 11];
-          email = parts[checkIdx - 8] || parts[checkIdx - 2] || null;
-          qStartIdx = checkIdx + 3;
-        } else {
-          const firstContentIdx = parts.findIndex(p => p && p.trim().length > 0);
-          if (firstContentIdx > 0 && firstContentIdx <= 6) {
-            name = parts[firstContentIdx] || parts[firstContentIdx + 1];
-            qStartIdx = firstContentIdx + 14;
-          }
-        }
-
-        if (!name) continue;
-
-        if (email) {
-          const s = memStudents.find(s => s.name === name && s.stt === stt);
-          if (s) s.email = email;
-          else {
-             // Fallback to updating any matching name if exact STT mismatch
-             const anyS = memStudents.find(s => s.name === name);
-             if (anyS && !anyS.email) anyS.email = email;
-          }
-        }
-        
-        for (let i = 0; i < 60; i++) {
-          let val = parts[qStartIdx + i];
-          if (val) val = val.trim();
-          let status = 'wrong';
-          
-          if (val === '1' || val === '1.0' || val === '1.00' || val === '0.1' || val === '0.25' || val === '0.5') {
-            status = 'correct';
-          } else if (val === '0' || val === '0.0' || val === '0.00') {
-            status = 'wrong';
-          } else if (val === '' || val === '-1' || val === '\r' || val === '\r\n' || !val) {
-            status = 'missing';
-          } else {
-            let numVal = parseFloat(val);
-            if (numVal > 0) status = 'correct';
-            else if (numVal === 0) status = 'wrong';
-            else status = 'missing';
-          }
-          
-          if ((i + 1) === 4) {
-            status = 'correct';
-          }
-          
-          memResponses.push({
-            student_name: name,
-            stt: stt,
-            question_num: (i + 1),
-            status: status
-          });
-        }
-        stt++;
-      }
-    }
-  } catch(e) {
-    console.error('Failed to load student responses:', e);
+  const responsesCsv = await readCsv('raw_student_responses.csv');
+  if (responsesCsv !== null) {
+    memResponses = parseResponsesCsv(responsesCsv, memStudents);
   }
 
-  // Load questions
-  try {
-    const rawQuestionsPath = path.join(process.cwd(), 'questions.csv');
-    const rawQuestions = await fs.readFile(rawQuestionsPath, 'utf-8');
-    const lines = rawQuestions.split('\n').map(l => l.trim()).filter(l => l);
-    const headers = parseCSVLine(lines[0] || '').map(h => h.toLowerCase().trim());
-    const examIdx = findExamTypeIndex(headers);
-    const dataLines = lines.slice(2);
-    let currentPhanThi = '';
-    
-    for (const line of dataLines) {
-      const parts = parseCSVLine(line);
-      if (parts.length >= 11) {
-        if (parts[0]) currentPhanThi = parts[0];
-        
-        const parseFloatSafe = (val: string) => val ? parseFloat(val) : null;
-        const parseIntSafe = (val: string) => val ? parseInt(val, 10) : null;
-        
-        memQuestions.push({
-          phan_thi: currentPhanThi,
-          cau_hoi: parts[1],
-          hs_da_lam: parseIntSafe(parts[2]),
-          hs_lam_dung: parseIntSafe(parts[3]),
-          hs_lam_sai: parseIntSafe(parts[4]),
-          diem_phat: parseFloatSafe(parts[5]),
-          diem_thuong_1_y: parseFloatSafe(parts[6]),
-          diem_thuong_2_y: parseFloatSafe(parts[7]),
-          diem_thuong_3_y: parseFloatSafe(parts[8]),
-          diem_thuong_dung: parseFloatSafe(parts[9]),
-          isError: parts[2] === 'LỖI ĐỀ THI' || parts[1] === 'Câu 4',
-          exam_type: examIdx !== -1 ? normalizeExamType(parts[examIdx]) : 'survey',
-        });
-      }
-    }
-  } catch(e) {
-    console.error('Failed to load questions:', e);
+  const questionsCsv = await readCsv('questions.csv');
+  if (questionsCsv !== null) {
+    memQuestions = parseQuestionsCsv(questionsCsv);
   }
+
+  console.log(`Loaded ${memStudents.length} students, ${memResponses.length} responses, ${memQuestions.length} questions.`);
 }
 
 async function startServer() {
   await loadData();
-  
+
   const app = express();
   const PORT = parseInt(process.env.PORT || '3000', 10);
   app.use(express.json());
@@ -206,29 +59,30 @@ async function startServer() {
   // API Routes
   app.get('/api/students', (req, res) => {
     try {
-      const students = memStudents.sort((a, b) => a.stt - b.stt);
-      const responses = memResponses.filter(r => r.status !== 'correct');
-      
-      const responsesMap = new Map<number, any[]>();
-      for (const r of responses) {
-        if (!responsesMap.has(r.stt)) {
-          responsesMap.set(r.stt, []);
+      const responsesMap = new Map<number, { question_num: number; status: string }[]>();
+      for (const r of failedOnly(memResponses)) {
+        let list = responsesMap.get(r.student_stt);
+        if (!list) {
+          list = [];
+          responsesMap.set(r.student_stt, list);
         }
-        responsesMap.get(r.stt)!.push({ question_num: r.question_num, status: r.status });
+        list.push({ question_num: r.question_num, status: r.status });
       }
 
-      // Format response to match frontend expectations
-      const formatted = students.map(s => ({
-        stt: s.stt,
-        name: s.name,
-        email: s.email,
-        examType: normalizeExamType(s.exam_type),
-        tho: { toan: s.tho_toan, tdkh: s.tho_tdkh },
-        irt: { toan: s.irt_toan, tdkh: s.irt_tdkh },
-        thuongPhat: { toan: s.thuong_phat_toan, tdkh: s.thuong_phat_tdkh },
-        note: s.note,
-        responses: responsesMap.get(s.stt) || []
-      }));
+      const formatted = [...memStudents]
+        .sort((a, b) => a.stt - b.stt)
+        .map(s => ({
+          stt: s.stt,
+          name: s.name,
+          email: s.email,
+          examType: s.exam_type,
+          tho: { toan: s.tho_toan, tdkh: s.tho_tdkh },
+          irt: { toan: s.irt_toan, tdkh: s.irt_tdkh },
+          thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh },
+          note: s.note,
+          responses: responsesMap.get(s.stt) || [],
+        }));
+
       res.json(formatted);
     } catch (e) {
       console.error(e);
@@ -239,18 +93,18 @@ async function startServer() {
   app.get('/api/questions', (req, res) => {
     try {
       const formatted = memQuestions.map(q => ({
-        id: q.cau_hoi,
-        subject: q.phan_thi,
-        examType: normalizeExamType(q.exam_type),
-        totalAttempts: q.hs_da_lam,
-        correct: q.hs_lam_dung,
-        incorrect: q.hs_lam_sai,
-        penaltyScore: q.diem_phat,
-        bonus1: q.diem_thuong_1_y,
-        bonus2: q.diem_thuong_2_y,
-        bonus3: q.diem_thuong_3_y,
-        bonusCorrect: q.diem_thuong_dung,
-        isError: q.isError
+        id: q.question_id,
+        subject: q.subject,
+        examType: q.exam_type,
+        totalAttempts: q.total_attempts,
+        correct: q.correct,
+        incorrect: q.incorrect,
+        penaltyScore: q.penalty_score,
+        bonus1: q.bonus1,
+        bonus2: q.bonus2,
+        bonus3: q.bonus3,
+        bonusCorrect: q.bonus_correct,
+        isError: q.is_error,
       }));
       res.json(formatted);
     } catch (e) {

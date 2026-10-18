@@ -10,149 +10,41 @@ import defaultQuestionTexts from './question_texts.json';
 import { defaultTopicMap } from './lib/knowledgeStructure';
 import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
 import { ABILITY_BANDS, EXAM_TYPES, EXAM_TYPE_LABEL, MAX_TOTAL_SCORE, normalizeExamType } from './analytics';
+import {
+  parseStudentsCsv,
+  parseResponsesCsv,
+  parseQuestionsCsv,
+  failedOnly,
+} from './lib/csvParser';
 
-/* ──────────── CSV Parser ──────────── */
-function parseCSVLine(text: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === '"' && text[i + 1] === '"') { current += '"'; i++; }
-    else if (char === '"') inQuotes = !inQuotes;
-    else if (char === ',' && !inQuotes) { result.push(current); current = ''; }
-    else current += char;
-  }
-  result.push(current);
-  return result;
-}
+/* ──────────── Data parsing (dùng chung với server.ts & scripts/export-data.ts) ──────────── */
 
-const readLines = (text: string) => text.split('\n').map(l => l.trim()).filter(l => l);
+async function uploadToSupabase(
+  table: string,
+  data: any[],
+  examType: ExamType,
+  onProgress?: (msg: string) => void
+) {
+  if (!supabase) throw new Error('Chưa kết nối Supabase client!');
 
-/* ──────────── Data parsers (mirrors scripts/export-data.cjs) ──────────── */
-
-function parseStudents(csv: string) {
-  const rows: any[] = [];
-  const lines = readLines(csv);
-  if (lines.length < 2) return rows;
-  const headers = parseCSVLine(lines[0]).map(s => s.toLowerCase().trim());
-  const idx = {
-    stt: headers.indexOf('stt'),
-    name: headers.indexOf('name') !== -1 ? headers.indexOf('name') : headers.indexOf('id'),
-    email: headers.indexOf('email'),
-    tho_tv: headers.indexOf('tho_tv'), tho_ta: headers.indexOf('tho_ta'), tho_toan: headers.indexOf('tho_toan'), tho_tdkh: headers.indexOf('tho_tdkh'),
-    irt_tv: headers.indexOf('irt_tv'), irt_ta: headers.indexOf('irt_ta'), irt_toan: headers.indexOf('irt_toan'), irt_tdkh: headers.indexOf('irt_tdkh'),
-    tp_tv: headers.indexOf('tp_tv'), tp_ta: headers.indexOf('tp_ta'), tp_toan: headers.indexOf('tp_toan'), tp_tdkh: headers.indexOf('tp_tdkh'),
-  };
-  
-  const useFallback = idx.tho_toan === -1;
-
-  for (let i = 2; i < lines.length; i++) {
-    const parts = parseCSVLine(lines[i]);
-    if (useFallback) {
-      if (parts.length >= 8) {
-        rows.push({
-          stt: parseInt(parts[0], 10),
-          name: parts[2] || parts[1],
-          email: parts[3] || null,
-          tho_toan: parseFloat(parts[4]), tho_tdkh: parseFloat(parts[5]),
-          irt_toan: parseFloat(parts[6]), irt_tdkh: parseFloat(parts[7]),
-          tp_toan: parseFloat(parts[8]), tp_tdkh: parseFloat(parts[9]),
-          note: '',
-        });
-      }
-    } else {
-       const getVal = (idxKey: number) => (idxKey !== -1 && parts[idxKey]) ? parseFloat(parts[idxKey]) : null;
-       rows.push({
-          stt: idx.stt !== -1 ? parseInt(parts[idx.stt], 10) : i,
-          name: (idx.name !== -1 ? parts[idx.name] : parts[0]) || parts[1],
-          email: idx.email !== -1 ? parts[idx.email] : null,
-          tho_tv: getVal(idx.tho_tv), tho_ta: getVal(idx.tho_ta), tho_toan: getVal(idx.tho_toan), tho_tdkh: getVal(idx.tho_tdkh),
-          irt_tv: getVal(idx.irt_tv), irt_ta: getVal(idx.irt_ta), irt_toan: getVal(idx.irt_toan), irt_tdkh: getVal(idx.irt_tdkh),
-          tp_tv: getVal(idx.tp_tv), tp_ta: getVal(idx.tp_ta), tp_toan: getVal(idx.tp_toan), tp_tdkh: getVal(idx.tp_tdkh),
-          note: '',
-       });
-    }
-  }
-  return rows;
-}
-
-function parseResponses(csv: string, students: any[]) {
-  const responses: any[] = [];
-  const lines = readLines(csv).slice(1);
-  let stt = 1;
-  for (const line of lines) {
-    const parts = parseCSVLine(line);
-    if (parts.length < 74) continue;
-    let name = parts[0] || parts[1];
-    let email = parts[3] || parts[9] || null;
-    let qStartIdx = 14;
-    const checkIdx = parts.findIndex(p => p && p.trim().toUpperCase() === 'TRUE');
-    if (checkIdx !== -1) {
-      name = parts[checkIdx - 10] || parts[checkIdx - 11];
-      email = parts[checkIdx - 8] || parts[checkIdx - 2] || null;
-      qStartIdx = checkIdx + 3;
-    } else {
-      const first = parts.findIndex(p => p && p.trim().length > 0);
-      if (first > 0 && first <= 6) { name = parts[first] || parts[first + 1]; qStartIdx = first + 14; }
-    }
-    if (!name) continue;
-    if (email) {
-      const exact = students.find(s => s.name === name && s.stt === stt);
-      if (exact) exact.email = email;
-      else { const any = students.find(s => s.name === name); if (any && !any.email) any.email = email; }
-    }
-    for (let i = 0; i < 60; i++) {
-      let val = parts[qStartIdx + i];
-      if (val) val = val.trim();
-      let status = 'wrong';
-      if (val === '1' || val === '1.0' || val === '1.00' || val === '0.1' || val === '0.25' || val === '0.5') status = 'correct';
-      else if (val === '0' || val === '0.0' || val === '0.00') status = 'wrong';
-      else if (val === '' || val === '-1' || val === '\r' || val === '\r\n' || !val) status = 'missing';
-      else { const n = parseFloat(val); if (n > 0) status = 'correct'; else if (n === 0) status = 'wrong'; else status = 'missing'; }
-      if (i + 1 === 4) status = 'correct';
-      if (status !== 'correct') responses.push({ student_stt: stt, student_name: name, question_num: i + 1, status });
-    }
-    stt++;
-  }
-  return responses;
-}
-
-function parseQuestions(csv: string) {
-  const rows: any[] = [];
-  const lines = readLines(csv).slice(2);
-  let cur = '';
-  for (const line of lines) {
-    const parts = parseCSVLine(line);
-    if (parts.length >= 11) {
-      if (parts[0]) cur = parts[0];
-      const num = (v: string) => v ? parseFloat(v) : null;
-      const int = (v: string) => v ? parseInt(v, 10) : null;
-      rows.push({
-        question_id: parts[1], subject: cur,
-        total_attempts: int(parts[2]), correct: int(parts[3]), incorrect: int(parts[4]),
-        penalty_score: num(parts[5]), bonus1: num(parts[6]), bonus2: num(parts[7]),
-        bonus3: num(parts[8]), bonus_correct: num(parts[9]),
-        is_error: parts[2] === 'LỖI ĐỀ THI' || parts[1] === 'Câu 4',
-      });
-    }
-  }
-  return rows;
-}
-
-
-async function uploadToSupabase(table: string, data: any[], examType: ExamType) {
-  if (!supabase) throw new Error('No supabase client');
-
+  onProgress?.(`Đang dọn dữ liệu cũ bảng ${table} (${EXAM_TYPE_LABEL[examType]})...`);
   const { error: delErr } = await supabase.from(table).delete().eq('exam_type', examType);
-  if (delErr) throw delErr;
+  if (delErr) {
+    console.error(`Lỗi xóa dữ liệu cũ bảng ${table}:`, delErr);
+    throw new Error(`Lỗi dọn dữ liệu cũ ${table}: ${delErr.message}`);
+  }
 
   const rows = data.map(r => ({ ...r, exam_type: examType }));
+  const chunkSize = 250;
 
-  for (let i = 0; i < rows.length; i += 500) {
-    const chunk = rows.slice(i, i + 500);
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    onProgress?.(`Đang lưu dữ liệu ${table}: ${Math.min(i + chunkSize, rows.length)}/${rows.length}...`);
     const { error } = await supabase.from(table).insert(chunk);
-    if (error) throw error;
+    if (error) {
+      console.error(`Lỗi chèn dữ liệu bảng ${table} tại dòng ${i}:`, error);
+      throw new Error(`Lỗi lưu dữ liệu ${table}: ${error.message}`);
+    }
   }
 }
 
@@ -217,14 +109,11 @@ async function fetchStats() {
 /* ──────────── Component ──────────── */
 interface AdminPageProps {
   onExit: () => void;
-  questions?: any;
-  students?: any;
-  topicMap?: any;
-  questionTexts?: any;
+  onDataChange?: () => void;
   visibleParts?: { tv: boolean; ta: boolean; toan: boolean; tdkh: boolean };
 }
 
-export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
+export function AdminPage({ onExit, onDataChange, visibleParts }: AdminPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authed, setAuthed] = useState(false);
@@ -280,17 +169,18 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
   // Stats
   const [stats, setStats] = useState<{ students: number; questions: number; responses: number; avgToan?: number; avgTdkh?: number; highScores?: number; hardestQ?: string; examCounts?: Record<ExamType, number> } | null>(null);
   const [clearConfirm, setClearConfirm] = useState<false | 'all' | ExamType>(false);
+  const [clearStatus, setClearStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [uploadExamType, setUploadExamType] = useState<ExamType>('survey');
 
   const handleUpload = async () => {
     if (!studentsFile || !responsesFile || !questionsFile) {
-      setUploadStatus({ type: 'error', msg: 'Vui lòng chọn đủ cả 3 file!' });
+      setUploadStatus({ type: 'error', msg: 'Vui lòng chọn đủ cả 3 file CSV (học sinh, câu hỏi, bài làm)!' });
       return;
     }
 
     setLoading(true);
     setUploadStatus(null);
-    setUploadProgress('Đang đọc file...');
+    setUploadProgress('Đang đọc nội dung các file CSV...');
 
     try {
       const readFile = (f: File): Promise<string> => new Promise((resolve, reject) => {
@@ -304,31 +194,35 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
         readFile(studentsFile), readFile(responsesFile), readFile(questionsFile)
       ]);
 
-      setUploadProgress('Đang xử lý dữ liệu...');
-      const students = parseStudents(studentsTxt);
-      const responses = parseResponses(responsesTxt, students);
-      const questions = parseQuestions(questionsTxt);
+      setUploadProgress('Đang phân tích cấu trúc CSV...');
+      const students = parseStudentsCsv(studentsTxt);
+      const responses = failedOnly(parseResponsesCsv(responsesTxt, students));
+      const questions = parseQuestionsCsv(questionsTxt);
 
-      if (students.length === 0 || questions.length === 0) {
-        throw new Error('Dữ liệu trống hoặc file không hợp lệ!');
+      if (students.length === 0) {
+        throw new Error('Không phân tích được danh sách học sinh từ raw_students.csv (file trống hoặc sai định dạng)!');
+      }
+      if (questions.length === 0) {
+        throw new Error('Không phân tích được danh sách câu hỏi từ questions.csv (file trống hoặc sai định dạng)!');
       }
 
-      setUploadProgress('Đang tải dữ liệu học sinh lên máy chủ...');
-      await uploadToSupabase('students', students, uploadExamType);
+      await uploadToSupabase('students', students, uploadExamType, setUploadProgress);
+      await uploadToSupabase('questions', questions, uploadExamType, setUploadProgress);
+      await uploadToSupabase('student_responses', responses, uploadExamType, setUploadProgress);
 
-      setUploadProgress('Đang tải dữ liệu câu hỏi lên máy chủ...');
-      await uploadToSupabase('questions', questions, uploadExamType);
+      setUploadStatus({
+        type: 'success',
+        msg: `Thành công! Đã tải lên ${EXAM_TYPE_LABEL[uploadExamType]}: ${students.length} học sinh, ${questions.length} câu hỏi và ${responses.length} câu trả lời sai/bỏ qua.`
+      });
 
-      setUploadProgress('Đang tải dữ liệu bài làm lên máy chủ...');
-      await uploadToSupabase('student_responses', responses, uploadExamType);
-
-      setUploadStatus({ type: 'success', msg: `Thành công! Đã tải ${EXAM_TYPE_LABEL[uploadExamType].toLowerCase()}: ${students.length} học sinh và ${questions.length} câu hỏi.` });
-      refreshStats();
-      
       // Clear file inputs
       setStudentsFile(null);
       setResponsesFile(null);
       setQuestionsFile(null);
+
+      // Refresh dashboard & search immediately
+      onDataChange?.();
+      await refreshStats();
     } catch (err: any) {
       console.error(err);
       setUploadStatus({ type: 'error', msg: `Lỗi: ${err.message || 'Không xác định'}` });
@@ -642,78 +536,43 @@ export function AdminPage({ onExit, visibleParts }: AdminPageProps) {
     setQuestionTextsSaving(false);
   };
 
-  // ── Upload handler ──
-  const handleUploadOld = async () => {
-    if (!supabase) return;
-    if (!studentsFile || !responsesFile || !questionsFile) {
-      setUploadStatus({ type: 'error', msg: 'Vui lòng chọn đủ 3 file CSV.' });
-      return;
-    }
-    setLoading(true);
-    setUploadStatus(null);
-    try {
-      // Parse CSVs
-      setUploadProgress('Đang đọc file CSV...');
-      const studentsCsv = await studentsFile.text();
-      const responsesCsv = await responsesFile.text();
-      const questionsCsv = await questionsFile.text();
-
-      const parsedStudents = parseStudents(studentsCsv);
-      const parsedResponses = parseResponses(responsesCsv, parsedStudents);
-      const parsedQuestions = parseQuestions(questionsCsv);
-
-      // Clear old data of this exam type only
-      setUploadProgress('Đang xoá dữ liệu cũ...');
-      await supabase.from('student_responses').delete().eq('exam_type', uploadExamType);
-      await supabase.from('students').delete().eq('exam_type', uploadExamType);
-      await supabase.from('questions').delete().eq('exam_type', uploadExamType);
-
-      const stamp = (rows: any[]) => rows.map(r => ({ ...r, exam_type: uploadExamType }));
-
-      // Insert students (batch 500)
-      setUploadProgress(`Đang tải ${parsedStudents.length} học sinh...`);
-      for (let i = 0; i < parsedStudents.length; i += 500) {
-        await supabase.from('students').insert(stamp(parsedStudents.slice(i, i + 500)));
-      }
-
-      // Insert questions
-      setUploadProgress(`Đang tải ${parsedQuestions.length} câu hỏi...`);
-      await supabase.from('questions').insert(stamp(parsedQuestions));
-
-      // Insert responses (batch 1000)
-      setUploadProgress(`Đang tải ${parsedResponses.length} bản ghi câu sai/bỏ trống...`);
-      for (let i = 0; i < parsedResponses.length; i += 1000) {
-        await supabase.from('student_responses').insert(stamp(parsedResponses.slice(i, i + 1000)));
-      }
-
-      setUploadProgress('');
-      setUploadStatus({
-        type: 'success',
-        msg: `Đã tải lên thành công: ${parsedStudents.length} học sinh, ${parsedQuestions.length} câu hỏi, ${parsedResponses.length} bản ghi câu sai/bỏ trống.`,
-      });
-      await refreshStats();
-    } catch (err: any) {
-      setUploadProgress('');
-      setUploadStatus({ type: 'error', msg: `Lỗi: ${err?.message || 'Không xác định'}` });
-    }
-    setLoading(false);
-  };
-
   const handleClearAll = async () => {
     if (!supabase) return;
     setLoading(true);
-    if (clearConfirm === 'all') {
-      await supabase.from('student_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    } else if (clearConfirm !== false) {
-      await supabase.from('student_responses').delete().eq('exam_type', clearConfirm);
-      await supabase.from('students').delete().eq('exam_type', clearConfirm);
-      await supabase.from('questions').delete().eq('exam_type', clearConfirm);
+    setClearStatus(null);
+    try {
+      if (clearConfirm === 'all') {
+        const [res1, res2, res3] = await Promise.all([
+          supabase.from('student_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+          supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+          supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        ]);
+        if (res1.error) throw res1.error;
+        if (res2.error) throw res2.error;
+        if (res3.error) throw res3.error;
+        setClearStatus({ type: 'success', msg: 'Đã xóa toàn bộ dữ liệu thành công! Tìm kiếm và dashboard đã được làm sạch.' });
+      } else if (clearConfirm !== false) {
+        const [res1, res2, res3] = await Promise.all([
+          supabase.from('student_responses').delete().eq('exam_type', clearConfirm),
+          supabase.from('students').delete().eq('exam_type', clearConfirm),
+          supabase.from('questions').delete().eq('exam_type', clearConfirm),
+        ]);
+        if (res1.error) throw res1.error;
+        if (res2.error) throw res2.error;
+        if (res3.error) throw res3.error;
+        setClearStatus({ type: 'success', msg: `Đã xóa dữ liệu ${EXAM_TYPE_LABEL[clearConfirm].toLowerCase()} thành công!` });
+      }
+
+      // Sync App state so search results update immediately!
+      onDataChange?.();
+      await refreshStats();
+    } catch (err: any) {
+      console.error('Lỗi khi xóa dữ liệu:', err);
+      setClearStatus({ type: 'error', msg: `Lỗi khi xóa: ${err?.message || 'Không thể xóa dữ liệu'}` });
+    } finally {
+      setLoading(false);
+      setClearConfirm(false);
     }
-    setLoading(false);
-    setClearConfirm(false);
-    await refreshStats();
   };
 
   /* ── Not configured ── */
@@ -873,24 +732,22 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">File Học sinh (raw_students.csv)</label>
-            <input type="file" accept=".csv" onChange={e => setStudentsFile(e.target.files?.[0] || null)} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">File Bài làm (raw_student_responses.csv)</label>
-            <input type="file" accept=".csv" onChange={e => setResponsesFile(e.target.files?.[0] || null)} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-slate-700">File Câu hỏi (questions.csv)</label>
-            <input type="file" accept=".csv" onChange={e => setQuestionsFile(e.target.files?.[0] || null)} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
-          </div>
+          <FileInput label="raw_students.csv (Học sinh)" file={studentsFile} onChange={setStudentsFile} />
+          <FileInput label="raw_student_responses.csv (Bài làm)" file={responsesFile} onChange={setResponsesFile} />
+          <FileInput label="questions.csv (Câu hỏi)" file={questionsFile} onChange={setQuestionsFile} />
         </div>
         
+        {uploadProgress && (
+          <div className="flex items-center gap-2 text-sm text-indigo-700 bg-indigo-50 border border-indigo-200 px-4 py-3 rounded-xl mb-4">
+            <Loader2 className="w-5 h-5 animate-spin shrink-0 text-indigo-600" />
+            <span className="font-medium">{uploadProgress}</span>
+          </div>
+        )}
+
         {uploadStatus && (
-          <div className={`flex items-center gap-2 text-sm px-4 py-3 rounded-lg mb-4 ${uploadStatus.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-            {uploadStatus.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-            {uploadStatus.msg}
+          <div className={`flex items-start gap-2.5 text-sm px-4 py-3 rounded-xl mb-4 ${uploadStatus.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+            {uploadStatus.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />}
+            <div>{uploadStatus.msg}</div>
           </div>
         )}
         
@@ -900,7 +757,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
           className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-          {loading ? uploadProgress || 'Đang xử lý...' : 'Tải lên & Cập nhật'}
+          {loading ? uploadProgress || 'Đang xử lý...' : 'Tải lên & Cập nhật dữ liệu'}
         </button>
       </div>
 
@@ -1257,43 +1114,6 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
         </div>
       </div>
 
-      {/* Upload section */}
-      <div className="card p-5 sm:p-6">
-        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
-          <Upload className="w-5 h-5 text-indigo-500" />
-          Tải lên dữ liệu mới
-        </h2>
-        <p className="text-sm text-slate-500 mb-5">
-          Chọn 3 file CSV. Dữ liệu cũ của <span className="font-semibold text-indigo-600">{EXAM_TYPE_LABEL[uploadExamType].toLowerCase()}</span> sẽ bị xoá và thay thế bằng dữ liệu mới.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FileInput label="raw_students.csv" file={studentsFile} onChange={setStudentsFile} />
-          <FileInput label="raw_student_responses.csv" file={responsesFile} onChange={setResponsesFile} />
-          <FileInput label="questions.csv" file={questionsFile} onChange={setQuestionsFile} />
-        </div>
-
-        {uploadProgress && (
-          <div className="mt-4 flex items-center gap-2 text-sm text-indigo-600 bg-indigo-50 px-4 py-2.5 rounded-lg">
-            <Loader2 className="w-4 h-4 animate-spin shrink-0" /> {uploadProgress}
-          </div>
-        )}
-
-        {uploadStatus && (
-          <div className={`mt-4 flex items-start gap-2 text-sm px-4 py-2.5 rounded-lg ${uploadStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-            {uploadStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
-            {uploadStatus.msg}
-          </div>
-        )}
-
-        <button
-          onClick={handleUpload} disabled={loading || !studentsFile || !responsesFile || !questionsFile}
-          className="mt-5 px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 flex items-center justify-center gap-2"
-        >
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-          Tải lên toàn bộ
-        </button>
-      </div>
-
       {/* Danger zone */}
       <div className="card p-5 sm:p-6 border-2 border-rose-100">
         <h2 className="text-lg font-bold text-rose-600 flex items-center gap-2 mb-3">
@@ -1325,6 +1145,13 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...`}
             <button onClick={() => setClearConfirm(false)} className="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 font-semibold text-sm hover:bg-slate-200 transition-colors">
               Huỷ
             </button>
+          </div>
+        )}
+
+        {clearStatus && (
+          <div className={`mt-4 flex items-start gap-2.5 text-sm px-4 py-3 rounded-xl ${clearStatus.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+            {clearStatus.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />}
+            <div>{clearStatus.msg}</div>
           </div>
         )}
       </div>
