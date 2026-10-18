@@ -2,12 +2,11 @@ import React from 'react';
 import { QuestionData } from './types';
 
 interface Props {
-  onRowClick?: (qKey: string) => void;
   data: QuestionData[];
   selectedSubject?: string;
 }
 
-export function QuestionTable({ data, selectedSubject = 'all', onRowClick }: Props) {
+export function QuestionTable({ data, selectedSubject = 'all' }: Props) {
   const filteredData = React.useMemo(() => {
     if (selectedSubject === 'all') return data;
     return data.filter(q => q.subject === selectedSubject);

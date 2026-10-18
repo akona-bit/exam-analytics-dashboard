@@ -70,22 +70,6 @@ function ExamTypeTabs({ active, onChange, counts }: { active: ExamType; onChange
     </div>
   );
 }
-
-const maskEmail = (email: string | null | undefined) => {
-  if (!email) return '';
-  const parts = email.split('@');
-  if (parts.length !== 2) return email;
-  const [name, domain] = parts;
-  const dParts = domain.split('.');
-  if (dParts.length < 2) return email;
-  const dName = dParts[0];
-  const dExt = dParts.slice(1).join('.');
-  
-  const maskedName = name.length > 3 ? name.substring(0, 3) + '***' : name + '***';
-  const maskedDomain = dName.length > 2 ? dName.substring(0, 1) + '***' + dName.substring(dName.length - 1) : dName + '***';
-  return `${maskedName}@${maskedDomain}.${dExt}`;
-};
-
 export function Dashboard({ questions, students, examName, topicMap, knowledgeCsv, questionTexts: propQuestionTexts, answerLink, nextExamDate, sbdMap, visibleParts }: Props) {
   const currentTexts = propQuestionTexts || texts;
   const [searchQuery, setSearchQuery] = useState('');
@@ -1530,7 +1514,6 @@ export function Dashboard({ questions, students, examName, topicMap, knowledgeCs
                 students={activeStudents}
                 questions={activeQuestions}
                 metric={classMetric}
-                onSelectStudent={s => setSelectedStudent(s)}
               />
             </Suspense>
           </div>

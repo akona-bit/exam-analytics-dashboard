@@ -14,14 +14,13 @@ interface Props {
   students: StudentData[];
   questions: QuestionData[];
   metric: MetricKey;
-  onSelectStudent: (s: StudentData) => void;
 }
 
 const tooltipStyle = { borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '13px' };
 
 const BUCKET_COLORS = ['#f43f5e', '#fb7185', '#f59e0b', '#38bdf8', '#34d399'];
 
-export function ClassAnalytics({ students, questions, metric, onSelectStudent }: Props) {
+export function ClassAnalytics({ students, questions, metric }: Props) {
   const [subjectFilter, setSubjectFilter] = useState<'all' | 'Toán' | 'TDKH'>('all');
 
   const latest = useMemo(() => latestAttempts(students), [students]);
