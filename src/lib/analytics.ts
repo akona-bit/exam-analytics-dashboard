@@ -1,42 +1,59 @@
 import { MetricKey, StudentData, SubjectKey } from '../types';
 
 /** Trang phục vụ đúng một kỳ thi nên không còn khái niệm "loại kỳ thi". */
-export const EXAM_LABEL = 'Kì Thi Thử';
+export const EXAM_LABEL = 'Kì Thi Thử ĐGNL';
 
 export const METRIC_LABEL: Record<MetricKey, string> = {
-  tho: 'Điểm Thô',
-  irt: 'Điểm Neo Đề',
+  tho: 'Điểm Thô (Số câu đúng)',
+  irt: 'Điểm Chuẩn Hoá Neo Đề (IRT)',
 };
 
+export const ALL_SUBJECTS: SubjectKey[] = ['tv', 'ta', 'toan', 'tdkh'];
+
 export const SUBJECT_LABEL: Record<SubjectKey, string> = {
+  tv: 'Tiếng Việt',
+  ta: 'Tiếng Anh',
+  toan: 'Toán',
+  tdkh: 'Tư Duy Khoa Học',
+};
+
+export const SUBJECT_SHORT_LABEL: Record<SubjectKey, string> = {
+  tv: 'TV',
+  ta: 'TA',
   toan: 'Toán',
   tdkh: 'TDKH',
 };
 
-/** Số câu mỗi môn — đề thi có 4 môn nên tổng cộng 120 câu. */
+export const SUBJECT_COLOR: Record<SubjectKey, string> = {
+  tv: '#ec4899',   // Hồng cánh sen
+  ta: '#8b5cf6',   // Tím violet
+  toan: '#6366f1', // Lam đậm Indigo
+  tdkh: '#0ea5e9', // Xanh da trời Sky
+};
+
+/** Số câu mỗi môn — đề thi có 4 môn, mỗi môn 30 câu, tổng cộng 120 câu. */
 export const QUESTIONS_PER_SUBJECT = 30;
 export const SUBJECT_COUNT = 4;
 export const QUESTIONS_TOTAL = QUESTIONS_PER_SUBJECT * SUBJECT_COUNT;
 
-/** Thang điểm tối đa của MỘT môn, khác nhau theo từng thang đo. */
+/** Thang điểm tối đa của MỘT môn: 30 câu (thô) hoặc 300 điểm (IRT). */
 export const METRIC_MAX_SUBJECT: Record<MetricKey, number> = {
-  tho: QUESTIONS_PER_SUBJECT, // số câu đúng
-  irt: 300,                   // điểm neo đề chuẩn hoá
+  tho: 30,
+  irt: 300,
 };
 
 /** Thang điểm tối đa của một môn theo `metric`. */
 export const subjectMax = (metric: MetricKey): number => METRIC_MAX_SUBJECT[metric];
 
-/** Tổng Toán + TDKH theo `metric`. */
-export const totalMax = (metric: MetricKey): number => METRIC_MAX_SUBJECT[metric] * 2;
+/** Tổng toàn bài thi (4 môn): 120 câu đúng (thô) hoặc 1200 điểm (IRT). */
+export const totalMax = (metric: MetricKey): number => (metric === 'tho' ? 120 : 1200);
 
-/** Tổng đủ 4 môn — chỉ dùng được cho thang `tho`. */
 export const MAX_ALL_SUBJECT_SCORE = QUESTIONS_TOTAL;
 
 export const toNumber = (v: number | null | undefined): number | null =>
   typeof v === 'number' && Number.isFinite(v) ? v : null;
 
-
+/** Lấy lần thi mới nhất của từng học sinh (theo email hoặc tên). */
 export const latestAttempts = (students: StudentData[]): StudentData[] => {
   const map = new Map<string, StudentData>();
   for (const s of students) {
@@ -78,13 +95,26 @@ export const stdDev = (values: number[]): number => {
 };
 
 export const subjectScore = (s: StudentData, metric: MetricKey, subject: SubjectKey): number | null =>
-  toNumber(s[metric][subject]);
+  toNumber(s[metric]?.[subject]);
 
-export const totalScore = (s: StudentData, metric: MetricKey): number =>
-  (subjectScore(s, metric, 'toan') ?? 0) + (subjectScore(s, metric, 'tdkh') ?? 0);
+/**
+ * Tổng điểm toàn bài thi (cộng cả 4 môn: Tiếng Việt + Tiếng Anh + Toán + TDKH).
+ * Thang Thô: tối đa 120 câu.
+ * Thang IRT: tối đa 1200 điểm.
+ */
+export const totalScore = (s: StudentData, metric: MetricKey): number => {
+  const tv = subjectScore(s, metric, 'tv') ?? 0;
+  const ta = subjectScore(s, metric, 'ta') ?? 0;
+  const toan = subjectScore(s, metric, 'toan') ?? 0;
+  const tdkh = subjectScore(s, metric, 'tdkh') ?? 0;
+  return tv + ta + toan + tdkh;
+};
 
 export const sortedScores = (students: StudentData[], metric: MetricKey, subject: SubjectKey): number[] =>
   students.map(s => subjectScore(s, metric, subject)).filter((v): v is number => v !== null).sort((a, b) => a - b);
+
+export const sortedTotalScores = (students: StudentData[], metric: MetricKey): number[] =>
+  students.map(s => totalScore(s, metric)).sort((a, b) => a - b);
 
 export interface DistributionStats {
   n: number;
@@ -124,24 +154,30 @@ export interface AbilityBand {
   max: number;
 }
 
-/** 5 mức xếp loại, ranh giới tính theo % của tổng điểm của `metric`. */
+/**
+ * 5 mức xếp loại năng lực chuẩn:
+ * - Xuất sắc: ≥ 80% (≥ 96 câu / ≥ 960đ)
+ * - Giỏi: 65% – 79.9% (78 – 95 câu / 780 – 959đ)
+ * - Khá: 50% – 64.9% (60 – 77 câu / 600 – 779đ)
+ * - Trung bình: 35% – 49.9% (42 – 59 câu / 420 – 599đ)
+ * - Yếu: < 35% (< 42 câu / < 420đ)
+ */
 export const abilityBands = (metric: MetricKey): AbilityBand[] => {
   const max = totalMax(metric);
   return [
-    { label: 'Yếu · 0–20%', short: 'Yếu', color: '#f43f5e', min: 0, max: max * 0.2 },
-    { label: 'Trung bình · 20–40%', short: 'Trung bình', color: '#f59e0b', min: max * 0.2, max: max * 0.4 },
-    { label: 'Khá · 40–60%', short: 'Khá', color: '#0ea5e9', min: max * 0.4, max: max * 0.6 },
-    { label: 'Giỏi · 60–80%', short: 'Giỏi', color: '#6366f1', min: max * 0.6, max: max * 0.8 },
-    { label: 'Xuất sắc · 80–100%', short: 'Xuất sắc', color: '#10b981', min: max * 0.8, max: Infinity },
+    { label: `Yếu · <35% (<${Math.round(max * 0.35)}đ)`, short: 'Yếu', color: '#f43f5e', min: 0, max: max * 0.35 },
+    { label: `Trung bình · 35–50% (${Math.round(max * 0.35)}–${Math.round(max * 0.5)}đ)`, short: 'Trung bình', color: '#f59e0b', min: max * 0.35, max: max * 0.5 },
+    { label: `Khá · 50–65% (${Math.round(max * 0.5)}–${Math.round(max * 0.65)}đ)`, short: 'Khá', color: '#0ea5e9', min: max * 0.5, max: max * 0.65 },
+    { label: `Giỏi · 65–80% (${Math.round(max * 0.65)}–${Math.round(max * 0.8)}đ)`, short: 'Giỏi', color: '#6366f1', min: max * 0.65, max: max * 0.8 },
+    { label: `Xuất sắc · ≥80% (≥${Math.round(max * 0.8)}đ)`, short: 'Xuất sắc', color: '#10b981', min: max * 0.8, max: Infinity },
   ];
 };
 
-/** Trả về -1 nếu tổng điểm rơi ngoài mọi mức (ví dụ âm). */
 export const bandOf = (total: number, metric: MetricKey): number =>
   abilityBands(metric).findIndex(b => total >= b.min && total < b.max);
 
-/** Ngưỡng "Giỏi" quy đổi từ thang Toán + TDKH sang thang đủ 4 môn, để cùng một tỉ lệ 60% dùng được trên cả hai cách cộng điểm. */
-export const GIOI_MIN = MAX_ALL_SUBJECT_SCORE * 0.6;
+/** Ngưỡng "Giỏi" tương ứng 65% tổng điểm bài thi 120 câu (78 câu). */
+export const GIOI_MIN = MAX_ALL_SUBJECT_SCORE * 0.65;
 
 export interface ThresholdRow {
   name: string;
@@ -149,42 +185,59 @@ export interface ThresholdRow {
   percent: number;
 }
 
-/** Ngưỡng tương ứng 40 / 50 / 60 / 70 / 80% của tổng điểm `metric`. */
+/** Tỷ lệ đạt các ngưỡng quan trọng: 40%, 50%, 60%, 70%, 80% trên tổng điểm 120 / 1200. */
 export const thresholdRows = (students: StudentData[], metric: MetricKey): ThresholdRow[] => {
   const max = totalMax(metric);
   return [0.4, 0.5, 0.6, 0.7, 0.8].map(p => {
     const t = max * p;
     const count = students.filter(s => totalScore(s, metric) >= t).length;
     return {
-      name: `≥ ${Math.round(t)}đ ${Math.round(p * 100)}%`,
+      name: `≥ ${Math.round(t)}đ (${Math.round(p * 100)}%)`,
       count,
       percent: students.length ? (count / students.length) * 100 : 0,
     };
   });
 };
 
-export const attemptAverages = (students: StudentData[], metric: MetricKey): { name: string; Toán: number; TDKH: number }[] => {
+/** Điểm trung bình cả 4 môn qua từng lần thi. */
+export const attemptAverages = (
+  students: StudentData[],
+  metric: MetricKey
+): { name: string; 'Tiếng Việt': number; 'Tiếng Anh': number; 'Toán': number; 'TDKH': number; 'Tổng': number }[] => {
   const groups = groupByStudent(students);
-  const acc = new Map<number, { st: number; sd: number; c: number }>();
+  const acc = new Map<number, { tv: number; ta: number; toan: number; tdkh: number; c: number }>();
   for (const arr of groups.values()) {
     arr.forEach((s, i) => {
       const n = i + 1;
-      const d = acc.get(n) || { st: 0, sd: 0, c: 0 };
+      const d = acc.get(n) || { tv: 0, ta: 0, toan: 0, tdkh: 0, c: 0 };
+      const tv = subjectScore(s, metric, 'tv');
+      const ta = subjectScore(s, metric, 'ta');
       const toan = subjectScore(s, metric, 'toan');
       const tdkh = subjectScore(s, metric, 'tdkh');
-      if (toan !== null) d.st += toan;
-      if (tdkh !== null) d.sd += tdkh;
+      if (tv !== null) d.tv += tv;
+      if (ta !== null) d.ta += ta;
+      if (toan !== null) d.toan += toan;
+      if (tdkh !== null) d.tdkh += tdkh;
       d.c += 1;
       acc.set(n, d);
     });
   }
   return Array.from(acc.entries())
     .sort((a, b) => a[0] - b[0])
-    .map(([n, d]) => ({
-      name: `Lần ${n}`,
-      'Toán': d.c ? +(d.st / d.c).toFixed(2) : 0,
-      'TDKH': d.c ? +(d.sd / d.c).toFixed(2) : 0,
-    }));
+    .map(([n, d]) => {
+      const avgTv = d.c ? +(d.tv / d.c).toFixed(2) : 0;
+      const avgTa = d.c ? +(d.ta / d.c).toFixed(2) : 0;
+      const avgToan = d.c ? +(d.toan / d.c).toFixed(2) : 0;
+      const avgTdkh = d.c ? +(d.tdkh / d.c).toFixed(2) : 0;
+      return {
+        name: `Lần ${n}`,
+        'Tiếng Việt': avgTv,
+        'Tiếng Anh': avgTa,
+        'Toán': avgToan,
+        'TDKH': avgTdkh,
+        'Tổng': +(avgTv + avgTa + avgToan + avgTdkh).toFixed(2),
+      };
+    });
 };
 
 export const attemptDistribution = (students: StudentData[]): { name: string; value: number }[] => {
@@ -198,5 +251,8 @@ export const attemptDistribution = (students: StudentData[]): { name: string; va
     .map(([n, value]) => ({ name: `${n} lần`, value }));
 };
 
+/** Xếp hạng toàn bộ thí sinh theo tổng điểm 4 môn (120 câu / 1200 điểm). */
 export const rankList = (students: StudentData[], metric: MetricKey): { student: StudentData; score: number }[] =>
-  students.map(student => ({ student, score: totalScore(student, metric) })).sort((a, b) => b.score - a.score);
+  students
+    .map(student => ({ student, score: totalScore(student, metric) }))
+    .sort((a, b) => b.score - a.score);

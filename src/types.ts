@@ -1,6 +1,5 @@
-/** Thang điểm: `tho` = số câu đúng, `irt` = điểm neo đề chuẩn hoá. */
 export type MetricKey = 'tho' | 'irt';
-export type SubjectKey = 'toan' | 'tdkh';
+export type SubjectKey = 'tv' | 'ta' | 'toan' | 'tdkh';
 
 export interface QuestionData {
   id: string;
