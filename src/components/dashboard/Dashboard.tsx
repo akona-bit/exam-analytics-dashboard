@@ -1916,18 +1916,14 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
 
         {/* TAB 4: CLASS ANALYTICS */}
         {studentTab === 'class' && (
-          <div className="flex flex-col gap-6 fade-in">
-            <Suspense fallback={<LazyFallback />}>
-              <AbilityDistribution students={students} metric={classMetric} onMetricChange={setClassMetric} />
-            </Suspense>
-            <Suspense fallback={<LazyFallback />}>
-              <ClassAnalytics
-                students={students}
-                questions={questions}
-                metric={classMetric}
-              />
-            </Suspense>
-          </div>
+          <Suspense fallback={<LazyFallback />}>
+            <ClassAnalytics
+              students={students}
+              questions={questions}
+              metric={classMetric}
+              onMetricChange={setClassMetric}
+            />
+          </Suspense>
         )}
       </div>
 
