@@ -213,53 +213,231 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
     </div>
   );
 
-  const difficultyTable = (title: string, rows: typeof hardest, color: string) => (
-    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-      <p className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 ${color}`}>
-        {title}
-      </p>
-      <table className="w-full text-sm text-left border-collapse">
-        <tbody>
-          {rows.map(q => (
-            <tr
-              key={q.id}
-              className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-white dark:hover:bg-slate-800 transition-colors"
-            >
-              <td className="px-4 py-2.5 font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                {q.id}
-              </td>
-              <td className="px-2 py-2.5 text-[11px] text-slate-400 whitespace-nowrap">{q.subject}</td>
-              <td className="px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden min-w-[60px]">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${Math.round(q.ratio * 100)}%`,
-                        background: color.includes('rose') ? '#f43f5e' : '#10b981',
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs font-bold tabular-nums text-slate-700 dark:text-slate-300 w-10 text-right">
-                    {(q.ratio * 100).toFixed(0)}%
+  const difficultyTable = (title: string, rows: typeof hardest, color: string) => {
+    const isHard = color.includes('rose');
+    return (
+      <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col">
+        <div className={`px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 flex items-center justify-between ${color}`}>
+          <span>{title}</span>
+          <span className="text-[10px] text-slate-400 font-semibold lowercase">đúng / tổng</span>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {rows.map(q => {
+            const pct = Math.round(q.ratio * 100);
+            return (
+              <div
+                key={q.id}
+                className="px-3.5 py-2.5 flex items-center justify-between gap-2.5 hover:bg-white dark:hover:bg-slate-800/80 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-100 shrink-0">
+                    {q.id}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 shrink-0">
+                    {q.subject}
+                  </span>
+                  <span className="text-[11px] text-slate-400 tabular-nums shrink-0">
+                    ({q.correct}/{q.attempts})
                   </span>
                 </div>
-              </td>
-              <td className="px-4 py-2.5 text-right text-[11px] tabular-nums text-slate-400 whitespace-nowrap">
-                {q.correct}/{q.attempts}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="w-16 sm:w-24 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        isHard ? 'bg-gradient-to-r from-rose-500 to-rose-600' : 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-black tabular-nums w-10 text-right ${isHard ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                    {pct}%
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   if (students.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-6 fade-in">
-      {/* SECTION 1: XU HƯỚNG & TIẾN BỘ QUA TỪNG LẦN THI */}
+      {/* SECTION 1: PHÂN TÍCH CÂU HỎI (ITEM ANALYSIS) - ĐƯỢC ĐƯA LÊN TRÊN */}
+      <section id="cau-hoi" className="flex flex-col gap-4">
+        <div className="card p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-l-4 border-l-rose-500">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <ListFilter className="w-6 h-6 text-rose-500" />
+              Phân Tích Câu Hỏi (Item Analysis)
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {questionStats.length} câu hỏi hợp lệ · Độ phân hóa, tỷ lệ làm đúng và câu hỏi tiêu biểu
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Difficulty Buckets */}
+          <div className="card p-5 lg:col-span-1 flex flex-col justify-between">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
+                <span className="icon-box bg-sky-50 dark:bg-sky-950/60 text-sky-600">
+                  <Activity className="w-4 h-4" />
+                </span>
+                Phân Bố Độ Khó Đề Thi
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                Số lượng câu hỏi theo tỷ lệ làm đúng (%)
+              </p>
+            </div>
+
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={difficultyBuckets} margin={{ top: 10, right: 10, left: -18, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b', fontSize: 10 }}
+                    interval={0}
+                    angle={-25}
+                    textAnchor="end"
+                    height={40}
+                  />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
+                  <Bar dataKey="value" name="Số câu" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                    {difficultyBuckets.map((entry, i) => (
+                      <Cell key={`c-${i}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Hardest & Easiest */}
+          <div className="card p-5 lg:col-span-2 flex flex-col gap-4">
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span className="icon-box bg-amber-50 dark:bg-amber-950/60 text-amber-600">
+                <CheckCircle2 className="w-4 h-4" />
+              </span>
+              Top Câu Hỏi Khó Nhất &amp; Dễ Nhất
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {difficultyTable('5 câu có tỷ lệ đúng thấp nhất (Khó)', hardest, 'text-rose-500')}
+              {difficultyTable('5 câu có tỷ lệ đúng cao nhất (Dễ)', easiest, 'text-emerald-600')}
+            </div>
+          </div>
+        </div>
+
+        {/* FULL QUESTION TABLE */}
+        <div className="card overflow-hidden">
+          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
+                  <ListFilter className="w-4 h-4" />
+                </span>
+                Bảng Thống Kê Chi Tiết Toàn Bộ 120 Câu Hỏi
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Xem thông số IRT: độ khó (b), độ phân biệt (a), số thí sinh làm đúng/sai
+              </p>
+            </div>
+
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap">
+              {(['all', ...subjectOptions] as const).map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSubjectFilter(s)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    subjectFilter === s
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {s === 'all' ? 'Tất cả 120 câu' : s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="max-h-[560px] overflow-y-auto bg-white dark:bg-slate-800">
+            <QuestionTable data={questions} selectedSubject={subjectFilter} />
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2: BẢNG XẾP HẠNG TOÀN KHÓA */}
+      <section id="top-ten" className="flex flex-col gap-4">
+        <div className="card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-amber-500 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 rounded-2xl shadow-sm">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Trophy className="w-6 h-6 text-amber-500" />
+              Bảng Xếp Hạng Toàn Khóa (Đủ 4 Môn)
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {activeMetric === 'irt'
+                ? 'Xếp hạng theo mô hình chuẩn hóa IRT (Thang tối đa: 1200 điểm)'
+                : 'Xếp hạng theo tổng số câu trả lời đúng (Thang tối đa: 120 câu)'}
+            </p>
+          </div>
+
+          {/* Metric Switcher */}
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit border border-slate-200/60 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setActiveMetric('irt')}
+              className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+                activeMetric === 'irt'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Chuẩn hoá IRT (1200đ)
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveMetric('tho')}
+              className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+                activeMetric === 'tho'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Điểm Thô (120 câu)
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {renderRankTable(
+            'Top 10 Thí Sinh Điểm Cao Nhất',
+            topTen,
+            true,
+            <Trophy className="w-4 h-4 text-amber-500" />,
+            'bg-amber-50 dark:bg-amber-950/60 text-amber-500',
+            'text-emerald-600 dark:text-emerald-400'
+          )}
+          {renderRankTable(
+            'Top 10 Thí Sinh Cần Nỗ Lực Thêm',
+            bottomTen,
+            false,
+            <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+            'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400',
+            'text-slate-700 dark:text-slate-200'
+          )}
+        </div>
+      </section>
+
+      {/* SECTION 3: XU HƯỚNG & TIẾN BỘ QUA TỪNG LẦN THI */}
       <section id="xu-huong" className="flex flex-col gap-4">
         <div className="card p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-l-4 border-l-emerald-500">
           <div>
@@ -376,177 +554,6 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 2: BẢNG XẾP HẠNG TOÀN KHÓA */}
-      <section id="top-ten" className="flex flex-col gap-4">
-        <div className="card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-amber-500 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 rounded-2xl shadow-sm">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-amber-500" />
-              Bảng Xếp Hạng Toàn Khóa (Đủ 4 Môn)
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {activeMetric === 'irt'
-                ? 'Xếp hạng theo mô hình chuẩn hóa IRT (Thang tối đa: 1200 điểm)'
-                : 'Xếp hạng theo tổng số câu trả lời đúng (Thang tối đa: 120 câu)'}
-            </p>
-          </div>
-
-          {/* Metric Switcher */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit border border-slate-200/60 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setActiveMetric('irt')}
-              className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
-                activeMetric === 'irt'
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              Chuẩn hoá IRT (1200đ)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveMetric('tho')}
-              className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
-                activeMetric === 'tho'
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              Điểm Thô (120 câu)
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {renderRankTable(
-            'Top 10 Thí Sinh Điểm Cao Nhất',
-            topTen,
-            true,
-            <Trophy className="w-4 h-4 text-amber-500" />,
-            'bg-amber-50 dark:bg-amber-950/60 text-amber-500',
-            'text-emerald-600 dark:text-emerald-400'
-          )}
-          {renderRankTable(
-            'Top 10 Thí Sinh Cần Nỗ Lực Thêm',
-            bottomTen,
-            false,
-            <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
-            'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400',
-            'text-slate-700 dark:text-slate-200'
-          )}
-        </div>
-      </section>
-
-      {/* SECTION 3: PHÂN TÍCH CÂU HỎI (ITEM ANALYSIS) */}
-      <section id="cau-hoi" className="flex flex-col gap-4">
-        <div className="card p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-l-4 border-l-rose-500">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <ListFilter className="w-6 h-6 text-rose-500" />
-              Phân Tích Câu Hỏi (Item Analysis)
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {questionStats.length} câu hỏi hợp lệ · Độ phân hóa, tỷ lệ làm đúng và câu hỏi tiêu biểu
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Difficulty Buckets */}
-          <div className="card p-5 lg:col-span-1 flex flex-col justify-between">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
-                <span className="icon-box bg-sky-50 dark:bg-sky-950/60 text-sky-600">
-                  <Activity className="w-4 h-4" />
-                </span>
-                Phân Bố Độ Khó Đề Thi
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                Số lượng câu hỏi theo tỷ lệ làm đúng (%)
-              </p>
-            </div>
-
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={difficultyBuckets} margin={{ top: 10, right: 10, left: -18, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis
-                    dataKey="label"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#64748b', fontSize: 10 }}
-                    interval={0}
-                    angle={-25}
-                    textAnchor="end"
-                    height={40}
-                  />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="value" name="Số câu" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                    {difficultyBuckets.map((entry, i) => (
-                      <Cell key={`c-${i}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Hardest & Easiest */}
-          <div className="card p-5 lg:col-span-2 flex flex-col gap-4">
-            <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span className="icon-box bg-amber-50 dark:bg-amber-950/60 text-amber-600">
-                <CheckCircle2 className="w-4 h-4" />
-              </span>
-              Top Câu Hỏi Khó Nhất &amp; Dễ Nhất
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {difficultyTable('5 câu có tỷ lệ đúng thấp nhất (Khó)', hardest, 'text-rose-500')}
-              {difficultyTable('5 câu có tỷ lệ đúng cao nhất (Dễ)', easiest, 'text-emerald-600')}
-            </div>
-          </div>
-        </div>
-
-        {/* FULL QUESTION TABLE */}
-        <div className="card overflow-hidden">
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
-                  <ListFilter className="w-4 h-4" />
-                </span>
-                Bảng Thống Kê Chi Tiết Toàn Bộ 120 Câu Hỏi
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Xem thông số IRT: độ khó (b), độ phân biệt (a), số thí sinh làm đúng/sai
-              </p>
-            </div>
-
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap">
-              {(['all', ...subjectOptions] as const).map(s => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setSubjectFilter(s)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    subjectFilter === s
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  {s === 'all' ? 'Tất cả 120 câu' : s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="max-h-[560px] overflow-y-auto bg-white dark:bg-slate-800">
-            <QuestionTable data={questions} selectedSubject={subjectFilter} />
           </div>
         </div>
       </section>
