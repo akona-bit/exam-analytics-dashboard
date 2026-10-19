@@ -83,12 +83,6 @@ export function ThankYouModal({ show, studentName, onClose }: Props) {
                 <p className="font-normal text-slate-700 dark:text-slate-200">
                   Toàn thể đội ngũ <strong>Team MIT Hàn Thuyên</strong> xin gửi lời cảm ơn chân thành và nồng nhiệt nhất đến bạn vì đã dành thời gian và tâm huyết tham gia <strong>Kỳ thi thử Đánh giá năng lực (ĐGNL) Đợt 1</strong>.
                 </p>
-                <p className="font-normal text-slate-700 dark:text-slate-200">
-                  Mỗi nỗ lực và từng câu hỏi bạn giải hôm nay đều là hành trang quý giá trên con đường chinh phục cánh cổng đại học mơ ước. Dù kết quả ra sao, tinh thần dám thử sức và quyết tâm rèn luyện của bạn đã là một thành công lớn!
-                </p>
-                <p className="font-normal text-slate-700 dark:text-slate-200">
-                  Chúc bạn luôn giữ vững ngọn lửa đam mê, học tập thật tốt và bứt phá ngoạn mục trong kỳ thi chính thức sắp tới!
-                </p>
                 <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Team Khảo thí &amp; Học thuật</span>
                   <span className="font-black text-amber-700 dark:text-amber-400 text-sm">MIT Hàn Thuyên</span>
