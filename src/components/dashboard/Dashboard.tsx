@@ -82,27 +82,26 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
   const autoCompleteSuggestions = useMemo(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) return [];
     const lower = searchQuery.toLowerCase().trim();
+
+    // Khi người dùng đang nhập email/gmail thì KHÔNG gợi ý tên thí sinh
+    if (lower.includes('@') || lower.includes('gmail') || lower.endsWith('.com')) return [];
+
     const uniqueKeys = new Set<string>();
     const suggestions: (StudentData & { customDisplayName?: string })[] = [];
 
-    // Chỉ gợi ý theo tên hoặc email thật.
-    // TUYỆT ĐỐI không gợi ý theo SBD và không kèm SBD trong gợi ý:
-    // SBD là mật khẩu nên không được lộ trước khi thí sinh vào tra cứu.
+    // Chỉ gợi ý theo tên thí sinh khi tìm kiếm bằng tên.
+    // TUYỆT ĐỐI không gợi ý theo email hoặc SBD để bảo vệ quyền riêng tư
+    // và tránh lộ danh tính thí sinh khi gõ email.
     for (const s of students) {
       // Không có tên thật (name trùng SBD, chỉ toàn chữ số) → bỏ qua, tránh lộ SBD.
       const realName = (s.name || '').trim();
       if (!realName || /^\d+$/.test(realName)) continue;
-      // Email trong một số bản export chứa SBD (chỉ số) → coi như không có email.
-      const realEmail = s.email && !/^\d+$/.test(s.email.trim()) ? s.email : null;
 
-      if (
-        realName.toLowerCase().includes(lower) ||
-        (!!realEmail && realEmail.toLowerCase().includes(lower))
-      ) {
-        const key = realEmail || realName;
+      if (realName.toLowerCase().includes(lower)) {
+        const key = realName.toLowerCase();
         if (!uniqueKeys.has(key)) {
           uniqueKeys.add(key);
-          suggestions.push({ ...s, name: realName, email: realEmail ?? undefined });
+          suggestions.push({ ...s, name: realName });
         }
       }
     }
@@ -236,37 +235,6 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
     }
   };
 
-
-  const searchResults = useMemo(() => {
-    const lowerQuery = searchQuery.toLowerCase().trim();
-    if (!lowerQuery) return { type: 'empty', data: [] };
-
-    const pickLatest = (rows: StudentData[]) => {
-      // Group by email/name and pick the latest attempt
-      const latestMap = new Map<string, StudentData>();
-      for (const m of rows) {
-        const key = m.email || m.name;
-        const ex = latestMap.get(key);
-        if (!ex || m.stt > ex.stt) latestMap.set(key, m);
-      }
-      return { type: 'success', data: Array.from(latestMap.values()).slice(0, 5) };
-    };
-
-    const matches: StudentData[] = [];
-    for (const s of students) {
-      const byName = s.name.toLowerCase().includes(lowerQuery)
-        || (!!s.email && s.email.toLowerCase().includes(lowerQuery));
-      if (byName) {
-        matches.push(s);
-      }
-    }
-
-    if (matches.length === 0) {
-      return { type: 'not_found', data: [] };
-    }
-
-    return pickLatest(matches);
-  }, [students, searchQuery]);
 
   const classProgressData = useMemo(() => {
     const am = new Map<number, { vT: number, vD: number, c: number }>();
