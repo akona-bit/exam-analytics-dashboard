@@ -10,7 +10,8 @@ html, body, #root {
   padding: 0;
   font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   background: #9cc3fb;
-  color: #1e293b;
+  color: #020617;
+  font-weight: 700;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -171,27 +172,27 @@ html, body, #root {
   --accent: #4f46e5;
   --accent-light: #6366f1;
   --accent-glow: rgba(79, 70, 229, 0.18);
-  --ink: #1e293b;
-  --ink-secondary: #475569;
-  --muted: #94a3b8;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
+  --ink: #020617;
+  --ink-secondary: #0f172a;
+  --muted: #1e293b;
+  --line: #cbd5e1;
+  --line-strong: #94a3b8;
   --surface-solid: #ffffff;
   --surface-muted: #f8fafc;
   --surface-hover: #f1f5f9;
 }
 .dark {
-  --accent: #818cf8;
-  --accent-light: #a5b4fc;
+  --accent: #6366f1;
+  --accent-light: #818cf8;
   --accent-glow: rgba(129, 140, 248, 0.22);
-  --ink: #e2e8f0;
-  --ink-secondary: #94a3b8;
-  --muted: #64748b;
-  --line: #334155;
-  --line-strong: #475569;
-  --surface-solid: #0f172a;
-  --surface-muted: #1e293b;
-  --surface-hover: #334155;
+  --ink: #020617;
+  --ink-secondary: #0f172a;
+  --muted: #1e293b;
+  --line: #cbd5e1;
+  --line-strong: #94a3b8;
+  --surface-solid: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-hover: #f1f5f9;
 }
 
 
@@ -397,4 +398,85 @@ html, body, #root {
   background: var(--surface-solid);
 }
 .dark .table-wrap { background: var(--surface-solid); }
+
+/* ════════════════════════════════════════════════════════════════
+   HỆ THỐNG CHỮ ĐEN ĐẬM SẮC NÉT (HIGH-CONTRAST BOLD BLACK SYSTEM)
+   ════════════════════════════════════════════════════════════════ */
+
+/* Bắt buộc toàn bộ text bên trong card có nền trắng hiển thị màu đen đậm */
+.card, .glass-panel, table, tbody, tr, td, th {
+  color: #020617;
+  font-weight: 700;
+}
+
+/* Biến đổi toàn bộ các class text xám/đen trung tính thành chữ đen đậm */
+.text-slate-900,
+.text-slate-800,
+.text-slate-700,
+.text-slate-600,
+.text-slate-500,
+.text-gray-900,
+.text-gray-800,
+.text-gray-700,
+.text-gray-600,
+.text-gray-500 {
+  color: #020617 !important;
+  font-weight: 700 !important;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: #020617 !important;
+  font-weight: 700 !important;
+}
+
+/* Các tiêu đề bên trong card: đen đậm cực đại font-black */
+h1:not(.modern-title), h2:not(.modern-title), h3, h4, h5, h6,
+.card h1:not(.modern-title), .card h2:not(.modern-title), .card h3, .card h4, .card h5, .card h6,
+.card-header h3, .section-title {
+  color: #020617 !important;
+  font-weight: 900 !important;
+}
+
+/* Bảng số liệu: Tiêu đề cột đen đậm rõ nét */
+table th {
+  color: #020617 !important;
+  font-weight: 900 !important;
+}
+
+table td {
+  color: #020617 !important;
+  font-weight: 700 !important;
+}
+
+/* Nhãn phụ và mô tả bên trong card đậm đà, không bị mờ nhạt */
+.card p,
+.card span:not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]):not([class*="text-indigo-"]):not([class*="text-purple-"]):not([class*="text-sky-"]):not([class*="text-blue-"]):not([class*="text-white"]):not([class*="text-violet-"]) {
+  font-weight: 700;
+}
+
+.card .font-medium, .card .font-normal {
+  font-weight: 700 !important;
+}
+
+/* Input & Form controls: chữ đen đậm */
+input, select, textarea {
+  color: #020617 !important;
+  font-weight: 700 !important;
+}
+input::placeholder {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+/* Bảo toàn màu trắng viền xanh cho tên kỳ thi modern-title */
+.modern-title {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-text-stroke: 1.5px #2563eb !important;
+}
+
 
