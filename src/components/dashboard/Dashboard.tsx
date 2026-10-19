@@ -7,9 +7,7 @@ import {
   FileSpreadsheet, Key, Target, PieChart as PieChartIcon, Check, CheckCircle2, Layers, Filter, 
   LayoutGrid, Table, Loader2, Lock, Eye, EyeOff, User, Award, BookmarkCheck, ArrowUpDown, HelpCircle
 } from 'lucide-react';
-import html2canvas from 'html2canvas-pro';
-import jsPDF from 'jspdf';
-import { Download } from 'lucide-react';
+
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV, buildStandard120Structure, getQuestionKnowledgeInfo } from '../../lib/knowledgeStructure';
 import { getExamCodeQuestionNum } from '../../lib/examCodesMapping';
@@ -61,7 +59,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
   /** Bộ lọc bảng 120 câu: xem tất cả hay chỉ nhóm trạng thái. */
   const [questionStatusFilter, setQuestionStatusFilter] = useState<'all' | 'correct' | 'wrong' | 'missing'>('all');
   const [questionSubjectFilter, setQuestionSubjectFilter] = useState<'all' | 'TV' | 'TA' | 'TO' | 'TDKH'>('all');
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
   const celebratedRef = React.useRef<Set<string>>(new Set());
 
   /** Số câu của đề thi — luôn lấy từ bảng `questions`, không suy từ `responses`. */
@@ -119,121 +117,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
     }
   }, [selectedStudent]);
   
-  const handleDownloadPDF = async () => {
-    if (!selectedStudent) return;
-    const dashboardElement = document.getElementById('dashboard-content');
-    if (!dashboardElement) return;
-    
-    setIsExportingPDF(true);
-    try {
-      // Small delay to allow any pending DOM paint or layout stabilization
-      await new Promise(r => setTimeout(r, 100));
 
-      const elementHeight = dashboardElement.offsetHeight || 2000;
-      // Auto-scale to ensure we don't exceed browser canvas limits (canvas max dimensions)
-      const targetScale = elementHeight > 3500 ? 1.5 : 2;
-
-      const canvas = await html2canvas(dashboardElement, {
-        scale: targetScale,
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 1200,
-        imageTimeout: 8000,
-        onclone: (clonedDoc) => {
-          // Remove dark mode in clone so print/export is always pristine high-contrast light
-          clonedDoc.documentElement.classList.remove('dark');
-          clonedDoc.body.classList.remove('dark');
-
-          // Ensure container has clear explicit sizing in cloned DOM
-          const clonedContainer = clonedDoc.getElementById('dashboard-content');
-          if (clonedContainer) {
-            clonedContainer.style.width = '1140px';
-            clonedContainer.style.maxWidth = '1140px';
-            clonedContainer.style.backgroundColor = '#ffffff';
-            clonedContainer.style.padding = '12px';
-            clonedContainer.style.borderRadius = '16px';
-          }
-
-          // Handle avatar: if loaded, convert to dataURL or fallback safely to initials
-          const clonedAvatar = clonedDoc.querySelector('img[alt="Avatar"]') as HTMLImageElement | null;
-          const originalAvatar = document.querySelector('img[alt="Avatar"]') as HTMLImageElement | null;
-          if (clonedAvatar) {
-            let inlined = false;
-            if (originalAvatar && originalAvatar.complete && originalAvatar.naturalWidth > 0) {
-              try {
-                const c = document.createElement('canvas');
-                c.width = originalAvatar.naturalWidth;
-                c.height = originalAvatar.naturalHeight;
-                const ctx = c.getContext('2d');
-                if (ctx) {
-                  ctx.drawImage(originalAvatar, 0, 0);
-                  clonedAvatar.src = c.toDataURL('image/png');
-                  inlined = true;
-                }
-              } catch {
-                inlined = false;
-              }
-            }
-            if (!inlined) {
-              clonedAvatar.style.display = 'none';
-              const fallback = clonedAvatar.nextElementSibling as HTMLElement | null;
-              if (fallback) {
-                fallback.style.display = 'flex';
-                fallback.style.borderRadius = '14px';
-              }
-            }
-          }
-        },
-        ignoreElements: (element) => {
-          return element.classList?.contains('no-pdf') || element.getAttribute('data-no-pdf') === 'true';
-        }
-      });
-
-      if (!canvas || canvas.width === 0 || canvas.height === 0) {
-        throw new Error('Canvas rendering produced empty image');
-      }
-
-      const imgData = canvas.toDataURL('image/png');
-      if (!imgData || imgData === 'data:,' || imgData.length < 100) {
-        throw new Error('Canvas data URL is invalid');
-      }
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
-      }
-
-      const safeName = (selectedStudent.name || 'Thi_Sinh')
-        .trim()
-        .replace(/\s+/g, '_')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-zA-Z0-9_-]/g, '');
-
-      pdf.save(`Phieu_Diem_${safeName || 'Thi_Sinh'}.pdf`);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Đã có lỗi xảy ra khi tạo PDF. Vui lòng thử lại.');
-    } finally {
-      setIsExportingPDF(false);
-    }
-  };
 
 
   const classProgressData = useMemo(() => {
@@ -666,14 +550,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
           <span>Quay Lại Tra Cứu</span>
         </button>
 
-        <button
-          onClick={handleDownloadPDF}
-          disabled={isExportingPDF}
-          className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-white bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-600 dark:hover:bg-indigo-600 font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-indigo-200 dark:border-indigo-800 text-sm shadow-xs disabled:opacity-60 cursor-pointer"
-        >
-          {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-          <span>{isExportingPDF ? 'Đang tạo PDF...' : 'Xuất Phiếu Điểm'}</span>
-        </button>
+
       </div>
 
       {/* Main Student Profile & Dashboard Card */}

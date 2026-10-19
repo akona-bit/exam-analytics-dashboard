@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { MetricKey, QuestionData, StudentData, SubjectKey } from '../../types';
+import { MetricKey, QuestionData, StudentData } from '../../types';
 import {
   METRIC_LABEL,
   SUBJECT_LABEL,
@@ -77,14 +77,16 @@ const SUB_TABS: { id: SubTab; label: string; icon: React.ComponentType<{ classNa
 
 const tooltipStyle = {
   borderRadius: '12px',
-  border: '1px solid #e2e8f0',
-  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+  border: '1px solid #cbd5e1',
+  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
   fontSize: '13px',
-  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-  backdropFilter: 'blur(8px)',
+  fontWeight: '600',
+  backgroundColor: 'rgba(255, 255, 255, 0.98)',
+  backdropFilter: 'blur(10px)',
+  color: '#0f172a',
 };
 
-const BUCKET_COLORS = ['#f43f5e', '#fb7185', '#f59e0b', '#38bdf8', '#34d399'];
+const BUCKET_COLORS = ['#e11d48', '#f43f5e', '#d97706', '#0284c7', '#059669'];
 const BIN_COUNT = 10;
 const TOTAL_BIN_COUNT = 12;
 
@@ -294,29 +296,29 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
   ) => (
     <div className="card overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.12)] rounded-2xl flex flex-col justify-between">
       <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
+        <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2.5">
           <span className={`icon-box ${iconBox}`}>{icon}</span>
           <span>{title}</span>
         </h3>
-        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+        <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700">
           Thang {maxTotalVal} {activeMetric === 'tho' ? 'câu' : 'điểm'}
         </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left border-collapse min-w-[540px]">
-          <thead className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 uppercase font-semibold">
+          <thead className="text-xs text-slate-700 dark:text-slate-200 bg-slate-100/90 dark:bg-slate-800/80 uppercase font-black tracking-wide border-b border-slate-200 dark:border-slate-700">
             <tr>
-              <th className="px-3 py-2.5 w-14 text-center">Hạng</th>
-              <th className="px-3 py-2.5">Thí sinh</th>
-              <th className="px-2 py-2.5 text-center text-rose-500 w-14">TV</th>
-              <th className="px-2 py-2.5 text-center text-purple-500 w-14">TA</th>
-              <th className="px-2 py-2.5 text-center text-indigo-500 w-14">Toán</th>
-              <th className="px-2 py-2.5 text-center text-sky-500 w-14">TDKH</th>
-              <th className="px-3 py-2.5 text-right w-24">Tổng</th>
-              <th className="px-3 py-2.5 text-right w-20">Tỷ lệ</th>
+              <th className="px-3 py-3 w-14 text-center">Hạng</th>
+              <th className="px-3 py-3">Thí sinh</th>
+              <th className="px-2 py-3 text-center text-rose-600 dark:text-rose-400 w-14 font-black">TV</th>
+              <th className="px-2 py-3 text-center text-purple-600 dark:text-purple-400 w-14 font-black">TA</th>
+              <th className="px-2 py-3 text-center text-indigo-600 dark:text-indigo-400 w-14 font-black">Toán</th>
+              <th className="px-2 py-3 text-center text-sky-600 dark:text-sky-400 w-14 font-black">TDKH</th>
+              <th className="px-3 py-3 text-right w-24">Tổng</th>
+              <th className="px-3 py-3 text-right w-20">Tỷ lệ</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-semibold">
             {rows.map(r => {
               const tv = subjectScore(r.student, activeMetric, 'tv') ?? 0;
               const ta = subjectScore(r.student, activeMetric, 'ta') ?? 0;
@@ -327,39 +329,39 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               return (
                 <tr
                   key={r.student.sbd || r.student.email || r.student.name}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  className="hover:bg-indigo-50/40 dark:hover:bg-slate-800/60 transition-colors"
                 >
                   <td className="px-3 py-2.5 text-center">
                     <span
-                      className={`inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full text-xs font-black ${
+                      className={`inline-flex items-center justify-center min-w-[30px] h-7 px-2 rounded-full text-xs font-black ${
                         isTop && r.rank === 1
-                          ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-400 shadow-xs'
+                          ? 'bg-amber-100 text-amber-900 ring-2 ring-amber-400 shadow-sm'
                           : isTop && r.rank === 2
-                          ? 'bg-slate-200 text-slate-800 ring-2 ring-slate-300 shadow-xs'
+                          ? 'bg-slate-200 text-slate-900 ring-2 ring-slate-300 shadow-sm'
                           : isTop && r.rank === 3
-                          ? 'bg-amber-50 text-amber-900 border border-amber-300 shadow-xs'
+                          ? 'bg-amber-50 text-amber-900 border border-amber-400 shadow-sm'
                           : isTop
-                          ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                          ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       {isTop && r.rank === 1 ? '🥇 1' : isTop && r.rank === 2 ? '🥈 2' : isTop && r.rank === 3 ? '🥉 3' : `#${r.rank}`}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-200">
+                  <td className="px-3 py-2.5 font-bold text-slate-900 dark:text-slate-100">
                     <div>{r.student.name}</div>
                     {r.student.sbd && (
-                      <div className="text-[10px] text-slate-400 font-normal">SBD: {r.student.sbd}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">SBD: {r.student.sbd}</div>
                     )}
                   </td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{tv}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{ta}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{toan}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{tdkh}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-200 font-bold">{tv}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-200 font-bold">{ta}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-200 font-bold">{toan}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-200 font-bold">{tdkh}</td>
                   <td className={`px-3 py-2.5 text-right font-black tabular-nums text-sm ${scoreColor}`}>
                     {r.score.toFixed(0)}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-500 font-semibold">
+                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-300 font-bold">
                     {pct}%
                   </td>
                 </tr>
@@ -375,10 +377,10 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
   const renderDifficultyTable = (title: string, rows: typeof hardest, color: string) => {
     const isHard = color.includes('rose');
     return (
-      <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col">
-        <div className={`px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 flex items-center justify-between ${color}`}>
+      <div className="bg-slate-50/90 dark:bg-slate-900/70 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col shadow-xs">
+        <div className={`px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white/70 dark:bg-slate-850 ${color}`}>
           <span>{title}</span>
-          <span className="text-[10px] text-slate-400 font-semibold lowercase">đúng / tổng</span>
+          <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold lowercase">đúng / tổng</span>
         </div>
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {rows.map(q => {
@@ -389,19 +391,19 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                 className="px-3.5 py-2.5 flex items-center justify-between gap-2.5 hover:bg-white dark:hover:bg-slate-800/80 transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs font-black text-slate-800 dark:text-slate-100 shrink-0">
+                  <span className="text-xs font-black text-slate-900 dark:text-slate-50 shrink-0">
                     {q.id}
                   </span>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 shrink-0">
+                  <span className="px-1.5 py-0.5 rounded text-[11px] font-black bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 shrink-0">
                     {q.subject}
                   </span>
-                  <span className="text-[11px] text-slate-400 tabular-nums shrink-0">
+                  <span className="text-xs text-slate-600 dark:text-slate-300 font-semibold tabular-nums shrink-0">
                     ({q.correct}/{q.attempts})
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2.5 shrink-0">
-                  <div className="w-16 sm:w-24 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div className="w-16 sm:w-24 h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
                         isHard ? 'bg-gradient-to-r from-rose-500 to-rose-600' : 'bg-gradient-to-r from-emerald-500 to-teal-400'
@@ -427,31 +429,31 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       <div className="card p-5 sm:p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.12)] rounded-3xl flex flex-col gap-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
                 Thống Kê Toàn Khóa
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+              <span className="px-2.5 py-0.5 rounded-full text-xs text-slate-700 dark:text-slate-200 font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 {latest.length} thí sinh · {questions.length} câu hỏi
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
               Báo Cáo Phân Tích &amp; Thống Kê Toàn Khóa
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mt-1">
               Tổng hợp đầy đủ 4 phân môn theo thang điểm {activeMetric === 'tho' ? '120 câu đúng' : 'chuẩn hóa 1200 điểm'}
             </p>
           </div>
 
           {/* Metric Switcher */}
-          <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl w-fit shadow-inner border border-slate-200/60 dark:border-slate-700 shrink-0 self-start sm:self-auto">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl w-fit shadow-inner border border-slate-200/80 dark:border-slate-700 shrink-0 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => handleMetricToggle('irt')}
-              className={`px-3.5 sm:px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer ${
                 activeMetric === 'irt'
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-slate-200/50'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Chuẩn hoá IRT (1200đ)
@@ -459,10 +461,10 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             <button
               type="button"
               onClick={() => handleMetricToggle('tho')}
-              className={`px-3.5 sm:px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer ${
                 activeMetric === 'tho'
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-slate-200/50'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Điểm Thô (120 câu)
@@ -471,7 +473,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
         </div>
 
         {/* SUB-TABS BAR (Chia đúng phần) */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl overflow-x-auto no-scrollbar border border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-x-auto no-scrollbar border border-slate-200/80 dark:border-slate-700">
           {SUB_TABS.map(tab => {
             const Icon = tab.icon;
             const isActive = activeSubTab === tab.id;
@@ -480,13 +482,13 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSubTab(tab.id)}
-                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-slate-200/60'
+                    : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -498,83 +500,85 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* PHẦN 1: PHỔ ĐIỂM & NĂNG LỰC */}
       {/* ========================================================================= */}
       {(activeSubTab === 'distribution' || activeSubTab === 'all') && (
-        <section id="phan-pho-diem" className="flex flex-col gap-6 fade-in">
-          {/* Section 1 Title Badge when in 'all' view */}
-          {activeSubTab === 'all' && (
-            <div className="flex items-center gap-3 pt-2">
-              <span className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-black text-sm">
+        <section id="phan-pho-diem" className="flex flex-col gap-5 fade-in">
+          {/* Section 1 Card Header (Crisp White Card - NO SUNKEN TEXT) */}
+          <div className="card p-4 sm:p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.12)] rounded-2xl flex items-center justify-between gap-3 border-l-4 border-l-indigo-600">
+            <div className="flex items-center gap-3.5">
+              <span className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-600/30">
                 1
               </span>
               <div>
-                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 tracking-tight">
                   Phổ Điểm &amp; Phân Bổ Năng Lực Toàn Bộ Thí Sinh
                 </h3>
-                <p className="text-xs text-slate-500">Chỉ số KPI, phổ điểm 4 môn thi, xếp loại và độ cân bằng năng lực</p>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                  Chỉ số KPI, phổ điểm 4 môn thi, xếp loại và độ cân bằng năng lực
+                </p>
               </div>
             </div>
-          )}
+          </div>
 
           {/* 5 KPI Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                   <Users className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-700 dark:text-slate-200 font-black uppercase tracking-wider">
                   Tổng Thí Sinh
                 </span>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">
+                <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums">
                   {kpis.totalStudents}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Lần thi mới nhất</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">Lần thi mới nhất</p>
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <BarChart3 className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-700 dark:text-slate-200 font-black uppercase tracking-wider">
                   Điểm Trung Bình
                 </span>
               </div>
               <div>
                 <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
                   {kpis.avgTotal.toFixed(1)}{' '}
-                  <span className="text-xs font-semibold text-slate-400">/ {maxTotalVal}</span>
+                  <span className="text-xs font-bold text-slate-500">/ {maxTotalVal}</span>
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Trung vị: {kpis.medTotal.toFixed(1)}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">Trung vị: {kpis.medTotal.toFixed(1)}</p>
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
                   <Award className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-700 dark:text-slate-200 font-black uppercase tracking-wider">
                   Điểm Cao Nhất
                 </span>
               </div>
               <div>
                 <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
                   {kpis.maxTotal.toFixed(1)}{' '}
-                  <span className="text-xs font-semibold text-slate-400">/ {maxTotalVal}</span>
+                  <span className="text-xs font-bold text-slate-500">/ {maxTotalVal}</span>
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Thấp nhất: {kpis.minTotal.toFixed(1)}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">Thấp nhất: {kpis.minTotal.toFixed(1)}</p>
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 flex items-center justify-center text-sky-600 dark:text-sky-400">
                   <Target className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-700 dark:text-slate-200 font-black uppercase tracking-wider">
                   Đạt ≥ 50% Điểm
                 </span>
               </div>
@@ -582,18 +586,18 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                 <p className="text-2xl sm:text-3xl font-black text-sky-600 dark:text-sky-400 tabular-nums">
                   {kpis.pass50Rate.toFixed(1)}%
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">
                   {kpis.pass50Count}/{kpis.totalStudents} thí sinh
                 </p>
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform col-span-2 lg:col-span-1">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform col-span-2 lg:col-span-1 bg-white/95 dark:bg-slate-900/95">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 flex items-center justify-center text-violet-600 dark:text-violet-400">
                   <Sparkles className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-700 dark:text-slate-200 font-black uppercase tracking-wider">
                   Giỏi &amp; Xuất Sắc
                 </span>
               </div>
@@ -601,7 +605,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                 <p className="text-2xl sm:text-3xl font-black text-violet-600 dark:text-violet-400 tabular-nums">
                   {kpis.good65Rate.toFixed(1)}%
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">
                   {kpis.good65Count}/{kpis.totalStudents} thí sinh (≥ 65%)
                 </p>
               </div>
@@ -616,26 +620,28 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               return (
                 <div
                   key={subj}
-                  className="card p-3.5 flex flex-col justify-between border-t-2"
+                  className="card p-3.5 flex flex-col justify-between border-t-4 bg-white/95 dark:bg-slate-900/95 shadow-xs"
                   style={{ borderTopColor: color }}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black" style={{ color }}>
+                    <span className="text-xs font-black tracking-wide" style={{ color }}>
                       {SUBJECT_LABEL[subj]}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400">Max {maxSubjectVal}</span>
+                    <span className="text-xs font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                      Max {maxSubjectVal}
+                    </span>
                   </div>
                   <div className="my-1.5 flex items-baseline gap-2">
-                    <span className="text-xl font-black tabular-nums text-slate-800 dark:text-slate-100">
+                    <span className="text-xl font-black tabular-nums text-slate-900 dark:text-slate-50">
                       {s.avg.toFixed(1)}
                     </span>
-                    <span className="text-xs font-semibold text-slate-400">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                       TB ({((s.avg / maxSubjectVal) * 100).toFixed(0)}%)
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">
-                    <span>Trung vị: {s.med.toFixed(1)}</span>
-                    <span>Max: {s.max.toFixed(0)}</span>
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800 pt-1.5">
+                    <span>Trung vị: <strong className="text-slate-800 dark:text-slate-100">{s.med.toFixed(1)}</strong></span>
+                    <span>Max: <strong className="text-slate-800 dark:text-slate-100">{s.max.toFixed(0)}</strong></span>
                   </div>
                 </div>
               );
@@ -646,27 +652,27 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           <div className="card p-5 sm:p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.12)] rounded-3xl overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2">
                   <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
                     <BarChart3 className="w-4 h-4" />
                   </span>
                   Phân Bố Tần Suất Điểm Số
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mt-0.5">
                   {histView === 'total'
                     ? `Phổ điểm tổng toàn bài thi (thang 0–${maxTotalVal})`
                     : `Phổ điểm chi tiết của từng môn (thang 0–${maxSubjectVal}/môn)`}
                 </p>
               </div>
 
-              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
+              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit border border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setHistView('total')}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${
                     histView === 'total'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Tổng Toàn Bài Thi
@@ -674,10 +680,10 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                 <button
                   type="button"
                   onClick={() => setHistView('subjects')}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${
                     histView === 'subjects'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Từng Môn (4 Môn)
@@ -688,22 +694,22 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             <div className="h-[260px] sm:h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 {histView === 'total' ? (
-                  <BarChart data={totalHistogramData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+                  <BarChart data={totalHistogramData} margin={{ top: 18, right: 15, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
                     <Bar dataKey="Số thí sinh" name="Số thí sinh" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                      <LabelList dataKey="Số thí sinh" position="top" style={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} />
+                      <LabelList dataKey="Số thí sinh" position="top" style={{ fill: '#1e293b', fontSize: 12, fontWeight: 800 }} />
                     </Bar>
                   </BarChart>
                 ) : (
-                  <BarChart data={subjectHistogramData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+                  <BarChart data={subjectHistogramData} margin={{ top: 18, right: 15, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
-                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
+                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '12px', fontWeight: 700 }} />
                     <Bar dataKey="Tiếng Việt" name="Tiếng Việt" fill={SUBJECT_COLOR.tv} radius={[4, 4, 0, 0]} maxBarSize={16} />
                     <Bar dataKey="Tiếng Anh" name="Tiếng Anh" fill={SUBJECT_COLOR.ta} radius={[4, 4, 0, 0]} maxBarSize={16} />
                     <Bar dataKey="Toán" name="Toán" fill={SUBJECT_COLOR.toan} radius={[4, 4, 0, 0]} maxBarSize={16} />
@@ -717,15 +723,15 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           {/* 2 Cột: Donut Xếp Loại & Radar Cân Bằng */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Donut Chart: Xếp loại năng lực */}
-            <div className="card p-5 sm:p-6 flex flex-col justify-between">
+            <div className="card p-5 sm:p-6 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
               <div>
-                <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-1">
                   <span className="icon-box bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
                     <Award className="w-4 h-4" />
                   </span>
                   Xếp Loại Năng Lực Toàn Khóa
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mb-3">
                   Cơ cấu 5 mức xếp loại tính trên tổng điểm 4 môn (0–{maxTotalVal})
                 </p>
               </div>
@@ -756,7 +762,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                     />
                     <Legend
                       iconType="circle"
-                      wrapperStyle={{ fontSize: '11px' }}
+                      wrapperStyle={{ fontSize: '11px', fontWeight: 700 }}
                       formatter={(val: any, entry: any) => {
                         const count = entry?.payload?.value;
                         const pct = count ? ((count / latest.length) * 100).toFixed(0) : 0;
@@ -769,15 +775,15 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             </div>
 
             {/* Radar Chart: Đánh giá cân bằng 4 môn */}
-            <div className="card p-5 sm:p-6 flex flex-col justify-between">
+            <div className="card p-5 sm:p-6 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
               <div>
-                <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-1">
                   <span className="icon-box bg-purple-50 dark:bg-purple-950/60 text-purple-600">
                     <Compass className="w-4 h-4" />
                   </span>
                   Đánh Giá Cân Bằng Năng Lực 4 Môn
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mb-3">
                   Tỷ lệ hoàn thành trung bình của toàn khóa ở từng phân môn (%)
                 </p>
               </div>
@@ -785,9 +791,9 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: '#94a3b8' }} unit="%" />
+                    <PolarGrid stroke="#cbd5e1" strokeDasharray="3 3" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#1e293b', fontSize: 11, fontWeight: 800 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10, fill: '#475569', fontWeight: 700 }} unit="%" />
                     <Radar
                       name="Tỷ lệ đạt TB"
                       dataKey="Tỷ Lệ Đạt"
@@ -810,34 +816,34 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           </div>
 
           {/* Tỷ Lệ Đạt Các Ngưỡng Điểm */}
-          <div className="card p-5 sm:p-6">
-            <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+          <div className="card p-5 sm:p-6 bg-white/95 dark:bg-slate-900/95">
+            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2 mb-1">
               <span className="icon-box bg-amber-50 dark:bg-amber-950/60 text-amber-600">
                 <Target className="w-4 h-4" />
               </span>
               Tỷ Lệ Đạt Các Ngưỡng Chuẩn Toàn Khóa
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mb-4">
               Tỷ lệ thí sinh vượt qua các mốc điểm quan trọng trên thang tổng {maxTotalVal}
             </p>
 
             <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={thresholdData} layout="vertical" margin={{ top: 5, right: 60, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={140} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} />
+                <BarChart data={thresholdData} layout="vertical" margin={{ top: 5, right: 65, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                  <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 11, fontWeight: 700 }} />
+                  <YAxis type="category" dataKey="name" width={140} axisLine={false} tickLine={false} tick={{ fill: '#1e293b', fontSize: 11, fontWeight: 700 }} />
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(v: any, _n: any, p: any) => [`${(+v).toFixed(1)}% (${p.payload.count} thí sinh)`, 'Tỷ lệ']}
                     cursor={{ fill: '#f8fafc' }}
                   />
-                  <Bar dataKey="percent" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={20}>
+                  <Bar dataKey="percent" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={22}>
                     <LabelList
                       dataKey="percent"
                       position="right"
                       formatter={(v: any) => `${(+v).toFixed(1)}%`}
-                      style={{ fill: '#475569', fontSize: 11, fontWeight: 800 }}
+                      style={{ fill: '#0f172a', fontSize: 12, fontWeight: 800 }}
                     />
                   </Bar>
                 </BarChart>
@@ -846,16 +852,16 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           </div>
 
           {/* Bảng Thống Kê Phân Tán Chi Tiết */}
-          <div className="card overflow-hidden">
+          <div className="card overflow-hidden bg-white/95 dark:bg-slate-900/95">
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2">
                   <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
                     <FileSpreadsheet className="w-4 h-4" />
                   </span>
                   Bảng Thống Kê Phân Tán Chi Tiết
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mt-0.5">
                   Toàn bộ các chỉ số thống kê mô tả học thuật: Min, Q1, Trung vị, Q3, P90, Max, Trung bình, STĐ
                 </p>
               </div>
@@ -863,7 +869,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
 
             <div className="overflow-x-auto bg-white dark:bg-slate-800">
               <table className="w-full text-sm text-left border-collapse border border-slate-200 dark:border-slate-700 min-w-[860px]">
-                <thead className="bg-slate-100/80 dark:bg-slate-900/50 text-slate-700 dark:text-slate-200 text-xs font-bold uppercase tracking-wider">
+                <thead className="bg-slate-100 dark:bg-slate-900/70 text-slate-800 dark:text-slate-100 text-xs font-black uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="border border-slate-200 dark:border-slate-700 px-3.5 py-3">Phần Thi / Tổng</th>
                     <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Số TS</th>
@@ -873,47 +879,47 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                     <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Q3 (75%)</th>
                     <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">P90</th>
                     <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Cao nhất</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-center bg-indigo-50/70 dark:bg-indigo-950/40 font-black text-indigo-600 dark:text-indigo-400">
+                    <th className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-center bg-indigo-50 dark:bg-indigo-950/60 font-black text-indigo-700 dark:text-indigo-300">
                       Trung bình
                     </th>
                     <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Độ lệch chuẩn (STĐ)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-semibold">
                   {ALL_SUBJECTS.map(subj => {
                     const d = stats[subj];
                     return (
-                      <tr key={subj} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 font-bold flex items-center gap-2">
+                      <tr key={subj} className="hover:bg-indigo-50/30 dark:hover:bg-slate-750 transition-colors">
+                        <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: SUBJECT_COLOR[subj] }} />
                           <span>{SUBJECT_LABEL[subj]}</span>
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-500">
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-300 font-bold">
                           {d.n}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums">{d.min.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums">{d.q1.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums font-bold text-slate-800 dark:text-slate-100">
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-300">{d.min.toFixed(1)}</td>
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-300">{d.q1.toFixed(1)}</td>
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums font-bold text-slate-900 dark:text-slate-50">
                           {d.med.toFixed(1)}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums">{d.q3.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums">{d.p90.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums font-bold text-emerald-600">
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-300">{d.q3.toFixed(1)}</td>
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-300">{d.p90.toFixed(1)}</td>
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums font-black text-emerald-600 dark:text-emerald-400">
                           {d.max.toFixed(1)}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-center tabular-nums font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50/40 dark:bg-indigo-950/20">
+                        <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-center tabular-nums font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50/60 dark:bg-indigo-950/40">
                           {d.avg.toFixed(2)}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-500">
+                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-700 dark:text-slate-300">
                           {d.std.toFixed(2)}
                         </td>
                       </tr>
                     );
                   })}
 
-                  <tr className="bg-indigo-50/60 dark:bg-indigo-950/50 font-black text-slate-900 dark:text-white border-t-2 border-indigo-200 dark:border-indigo-800">
-                    <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+                  <tr className="bg-indigo-100/70 dark:bg-indigo-950/70 font-black text-slate-900 dark:text-white border-t-2 border-indigo-300 dark:border-indigo-800">
+                    <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-indigo-800 dark:text-indigo-200 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                       <span>TỔNG TOÀN BÀI THI (4 MÔN)</span>
                     </td>
                     <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums">
@@ -925,7 +931,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                     <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums">
                       {stats.totals.q1.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-indigo-600 dark:text-indigo-400 text-sm">
+                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-indigo-700 dark:text-indigo-300 text-sm">
                       {stats.totals.med.toFixed(1)}
                     </td>
                     <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums">
@@ -934,10 +940,10 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                     <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums">
                       {stats.totals.p90.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-emerald-600 text-sm">
+                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-emerald-600 dark:text-emerald-400 text-sm">
                       {stats.totals.max.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-center tabular-nums text-indigo-700 dark:text-indigo-300 text-sm bg-indigo-100/70 dark:bg-indigo-900/60">
+                    <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-center tabular-nums text-indigo-800 dark:text-indigo-200 text-sm bg-indigo-200/60 dark:bg-indigo-900/70">
                       {stats.totals.avg.toFixed(2)}
                     </td>
                     <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums">
@@ -956,20 +962,22 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* ========================================================================= */}
       {(activeSubTab === 'ranking' || activeSubTab === 'all') && (
         <section id="phan-xep-hang" className="flex flex-col gap-5 fade-in">
-          {/* Section 2 Title Badge when in 'all' view */}
-          {activeSubTab === 'all' && (
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-200/60 dark:border-slate-800">
-              <span className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center font-black text-sm">
+          {/* Section 2 Card Header (Crisp White Card - NO SUNKEN TEXT) */}
+          <div className="card p-4 sm:p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.12)] rounded-2xl flex items-center justify-between gap-3 border-l-4 border-l-amber-500">
+            <div className="flex items-center gap-3.5">
+              <span className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shadow-md shadow-amber-500/30">
                 2
               </span>
               <div>
-                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 tracking-tight">
                   Bảng Xếp Hạng Toàn Khóa (Đủ 4 Môn Thi)
                 </h3>
-                <p className="text-xs text-slate-500">Vinh danh Top 10 điểm cao nhất và thống kê nhóm cần nỗ lực thêm</p>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                  Vinh danh Top 10 điểm cao nhất và thống kê nhóm cần nỗ lực thêm
+                </p>
               </div>
             </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {renderRankTable(
@@ -986,7 +994,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               false,
               <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
               'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400',
-              'text-slate-700 dark:text-slate-200'
+              'text-slate-800 dark:text-slate-200'
             )}
           </div>
         </section>
@@ -997,51 +1005,53 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* ========================================================================= */}
       {(activeSubTab === 'questions' || activeSubTab === 'all') && (
         <section id="phan-cau-hoi" className="flex flex-col gap-5 fade-in">
-          {/* Section 3 Title Badge when in 'all' view */}
-          {activeSubTab === 'all' && (
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-200/60 dark:border-slate-800">
-              <span className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 flex items-center justify-center font-black text-sm">
+          {/* Section 3 Card Header (Crisp White Card - NO SUNKEN TEXT) */}
+          <div className="card p-4 sm:p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.12)] rounded-2xl flex items-center justify-between gap-3 border-l-4 border-l-rose-500">
+            <div className="flex items-center gap-3.5">
+              <span className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center font-black text-sm shadow-md shadow-rose-500/30">
                 3
               </span>
               <div>
-                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 tracking-tight">
                   Phân Tích Câu Hỏi (Item Analysis)
                 </h3>
-                <p className="text-xs text-slate-500">Độ phân hóa đề thi, Top câu hỏi khó/dễ nhất và bảng thống kê 120 câu hỏi</p>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                  Độ phân hóa đề thi, Top câu hỏi khó/dễ nhất và bảng thống kê 120 câu hỏi
+                </p>
               </div>
             </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Phân Bố Độ Khó Đề Thi */}
-            <div className="card p-5 lg:col-span-1 flex flex-col justify-between">
+            <div className="card p-5 lg:col-span-1 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 mb-1 flex items-center gap-2">
                   <span className="icon-box bg-sky-50 dark:bg-sky-950/60 text-sky-600">
                     <Activity className="w-4 h-4" />
                   </span>
                   Phân Bố Độ Khó Đề Thi
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mb-3">
                   Số lượng câu hỏi theo tỷ lệ làm đúng (%)
                 </p>
               </div>
 
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={difficultyBuckets} margin={{ top: 10, right: 10, left: -18, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <BarChart data={difficultyBuckets} margin={{ top: 15, right: 10, left: -18, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis
                       dataKey="label"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#64748b', fontSize: 10 }}
+                      tick={{ fill: '#334155', fontSize: 10, fontWeight: 700 }}
                       interval={0}
                       angle={-25}
                       textAnchor="end"
                       height={40}
                     />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12, fontWeight: 700 }} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
                     <Bar dataKey="value" name="Số câu" radius={[4, 4, 0, 0]} maxBarSize={40}>
                       {difficultyBuckets.map((entry, i) => (
@@ -1054,45 +1064,45 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             </div>
 
             {/* Top Câu Hỏi Khó Nhất & Dễ Nhất */}
-            <div className="card p-5 lg:col-span-2 flex flex-col gap-4">
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="card p-5 lg:col-span-2 flex flex-col gap-4 bg-white/95 dark:bg-slate-900/95">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2">
                 <span className="icon-box bg-amber-50 dark:bg-amber-950/60 text-amber-600">
                   <CheckCircle2 className="w-4 h-4" />
                 </span>
                 Top Câu Hỏi Khó Nhất &amp; Dễ Nhất
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {renderDifficultyTable('5 câu có tỷ lệ đúng thấp nhất (Khó)', hardest, 'text-rose-500')}
+                {renderDifficultyTable('5 câu có tỷ lệ đúng thấp nhất (Khó)', hardest, 'text-rose-600')}
                 {renderDifficultyTable('5 câu có tỷ lệ đúng cao nhất (Dễ)', easiest, 'text-emerald-600')}
               </div>
             </div>
           </div>
 
           {/* Full Question Table */}
-          <div className="card overflow-hidden">
+          <div className="card overflow-hidden bg-white/95 dark:bg-slate-900/95">
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 flex items-center gap-2">
                   <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
                     <ListFilter className="w-4 h-4" />
                   </span>
                   Bảng Thống Kê Chi Tiết Toàn Bộ 120 Câu Hỏi
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mt-0.5">
                   Xem thông số IRT: độ khó (b), độ phân biệt (a), số thí sinh làm đúng/sai
                 </p>
               </div>
 
-              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap">
+              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap border border-slate-200 dark:border-slate-700">
                 {(['all', ...subjectOptions] as const).map(s => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setSubjectFilter(s)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${
                       subjectFilter === s
-                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs'
+                        : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {s === 'all' ? 'Tất cả 120 câu' : s}
@@ -1113,39 +1123,41 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* ========================================================================= */}
       {(activeSubTab === 'trends' || activeSubTab === 'all') && (
         <section id="phan-xu-huong" className="flex flex-col gap-5 fade-in">
-          {/* Section 4 Title Badge when in 'all' view */}
-          {activeSubTab === 'all' && (
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-200/60 dark:border-slate-800">
-              <span className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-black text-sm">
+          {/* Section 4 Card Header (Crisp White Card - NO SUNKEN TEXT) */}
+          <div className="card p-4 sm:p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.12)] rounded-2xl flex items-center justify-between gap-3 border-l-4 border-l-emerald-600">
+            <div className="flex items-center gap-3.5">
+              <span className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-emerald-600/30">
                 4
               </span>
               <div>
-                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 tracking-tight">
                   Xu Hướng &amp; Tiến Trình Qua Từng Lần Thi
                 </h3>
-                <p className="text-xs text-slate-500">Điểm trung bình 4 môn thi qua từng đợt và cơ cấu số lần tham gia</p>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                  Điểm trung bình 4 môn thi qua từng đợt và cơ cấu số lần tham gia
+                </p>
               </div>
             </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Trend Area Chart (4 Môn) */}
-            <div className="card p-5 lg:col-span-2 flex flex-col justify-between">
+            <div className="card p-5 lg:col-span-2 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 mb-1 flex items-center gap-2">
                   <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
                     <Activity className="w-4 h-4" />
                   </span>
                   Điểm Trung Bình 4 Môn Qua Từng Lần Thi
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mb-4">
                   Điểm trung bình theo {METRIC_LABEL[activeMetric]} của tất cả thí sinh ở lần thi thứ n
                 </p>
               </div>
 
               <div className="h-[260px] sm:h-[300px] w-full -ml-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trendData} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
+                  <AreaChart data={trendData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
                     <defs>
                       <linearGradient id="gradTv" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={SUBJECT_COLOR.tv} stopOpacity={0.35} />
@@ -1164,11 +1176,11 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                         <stop offset="95%" stopColor={SUBJECT_COLOR.tdkh} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 12, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12, fontWeight: 700 }} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '12px', fontSize: '12px' }} />
+                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '12px', fontSize: '12px', fontWeight: 700 }} />
                     <Area
                       type="monotone"
                       dataKey="Tiếng Việt"
@@ -1207,15 +1219,15 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             </div>
 
             {/* Cơ cấu số lần thi */}
-            <div className="card p-5 flex flex-col justify-between">
+            <div className="card p-5 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-50 mb-1 flex items-center gap-2">
                   <span className="icon-box bg-violet-50 dark:bg-violet-950/60 text-violet-600">
                     <TrendingUp className="w-4 h-4" />
                   </span>
                   Cơ Cấu Số Lần Thi
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium mb-4">
                   Số thí sinh tham gia 1, 2, 3… lần thi
                 </p>
               </div>
@@ -1223,9 +1235,9 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               <div className="h-[260px] sm:h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={attemptData} margin={{ top: 15, right: 15, left: -16, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12, fontWeight: 700 }} allowDecimals={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
                     <Bar dataKey="value" name="Số thí sinh" fill="#8b5cf6" radius={[6, 6, 0, 0]} maxBarSize={52} />
                   </BarChart>
