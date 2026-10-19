@@ -68,22 +68,52 @@
         margin: 0;
         padding: 0;
         min-height: 100%;
-        background-color: #161a3f;
-        background: radial-gradient(circle at 50% 20%, #252b66 0%, #161a3f 70%, #0e112b 100%);
+        background-color: #0b0f24;
         color: #ffffff;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      .initial-bg-wrap {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .initial-bg-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .initial-bg-scrim {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(9,12,32,0.55) 0%, rgba(9,12,32,0.18) 22%, rgba(9,12,32,0.10) 55%, rgba(9,12,32,0.45) 100%);
+      }
+      .initial-bg-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 90% at 50% 45%, rgba(0,0,0,0) 45%, rgba(4,6,20,0.55) 100%);
       }
       #root {
+        position: relative;
+        z-index: 10;
         min-height: 100vh;
       }
       @keyframes loaderPulse {
         0%, 100% { transform: scale(1); opacity: 0.95; }
-        50% { transform: scale(1.06); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 1; }
       }
       @keyframes loaderSpin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
+      }
+      @keyframes shimmerBar {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+        100% { transform: translateX(250%); }
       }
       .initial-splash {
         min-height: 100vh;
@@ -91,27 +121,40 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 24px;
+        padding: 20px;
         box-sizing: border-box;
+      }
+      .initial-card {
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-radius: 28px;
+        padding: 36px 32px;
+        box-shadow: 0 24px 60px -12px rgba(16, 24, 70, 0.35);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
-        position: relative;
-        z-index: 10;
+        max-width: 380px;
+        width: 90%;
+        box-sizing: border-box;
+        animation: loaderPulse 3s ease-in-out infinite;
       }
       .initial-logo-box {
         position: relative;
-        margin-bottom: 22px;
-        animation: loaderPulse 2.4s ease-in-out infinite;
+        margin-bottom: 20px;
       }
       .initial-logo-card {
-        width: 84px;
-        height: 84px;
-        border-radius: 26px;
-        background: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 16px 40px -8px rgba(16, 20, 60, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.4);
+        width: 76px;
+        height: 76px;
+        border-radius: 22px;
+        background: #ffffff;
+        box-shadow: 0 12px 28px -6px rgba(40, 50, 110, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.15);
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 12px;
+        padding: 10px;
         box-sizing: border-box;
       }
       .initial-logo-card img {
@@ -122,37 +165,67 @@
       .initial-ring {
         position: absolute;
         inset: -6px;
-        border-radius: 32px;
-        border: 2px dashed rgba(165, 180, 252, 0.5);
-        animation: loaderSpin 14s linear infinite;
+        border-radius: 28px;
+        border: 2px dashed rgba(99, 102, 241, 0.55);
+        animation: loaderSpin 12s linear infinite;
         pointer-events: none;
       }
       .initial-title {
-        margin: 0 0 8px 0;
-        font-size: 19px;
-        font-weight: 800;
-        color: #ffffff;
+        margin: 0 0 6px 0;
+        font-size: 18px;
+        font-weight: 900;
+        color: #1e293b;
         letter-spacing: -0.02em;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
       }
       .initial-subtitle {
-        margin: 0 0 24px 0;
-        font-size: 13px;
-        color: #c7d2fe;
+        margin: 0 0 20px 0;
+        font-size: 12.5px;
+        color: #64748b;
         font-weight: 500;
       }
-      .initial-spinner {
-        width: 32px;
-        height: 32px;
+      .initial-track {
+        width: 100%;
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 14px;
+      }
+      .initial-bar {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 45%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+        animation: shimmerBar 1.8s ease-in-out infinite;
+      }
+      .initial-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #6366f1;
+      }
+      .initial-dot {
+        width: 6px;
+        height: 6px;
         border-radius: 50%;
-        border: 3px solid rgba(255, 255, 255, 0.15);
-        border-top-color: #818cf8;
-        border-right-color: #c084fc;
-        animation: loaderSpin 0.85s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+        background: #6366f1;
+        animation: loaderPulse 1.2s ease-in-out infinite;
       }
     </style>
   </head>
   <body>
+    <!-- Pre-React Background (Matches SkyBackground component seamlessly) -->
+    <div class="initial-bg-wrap" aria-hidden="true">
+      <img src="./bg.jpg" class="initial-bg-img" alt="" />
+      <div class="initial-bg-scrim"></div>
+      <div class="initial-bg-vignette"></div>
+    </div>
+
     <!-- SEO Fallback Content for Crawlers & Non-JS Clients -->
     <noscript>
       <div style="max-width: 680px; margin: 40px auto; padding: 32px; background: #ffffff; color: #1e293b; border-radius: 24px; font-family: sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; border: 1px solid #e2e8f0;">
@@ -171,15 +244,23 @@
     <!-- Root Element with Initial Loading Splash Screen -->
     <div id="root">
       <div class="initial-splash">
-        <div class="initial-logo-box">
-          <div class="initial-logo-card">
-            <img src="/logo.png" alt="Logo" width="60" height="60" />
+        <div class="initial-card">
+          <div class="initial-logo-box">
+            <div class="initial-logo-card">
+              <img src="./logo.png" alt="Logo" width="56" height="56" />
+            </div>
+            <div class="initial-ring"></div>
           </div>
-          <div class="initial-ring"></div>
+          <h2 class="initial-title">Đang Tải Kết Quả Thi...</h2>
+          <p class="initial-subtitle">Hệ thống phân tích năng lực &amp; tra cứu điểm</p>
+          <div class="initial-track">
+            <div class="initial-bar"></div>
+          </div>
+          <div class="initial-status">
+            <span class="initial-dot"></span>
+            <span>Đang chuẩn bị dữ liệu kỳ thi</span>
+          </div>
         </div>
-        <h2 class="initial-title">Đang tải kết quả thi...</h2>
-        <p class="initial-subtitle">Hệ thống phân tích &amp; tra cứu khảo sát</p>
-        <div class="initial-spinner"></div>
       </div>
     </div>
 

@@ -80,6 +80,15 @@ html, body, #root {
 }
 .pulse-gold { animation: softPulse 2s ease-in-out infinite; }
 
+@keyframes shimmerBar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(250%); }
+}
+.animate-shimmer-bar {
+  animation: shimmerBar 1.8s ease-in-out infinite;
+}
+
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
@@ -153,6 +162,38 @@ html, body, #root {
     transition: none !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — CSS variables cho Design System (bắt buộc phải
+   định nghĩa vì toàn bộ .btn/.table/.card dùng var(--…))
+   ════════════════════════════════════════════════════════════════ */
+:root {
+  --accent: #4f46e5;
+  --accent-light: #6366f1;
+  --accent-glow: rgba(79, 70, 229, 0.18);
+  --ink: #1e293b;
+  --ink-secondary: #475569;
+  --muted: #94a3b8;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --surface-solid: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-hover: #f1f5f9;
+}
+.dark {
+  --accent: #818cf8;
+  --accent-light: #a5b4fc;
+  --accent-glow: rgba(129, 140, 248, 0.22);
+  --ink: #e2e8f0;
+  --ink-secondary: #94a3b8;
+  --muted: #64748b;
+  --line: #334155;
+  --line-strong: #475569;
+  --surface-solid: #0f172a;
+  --surface-muted: #1e293b;
+  --surface-hover: #334155;
+}
+
 
 /* ════════════════════════════════════════════════════════════════
    DESIGN SYSTEM — Buttons (buttons)

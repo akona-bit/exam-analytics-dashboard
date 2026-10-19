@@ -134,27 +134,35 @@ async function fetchFromSupabase(): Promise<{ questions: QuestionData[]; student
   }
 }
 
-/** Fetch from API or static JSON fallback */
+/** Fetch from static JSON or API fallback */
 async function fetchFromStatic(): Promise<{ questions: QuestionData[]; students: StudentData[] }> {
   const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
-  const fetchJson = async (apiPath: string, staticPath: string) => {
+  const fetchJson = async (staticPath: string, apiPath: string) => {
+    // Ưu tiên đọc file tĩnh đã xuất sẵn trong public/data/ (tốc độ cao 5-10ms, không gây lỗi 404 network)
+    try {
+      const res = await fetch(`${base}${staticPath}`);
+      if (res.ok && (res.headers.get('content-type') || '').includes('application/json')) {
+        return await res.json();
+      }
+    } catch {
+      // Fall through
+    }
+    // Dự phòng gọi endpoint backend nếu có
     try {
       const res = await fetch(apiPath);
       if (res.ok && (res.headers.get('content-type') || '').includes('application/json')) {
         return await res.json();
       }
     } catch {
-      // API not available — fall through to static file
+      // Fall through
     }
-    const res = await fetch(`${base}${staticPath}`);
-    if (!res.ok) throw new Error(`Không tải được ${staticPath}`);
-    return res.json();
+    throw new Error(`Không tải được ${staticPath}`);
   };
 
   const [questions, students] = await Promise.all([
-    fetchJson('/api/questions', 'data/questions.json'),
-    fetchJson('/api/students', 'data/students.json'),
+    fetchJson('data/questions.json', '/api/questions'),
+    fetchJson('data/students.json', '/api/students'),
   ]);
   return { questions, students };
 }
@@ -167,7 +175,13 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [examName, setExamName] = useState('Kì Thi Thử');
+  const [examName, setExamName] = useState(() => {
+    try {
+      return localStorage.getItem('exam_name') || 'Kì Thi Thử';
+    } catch {
+      return 'Kì Thi Thử';
+    }
+  });
   const [knowledgeCsv, setKnowledgeCsv] = useState<string>(() => localStorage.getItem('knowledge_csv') || DEFAULT_KNOWLEDGE_CSV);
   const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(questionTextsFile);
   const [answerLink, setAnswerLink] = useState('');
@@ -204,7 +218,10 @@ export default function App() {
     pending.then(rows => {
       if (!rows) return;
       for (const row of rows) {
-        if (row.key === 'exam_name' && row.value) setExamName(row.value);
+        if (row.key === 'exam_name' && row.value) {
+          setExamName(row.value);
+          try { localStorage.setItem('exam_name', row.value); } catch {}
+        }
         if (row.key === 'knowledge_csv' && row.value) {
           setKnowledgeCsv(row.value);
           try { localStorage.setItem('knowledge_csv', row.value); } catch {}
@@ -307,9 +324,33 @@ export default function App() {
       {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-[80vh] gap-3">
-            <div className="w-10 h-10 border-3 border-indigo-200 border-t-indigo-500 rounded-full animate-spin"></div>
-            <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Đang tải dữ liệu...</p>
+          <div className="flex flex-col items-center justify-center min-h-[72vh] w-full px-4">
+            <div className="bg-white/92 dark:bg-slate-900/92 backdrop-blur-2xl border border-white/85 dark:border-slate-800 rounded-3xl p-8 sm:p-10 shadow-[0_24px_60px_-12px_rgba(20,30,80,0.3)] flex flex-col items-center text-center max-w-[390px] w-full scale-in">
+              {/* Logo box with animated ring */}
+              <div className="relative mb-5">
+                <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-800 shadow-md p-3.5 flex items-center justify-center border border-indigo-100 dark:border-slate-700">
+                  <img src="./logo.png" alt="Logo" className="w-full h-full object-contain" />
+                </div>
+                <div className="absolute -inset-2 rounded-3xl border-2 border-dashed border-indigo-400/60 animate-spin [animation-duration:12s] pointer-events-none" />
+              </div>
+
+              <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-white tracking-tight mb-1">
+                {examName || 'Tra Cứu Điểm Thi'}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+                Hệ thống phân tích năng lực &amp; tra cứu khảo sát
+              </p>
+
+              {/* Shimmer progress bar */}
+              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative shadow-inner mb-4">
+                <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full w-2/5 animate-shimmer-bar" />
+              </div>
+
+              <div className="flex items-center gap-2 text-[11.5px] font-bold text-indigo-600 dark:text-indigo-400">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span>Đang chuẩn bị dữ liệu kỳ thi &amp; phổ điểm...</span>
+              </div>
+            </div>
           </div>
         ) : (
           <Dashboard 
