@@ -5,10 +5,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { 
   Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, 
   FileSpreadsheet, Key, Target, PieChart as PieChartIcon, Check, CheckCircle2, Layers, Filter, 
-  LayoutGrid, Table, Loader2, Lock, Eye, EyeOff, User, Award, BookmarkCheck, ArrowUpDown, HelpCircle
+  LayoutGrid, Table, Loader2, Lock, Eye, EyeOff, User, Award, BookmarkCheck, ArrowUpDown, HelpCircle,
+  MailOpen
 } from 'lucide-react';
 
 import { CelebrationOverlay } from './CelebrationOverlay';
+import { ThankYouModal } from './ThankYouModal';
 import { parseKnowledgeCSV, DEFAULT_KNOWLEDGE_CSV, buildStandard120Structure, getQuestionKnowledgeInfo } from '../../lib/knowledgeStructure';
 import { getExamCodeQuestionNum } from '../../lib/examCodesMapping';
 
@@ -45,6 +47,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
   const [progressMetric, setProgressMetric] = useState<MetricKey>('tho');
   const [progressSubject, setProgressSubject] = useState<'Toán' | 'TDKH'>('Toán');
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showThankYouModal, setShowThankYouModal] = useState(false);
   const [classMetric, setClassMetric] = useState<MetricKey>('irt');
   const [studentTab, setStudentTab] = useState<'overview' | 'review' | 'history' | 'class'>('overview');
   const [radarMode, setRadarMode] = useState<'compare' | 'parts'>('compare');
@@ -114,8 +117,26 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
       }, 50);
+
+      // Tự động mở Thư Cảm Ơn khi thí sinh vào tra cứu lần đầu tiên
+      const studentKey = (selectedStudent.sbd || selectedStudent.email || selectedStudent.name).trim();
+      const hasSeen = localStorage.getItem(`mit_thank_you_seen_${studentKey}`);
+      if (!hasSeen) {
+        const timer = setTimeout(() => {
+          setShowThankYouModal(true);
+        }, 400);
+        return () => clearTimeout(timer);
+      }
     }
   }, [selectedStudent]);
+
+  const handleCloseThankYou = () => {
+    if (selectedStudent) {
+      const studentKey = (selectedStudent.sbd || selectedStudent.email || selectedStudent.name).trim();
+      localStorage.setItem(`mit_thank_you_seen_${studentKey}`, 'true');
+    }
+    setShowThankYouModal(false);
+  };
   
 
 
@@ -538,19 +559,32 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
           onComplete={() => setShowCelebration(false)}
         />
       )}
+      <ThankYouModal
+        show={showThankYouModal}
+        studentName={selectedStudent?.customDisplayName || selectedStudent?.name}
+        onClose={handleCloseThankYou}
+      />
       <div className="mb-2">
       </div>
       {/* Top Action Bar */}
       <div className="flex items-center justify-between gap-3 mb-2">
         <button 
           onClick={() => { setSelectedStudent(null); setStudentTab('overview'); }}
-          className="flex items-center gap-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-xs hover:shadow-sm font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 text-sm group"
+          className="flex items-center gap-2 text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl shadow-xs hover:shadow-sm font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 text-sm group cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span>Quay Lại Tra Cứu</span>
         </button>
 
-
+        <button
+          type="button"
+          onClick={() => setShowThankYouModal(true)}
+          className="flex items-center gap-2 text-amber-800 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-200 bg-amber-50/90 hover:bg-amber-100/90 dark:bg-amber-950/50 dark:hover:bg-amber-900/50 backdrop-blur-xl shadow-xs font-bold transition-all px-4 sm:px-5 py-2.5 rounded-2xl border border-amber-300/80 dark:border-amber-750 text-sm cursor-pointer group"
+          title="Xem lại thư cảm ơn từ Team MIT Hàn Thuyên"
+        >
+          <MailOpen className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+          <span>Thư Cảm Ơn MIT</span>
+        </button>
       </div>
 
       {/* Main Student Profile & Dashboard Card */}
