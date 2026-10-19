@@ -228,10 +228,23 @@ export default function App() {
     setIsLoading(true);
     setLoadError(null);
 
-    // Try Supabase first (if configured)
+    // 1. Try static JSON first (instant 5ms load)
+    try {
+      const staticData = await fetchFromStatic();
+      if (staticData.students && staticData.students.length > 0) {
+        setData(staticData.questions);
+        setStudentData(staticData.students);
+        setIsLoading(false);
+        return;
+      }
+    } catch {
+      // Fall through to Supabase
+    }
+
+    // 2. Try Supabase
     if (isSupabaseConfigured) {
       const supa = await fetchFromSupabase();
-      if (supa !== null) {
+      if (supa !== null && supa.students.length > 0) {
         setData(supa.questions);
         setStudentData(supa.students);
         setIsLoading(false);
@@ -239,17 +252,8 @@ export default function App() {
       }
     }
 
-    // Fall back to static JSON files only if Supabase is NOT configured or had query error
-    try {
-      const { questions, students } = await fetchFromStatic();
-      setData(questions);
-      setStudentData(students);
-      setIsLoading(false);
-    } catch (err: any) {
-      console.error('Failed to fetch data:', err);
-      setLoadError(err?.message || 'Đã có lỗi xảy ra khi tải dữ liệu.');
-      setIsLoading(false);
-    }
+    setLoadError('Không thể tải dữ liệu khảo sát. Vui lòng thử lại sau.');
+    setIsLoading(false);
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);

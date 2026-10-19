@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { MetricKey, QuestionData, StudentData } from '../../types';
 import {
   METRIC_LABEL,
@@ -32,6 +32,7 @@ import {
   Activity,
   ListFilter,
   CheckCircle2,
+  Target,
 } from 'lucide-react';
 
 interface Props {
@@ -53,6 +54,11 @@ const BUCKET_COLORS = ['#f43f5e', '#fb7185', '#f59e0b', '#38bdf8', '#34d399'];
 
 export function ClassAnalytics({ students, questions, metric }: Props) {
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
+  const [activeMetric, setActiveMetric] = useState<MetricKey>(metric || 'irt');
+
+  useEffect(() => {
+    if (metric) setActiveMetric(metric);
+  }, [metric]);
 
   const subjectOptions = useMemo(() => {
     const seen: string[] = [];
@@ -64,13 +70,26 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
 
   const latest = useMemo(() => latestAttempts(students), [students]);
 
-  const trendData = useMemo(() => attemptAverages(students, metric), [students, metric]);
+  const trendData = useMemo(() => attemptAverages(students, activeMetric), [students, activeMetric]);
 
   const attemptData = useMemo(() => attemptDistribution(students), [students]);
 
-  const ranking = useMemo(() => rankList(latest, metric), [latest, metric]);
+  const ranking = useMemo(() => rankList(latest, activeMetric), [latest, activeMetric]);
 
-  const maxTotalScore = totalMax(metric);
+  const maxTotalScore = totalMax(activeMetric);
+
+  const rankedList = useMemo(() => {
+    let currentRank = 1;
+    return ranking.map((item, idx) => {
+      if (idx > 0 && item.score < ranking[idx - 1].score) {
+        currentRank = idx + 1;
+      }
+      return { ...item, rank: currentRank };
+    });
+  }, [ranking]);
+
+  const topTen = useMemo(() => rankedList.slice(0, 10), [rankedList]);
+  const bottomTen = useMemo(() => rankedList.slice(-10), [rankedList]);
 
   const questionStats = useMemo(() => {
     return questions
@@ -107,48 +126,44 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
     [questionStats]
   );
 
-  const topTen = ranking.slice(0, 10);
-  const bottomTen = [...ranking].reverse().slice(0, 10);
-
   const renderRankTable = (
     title: string,
-    rows: { student: StudentData; score: number }[],
+    rows: { student: StudentData; score: number; rank: number }[],
     isTop: boolean,
     icon: React.ReactNode,
     iconBox: string,
     scoreColor: string
   ) => (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.15)] rounded-2xl">
       <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+        <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
           <span className={`icon-box ${iconBox}`}>{icon}</span>
-          {title}
+          <span>{title}</span>
         </h3>
-        <span className="text-xs font-semibold text-slate-400">
-          Thang {maxTotalScore} {metric === 'tho' ? 'câu' : 'điểm'}
+        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          Thang {maxTotalScore} {activeMetric === 'tho' ? 'câu' : 'điểm'}
         </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left border-collapse min-w-[540px]">
           <thead className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 uppercase font-semibold">
             <tr>
-              <th className="px-3 py-2.5 w-12 text-center">Hạng</th>
+              <th className="px-3 py-2.5 w-14 text-center">Hạng</th>
               <th className="px-3 py-2.5">Thí sinh</th>
-              <th className="px-2 py-2.5 text-center text-rose-500 w-12">TV</th>
-              <th className="px-2 py-2.5 text-center text-purple-500 w-12">TA</th>
-              <th className="px-2 py-2.5 text-center text-indigo-500 w-12">Toán</th>
-              <th className="px-2 py-2.5 text-center text-sky-500 w-12">TDKH</th>
+              <th className="px-2 py-2.5 text-center text-rose-500 w-14">TV</th>
+              <th className="px-2 py-2.5 text-center text-purple-500 w-14">TA</th>
+              <th className="px-2 py-2.5 text-center text-indigo-500 w-14">Toán</th>
+              <th className="px-2 py-2.5 text-center text-sky-500 w-14">TDKH</th>
               <th className="px-3 py-2.5 text-right w-24">Tổng</th>
               <th className="px-3 py-2.5 text-right w-20">Tỷ lệ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
             {rows.map((r, i) => {
-              const rankNum = isTop ? i + 1 : ranking.length - i;
-              const tv = subjectScore(r.student, metric, 'tv') ?? 0;
-              const ta = subjectScore(r.student, metric, 'ta') ?? 0;
-              const toan = subjectScore(r.student, metric, 'toan') ?? 0;
-              const tdkh = subjectScore(r.student, metric, 'tdkh') ?? 0;
+              const tv = subjectScore(r.student, activeMetric, 'tv') ?? 0;
+              const ta = subjectScore(r.student, activeMetric, 'ta') ?? 0;
+              const toan = subjectScore(r.student, activeMetric, 'toan') ?? 0;
+              const tdkh = subjectScore(r.student, activeMetric, 'tdkh') ?? 0;
               const pct = Math.min(100, Math.round((r.score / maxTotalScore) * 100));
 
               return (
@@ -158,17 +173,19 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
                 >
                   <td className="px-3 py-2.5 text-center">
                     <span
-                      className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full text-xs font-black ${
-                        isTop && i === 0
-                          ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-300'
-                          : isTop && i === 1
-                          ? 'bg-slate-200 text-slate-700'
-                          : isTop && i === 2
-                          ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                      className={`inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full text-xs font-black ${
+                        isTop && r.rank === 1
+                          ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-400 shadow-xs'
+                          : isTop && r.rank === 2
+                          ? 'bg-slate-200 text-slate-800 ring-2 ring-slate-300 shadow-xs'
+                          : isTop && r.rank === 3
+                          ? 'bg-amber-50 text-amber-900 border border-amber-300 shadow-xs'
+                          : isTop
+                          ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                       }`}
                     >
-                      {rankNum}
+                      {isTop && r.rank === 1 ? '🥇 1' : isTop && r.rank === 2 ? '🥈 2' : isTop && r.rank === 3 ? '🥉 3' : `#${r.rank}`}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-200">
@@ -177,14 +194,14 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
                       <div className="text-[10px] text-slate-400 font-normal">SBD: {r.student.sbd}</div>
                     )}
                   </td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400">{tv}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400">{ta}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400">{toan}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400">{tdkh}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{tv}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{ta}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{toan}</td>
+                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{tdkh}</td>
                   <td className={`px-3 py-2.5 text-right font-black tabular-nums text-sm ${scoreColor}`}>
                     {r.score.toFixed(0)}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-slate-500 dark:text-slate-400">
+                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-500 font-semibold">
                     {pct}%
                   </td>
                 </tr>
@@ -365,16 +382,43 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
 
       {/* SECTION 2: BẢNG XẾP HẠNG TOÀN KHÓA */}
       <section id="top-ten" className="flex flex-col gap-4">
-        <div className="card p-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-l-4 border-l-amber-500">
+        <div className="card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-amber-500 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 rounded-2xl shadow-sm">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Trophy className="w-6 h-6 text-amber-500" />
               Bảng Xếp Hạng Toàn Khóa (Đủ 4 Môn)
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Xếp hạng theo tổng điểm chuẩn của 4 môn thi · Thang tối đa {maxTotalScore}{' '}
-              {metric === 'tho' ? 'câu' : 'điểm'}
+              {activeMetric === 'irt'
+                ? 'Xếp hạng theo mô hình chuẩn hóa IRT Thang 1200 (Chuẩn ĐGNL ĐHQG-HCM Đợt 1)'
+                : 'Xếp hạng theo tổng số câu trả lời đúng (Thang tối đa: 120 câu)'}
             </p>
+          </div>
+
+          {/* Metric Switcher */}
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit border border-slate-200/60 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setActiveMetric('irt')}
+              className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+                activeMetric === 'irt'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Chuẩn hoá IRT (1200đ - Chuẩn VNU-HCM Đợt 1)
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveMetric('tho')}
+              className={`px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+                activeMetric === 'tho'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Điểm Thô (120 câu)
+            </button>
           </div>
         </div>
 
@@ -383,17 +427,17 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
             'Top 10 Thí Sinh Điểm Cao Nhất',
             topTen,
             true,
-            <Trophy className="w-4 h-4" />,
+            <Trophy className="w-4 h-4 text-amber-500" />,
             'bg-amber-50 dark:bg-amber-950/60 text-amber-500',
             'text-emerald-600 dark:text-emerald-400'
           )}
           {renderRankTable(
-            'Top 10 Thí Sinh Cần Cải Thiện',
+            'Top 10 Thí Sinh Cần Nỗ Lực Thêm',
             bottomTen,
             false,
-            <TrendingDown className="w-4 h-4" />,
-            'bg-rose-50 dark:bg-rose-950/60 text-rose-500',
-            'text-rose-500 dark:text-rose-400'
+            <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+            'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400',
+            'text-slate-700 dark:text-slate-200'
           )}
         </div>
       </section>

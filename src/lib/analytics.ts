@@ -4,8 +4,8 @@ import { MetricKey, StudentData, SubjectKey } from '../types';
 export const EXAM_LABEL = 'Kì Thi Thử ĐGNL';
 
 export const METRIC_LABEL: Record<MetricKey, string> = {
-  tho: 'Điểm Thô (Số câu đúng)',
-  irt: 'Điểm Chuẩn Hoá Neo Đề (IRT)',
+  tho: 'Điểm Thô (Số câu đúng 0–120)',
+  irt: 'Điểm Chuẩn Hoá Neo Đề (IRT 1200 - Chuẩn VNU-HCM Đợt 1)',
 };
 
 export const ALL_SUBJECTS: SubjectKey[] = ['tv', 'ta', 'toan', 'tdkh'];

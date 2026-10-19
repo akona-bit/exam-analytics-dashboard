@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { 
   Search, BarChart as BarChartIcon, X, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen, 
   FileSpreadsheet, Key, Target, PieChart as PieChartIcon, Check, CheckCircle2, Layers, Filter, 
-  LayoutGrid, Table, Loader2, Lock, Eye, EyeOff, User, Award, ShieldCheck, BookmarkCheck, ArrowUpDown, HelpCircle
+  LayoutGrid, Table, Loader2, Lock, Eye, EyeOff, User, Award, BookmarkCheck, ArrowUpDown, HelpCircle
 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
@@ -47,15 +47,14 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
   const [progressMetric, setProgressMetric] = useState<MetricKey>('tho');
   const [progressSubject, setProgressSubject] = useState<'Toán' | 'TDKH'>('Toán');
   const [showCelebration, setShowCelebration] = useState(false);
-  const [classMetric, setClassMetric] = useState<MetricKey>('tho');
+  const [classMetric, setClassMetric] = useState<MetricKey>('irt');
   const [studentTab, setStudentTab] = useState<'overview' | 'review' | 'history' | 'class'>('overview');
   const [radarMode, setRadarMode] = useState<'compare' | 'parts'>('compare');
   /**
    * Thang điểm dùng cho biểu đồ cột "Điểm Số Theo Từng Môn" và radar "So với TB Lớp".
-   * Thô (0–30 câu đúng) và IRT (0–300 điểm neo) là HAI thang khác nhau — cộng gộp
-   * chúng lại sẽ ra số không có ý nghĩa, nên chỉ hiển thị một thang tại một thời điểm.
+   * Mặc định là thang chuẩn hoá IRT 1200 điểm theo kỳ thi ĐGNL ĐHQG TP.HCM (VNU-HCM) Đợt 1.
    */
-  const [subjectMetric, setSubjectMetric] = useState<MetricKey>('tho');
+  const [subjectMetric, setSubjectMetric] = useState<MetricKey>('irt');
   const [knowledgeFilter, setKnowledgeFilter] = useState<'all' | 'strong' | 'medium' | 'weak'>('all');
   const [knowledgeViewMode, setKnowledgeViewMode] = useState<'cards' | 'table'>('cards');
   /** Bộ lọc bảng 120 câu: xem tất cả hay chỉ nhóm trạng thái. */
@@ -515,10 +514,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
           <form onSubmit={handleLoginSubmit} className="relative w-full max-w-xl px-2 flex flex-col items-center gap-5">
             <div className="w-full rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-6 sm:p-8 flex flex-col gap-5 fade-in border border-slate-200/80 dark:border-slate-800 shadow-[0_15px_50px_rgba(30,40,90,0.18)] transition-all duration-300">
               
-              <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
+              <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-base sm:text-lg">
                     Tra Cứu Điểm &amp; Phân Tích
@@ -917,6 +913,181 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
         {/* TAB 1: OVERVIEW */}
         {studentTab === 'overview' && (
           <div className="flex flex-col gap-4 sm:gap-5 fade-in">
+            {/* BẢNG ĐIỂM NEO ĐỀ CHUẨN HOÁ (MÔ HÌNH IRT THANG 1200 - CHUẨN ĐGNL ĐHQG-HCM ĐỢT 1) */}
+            <section className="card p-5 sm:p-7 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-indigo-100 dark:border-slate-800 rounded-3xl shadow-[0_12px_40px_-5px_rgba(60,80,160,0.18)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col gap-5">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-sm">
+                      <Award className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-md text-[10.5px] font-black uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
+                          Chuẩn hóa IRT · VNU-HCM Đợt 1
+                        </span>
+                        <h3 className="font-black text-lg sm:text-xl text-slate-800 dark:text-white tracking-tight">
+                          Bảng Điểm Neo Đề Chuẩn Hóa (Mô Hình IRT Thang 1200 - Chuẩn ĐGNL ĐHQG-HCM Đợt 1)
+                        </h3>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Quy đổi chuẩn hóa theo độ khó và độ phân biệt câu hỏi kỳ thi ĐGNL ĐHQG TP.HCM (VNU-HCM) Đợt 1 · Thang điểm tối đa: 1200 điểm
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Total IRT Score Pill */}
+                  <div className="flex items-center gap-3 self-start sm:self-center bg-indigo-50/70 dark:bg-slate-800/80 px-5 py-2.5 rounded-2xl border border-indigo-100 dark:border-slate-700">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">
+                        Tổng Điểm Neo Đề (VNU-HCM Đợt 1)
+                      </span>
+                      <div className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                        {((visibleParts?.tv !== false ? selectedStudent.irt.tv || 0 : 0) + 
+                          (visibleParts?.ta !== false ? selectedStudent.irt.ta || 0 : 0) + 
+                          (visibleParts?.toan !== false ? selectedStudent.irt.toan || 0 : 0) + 
+                          (visibleParts?.tdkh !== false ? selectedStudent.irt.tdkh || 0 : 0)).toFixed(0)}{' '}
+                        <span className="text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-500">/ 1200</span>
+                      </div>
+                    </div>
+                    {studentRankInfo?.rankIrt && (
+                      <div className="pl-3 border-l border-indigo-200 dark:border-slate-700 text-center">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                          Hạng IRT
+                        </span>
+                        <span className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400">
+                          #{studentRankInfo.rankIrt}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4 Subjects Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {/* Tiếng Việt */}
+                  {visibleParts?.tv !== false && (
+                    <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-slate-800/60 border border-amber-100 dark:border-slate-700 flex flex-col justify-between gap-3 hover:shadow-xs transition-all">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                            Phần 1: TV
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                            {selectedStudent.tho.tv ?? 0}/30 câu đúng
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-slate-800 dark:text-white">Tiếng Việt</h4>
+                        <div className="text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums mt-1">
+                          {selectedStudent.irt.tv ?? 0}{' '}
+                          <span className="text-xs font-semibold text-slate-400">/ 300 điểm</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1.5 bg-amber-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full" 
+                          style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.tv || 0) / 300) * 100))}%` }} 
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tiếng Anh */}
+                  {visibleParts?.ta !== false && (
+                    <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-slate-800/60 border border-purple-100 dark:border-slate-700 flex flex-col justify-between gap-3 hover:shadow-xs transition-all">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
+                            Phần 2: TA
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                            {selectedStudent.tho.ta ?? 0}/30 câu đúng
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-slate-800 dark:text-white">Tiếng Anh</h4>
+                        <div className="text-2xl font-black text-purple-600 dark:text-purple-400 tabular-nums mt-1">
+                          {selectedStudent.irt.ta ?? 0}{' '}
+                          <span className="text-xs font-semibold text-slate-400">/ 300 điểm</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1.5 bg-purple-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full" 
+                          style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.ta || 0) / 300) * 100))}%` }} 
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Toán học */}
+                  {visibleParts?.toan !== false && (
+                    <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-slate-800/60 border border-indigo-100 dark:border-slate-700 flex flex-col justify-between gap-3 hover:shadow-xs transition-all">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            Phần 3: TO
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                            {selectedStudent.tho.toan ?? 0}/30 câu đúng
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-slate-800 dark:text-white">Toán Học</h4>
+                        <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums mt-1">
+                          {selectedStudent.irt.toan ?? 0}{' '}
+                          <span className="text-xs font-semibold text-slate-400">/ 300 điểm</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1.5 bg-indigo-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full" 
+                          style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.toan || 0) / 300) * 100))}%` }} 
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tư duy khoa học */}
+                  {visibleParts?.tdkh !== false && (
+                    <div className="p-4 rounded-2xl bg-sky-50/50 dark:bg-slate-800/60 border border-sky-100 dark:border-slate-700 flex flex-col justify-between gap-3 hover:shadow-xs transition-all">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-sky-100 text-sky-800 border border-sky-200">
+                            Phần 4: TDKH
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                            {selectedStudent.tho.tdkh ?? 0}/30 câu đúng
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-slate-800 dark:text-white">Tư Duy Khoa Học</h4>
+                        <div className="text-2xl font-black text-sky-600 dark:text-sky-400 tabular-nums mt-1">
+                          {selectedStudent.irt.tdkh ?? 0}{' '}
+                          <span className="text-xs font-semibold text-slate-400">/ 300 điểm</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1.5 bg-sky-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-sky-500 to-sky-400 rounded-full" 
+                          style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.tdkh || 0) / 300) * 100))}%` }} 
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Note & Explanation */}
+                <div className="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-slate-800/70 border border-indigo-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 leading-relaxed flex items-start gap-2.5">
+                  <span className="text-base shrink-0">💡</span>
+                  <p>
+                    <strong className="text-indigo-900 dark:text-indigo-200">Cơ chế Neo Đề Chuẩn VNU-HCM Đợt 1:</strong> Điểm neo đề được tính toán theo mô hình lý thuyết ứng đáp câu hỏi (Item Response Theory - IRT 2PL/3PL), chuẩn hóa về thang điểm chuẩn 1200 điểm của kỳ thi Đánh giá năng lực ĐHQG TP.HCM (VNU-HCM) Đợt 1. Thang điểm 4 môn: Tiếng Việt (300đ), Tiếng Anh (300đ), Toán học (300đ), Tư duy khoa học (300đ). Khác với điểm thô chỉ đếm số lượng câu đúng đơn thuần, điểm neo đề phản ánh chính xác năng lực thực chất của thí sinh bằng cách gán trọng số độ khó và độ phân biệt riêng cho từng câu hỏi neo theo chuẩn đề thi VNU-HCM Đợt 1.
+                  </p>
+                </div>
+              </div>
+            </section>
+
             {/* Chọn thang điểm — dùng chung cho radar "So với TB Lớp" và biểu đồ cột bên cạnh */}
             <div className="flex flex-wrap items-center justify-between gap-3 card px-4 py-3">
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -1308,7 +1479,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                                 key={key}
                                 type="button"
                                 onClick={() => setQuestionStatusFilter(cur => (cur === key ? 'all' : key))}
-                                className={filterBtn(questionStatusFilter === key)}
+                                className={`btn btn-sm ${questionStatusFilter === key ? 'btn-primary' : 'btn-ghost'}`}
                               >
                                 {label}
                               </button>
@@ -1317,7 +1488,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                         </div>
 
                         <div className="flex items-center gap-1.5 flex-wrap mb-4">
-                          <span className="text-xs font-semibold text-slate-400 mr-1">Môn:</span>
+                          <span className="text-[10px] font-semibold text-slate-400 mr-1">Môn:</span>
                           {([
                             ['all', `Tất cả (${allRows.length})`],
                             ['TV', 'Tiếng Việt'],
@@ -1329,7 +1500,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                               key={key}
                               type="button"
                               onClick={() => setQuestionSubjectFilter(key)}
-                              className={filterBtn(questionSubjectFilter === key)}
+                              className={`btn btn-sm ${questionSubjectFilter === key ? 'btn-primary' : 'btn-ghost'}`}
                             >
                               {label}
                             </button>
@@ -1337,16 +1508,16 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                         </div>
 
                         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                          <table className="w-full text-xs text-left border-collapse min-w-[640px]">
+                          <table className="w-full text-[10px] text-left border-collapse min-w-[560px]">
                             <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider">
                               <tr>
-                                <th className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 text-center w-16">Câu</th>
-                                <th className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 text-center w-24">
+                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-16">Câu</th>
+                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-24">
                                   Mã đề {maDe || '—'}
                                 </th>
-                                <th className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700">Phần thi</th>
-                                <th className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700">Chuyên đề</th>
-                                <th className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 text-center w-28">Kết quả</th>
+                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700">Phần thi</th>
+                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700">Chuyên đề</th>
+                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-28">Kết quả</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1361,24 +1532,24 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                                   const st = statusStyle[statusOf(r.status)];
                                   return (
                                     <tr key={r.q} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                                      <td className="px-3 py-2 text-center font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+                                      <td className="px-2 py-1.5 text-center font-bold text-slate-800 dark:text-slate-100 tabular-nums">
                                         {r.q}
                                       </td>
-                                      <td className="px-3 py-2 text-center text-slate-500 dark:text-slate-400 tabular-nums">
+                                      <td className="px-2 py-1.5 text-center text-slate-500 dark:text-slate-400 tabular-nums">
                                         {r.qInMaDe}
                                       </td>
-                                      <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
-                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-white font-black mr-1.5">
+                                      <td className="px-2 py-1.5 text-slate-600 dark:text-slate-300">
+                                        <span className="px-1 py-0.5 rounded text-[9px] bg-slate-800 text-white font-black mr-1">
                                           {r.subjectCode}
                                         </span>
                                         {r.subjectName}
                                       </td>
-                                      <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
+                                      <td className="px-2 py-1.5 text-slate-600 dark:text-slate-300">
                                         <span className="text-slate-400">{r.groupName} · </span>
                                         {r.topicName}
                                       </td>
-                                      <td className="px-3 py-2 text-center">
-                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border font-bold ${st.chip}`}>
+                                      <td className="px-2 py-1.5 text-center">
+                                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-bold ${st.chip}`}>
                                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                                           {st.label}
                                         </span>
@@ -1896,182 +2067,6 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
             </Suspense>
           </div>
         )}
-        {/* BẢNG ĐIỂM NEO ĐỀ CHUẨN HOÁ (MÔ HÌNH IRT THANG 1200) - ĐỂ CUỐI CÙNG */}
-        <section className="card p-5 sm:p-7 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl shadow-xl border border-indigo-500/30 overflow-hidden relative mt-3">
-          {/* Subtle background glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col gap-5">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-indigo-800/60">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shrink-0 shadow-inner">
-                  <Award className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-md text-[10.5px] font-black uppercase tracking-wider bg-indigo-500 text-white shadow-xs">
-                      Chuẩn hóa IRT
-                    </span>
-                    <h3 className="font-black text-lg sm:text-xl text-white tracking-tight">
-                      Bảng Điểm Neo Đề (Mô Hình IRT Thang 1200)
-                    </h3>
-                  </div>
-                  <p className="text-xs text-indigo-200/80 mt-0.5">
-                    Điểm số quy đổi tương đương kỳ thi ĐGNL ĐHQG TP.HCM (Thang điểm tối đa: 1200 điểm)
-                  </p>
-                </div>
-              </div>
-
-              {/* Total IRT Score Pill */}
-              <div className="flex items-center gap-3 self-start sm:self-center bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-white/15">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-200 block">
-                    Tổng Điểm Neo Đề
-                  </span>
-                  <div className="text-2xl sm:text-3xl font-black text-amber-300 tabular-nums">
-                    {((visibleParts?.tv !== false ? selectedStudent.irt.tv || 0 : 0) + 
-                      (visibleParts?.ta !== false ? selectedStudent.irt.ta || 0 : 0) + 
-                      (visibleParts?.toan !== false ? selectedStudent.irt.toan || 0 : 0) + 
-                      (visibleParts?.tdkh !== false ? selectedStudent.irt.tdkh || 0 : 0)).toFixed(0)}{' '}
-                    <span className="text-xs sm:text-sm font-bold text-white/70">/ 1200</span>
-                  </div>
-                </div>
-                {studentRankInfo?.rankIrt && (
-                  <div className="pl-3 border-l border-white/20 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-200 block">
-                      Hạng IRT
-                    </span>
-                    <span className="text-base sm:text-lg font-black text-emerald-300">
-                      #{studentRankInfo.rankIrt}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 4 Subjects Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-              {/* Tiếng Việt */}
-              {visibleParts?.tv !== false && (
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex flex-col justify-between gap-3 hover:bg-white/10 transition-all">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                        Phần 1: TV
-                      </span>
-                      <span className="text-xs text-white/70 font-semibold">
-                        {selectedStudent.tho.tv ?? 0}/30 câu đúng
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-sm text-white">Tiếng Việt</h4>
-                    <div className="text-2xl font-black text-amber-300 tabular-nums mt-1">
-                      {selectedStudent.irt.tv ?? 0}{' '}
-                      <span className="text-xs font-semibold text-white/60">/ 300 điểm</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-amber-400 to-amber-300 rounded-full" 
-                      style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.tv || 0) / 300) * 100))}%` }} 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Tiếng Anh */}
-              {visibleParts?.ta !== false && (
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex flex-col justify-between gap-3 hover:bg-white/10 transition-all">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-sky-400/20 text-sky-300 border border-sky-400/30">
-                        Phần 2: TA
-                      </span>
-                      <span className="text-xs text-white/70 font-semibold">
-                        {selectedStudent.tho.ta ?? 0}/30 câu đúng
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-sm text-white">Tiếng Anh</h4>
-                    <div className="text-2xl font-black text-sky-300 tabular-nums mt-1">
-                      {selectedStudent.irt.ta ?? 0}{' '}
-                      <span className="text-xs font-semibold text-white/60">/ 300 điểm</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-sky-400 to-sky-300 rounded-full" 
-                      style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.ta || 0) / 300) * 100))}%` }} 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Toán học */}
-              {visibleParts?.toan !== false && (
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex flex-col justify-between gap-3 hover:bg-white/10 transition-all">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-indigo-400/20 text-indigo-300 border border-indigo-400/30">
-                        Phần 3: TO
-                      </span>
-                      <span className="text-xs text-white/70 font-semibold">
-                        {selectedStudent.tho.toan ?? 0}/30 câu đúng
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-sm text-white">Toán Học</h4>
-                    <div className="text-2xl font-black text-indigo-300 tabular-nums mt-1">
-                      {selectedStudent.irt.toan ?? 0}{' '}
-                      <span className="text-xs font-semibold text-white/60">/ 300 điểm</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-indigo-400 to-indigo-300 rounded-full" 
-                      style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.toan || 0) / 300) * 100))}%` }} 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Tư duy khoa học */}
-              {visibleParts?.tdkh !== false && (
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex flex-col justify-between gap-3 hover:bg-white/10 transition-all">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
-                        Phần 4: TDKH
-                      </span>
-                      <span className="text-xs text-white/70 font-semibold">
-                        {selectedStudent.tho.tdkh ?? 0}/30 câu đúng
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-sm text-white">Tư Duy Khoa Học</h4>
-                    <div className="text-2xl font-black text-emerald-300 tabular-nums mt-1">
-                      {selectedStudent.irt.tdkh ?? 0}{' '}
-                      <span className="text-xs font-semibold text-white/60">/ 300 điểm</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-300 rounded-full" 
-                      style={{ width: `${Math.min(100, Math.round(((selectedStudent.irt.tdkh || 0) / 300) * 100))}%` }} 
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Note & Explanation */}
-            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs text-indigo-200/90 leading-relaxed flex items-start gap-2.5">
-              <span className="text-base shrink-0">💡</span>
-              <p>
-                <strong>Ghi chú về Điểm Neo Đề:</strong> Điểm neo đề được tính toán theo mô hình lý thuyết ứng đáp câu hỏi (Item Response Theory - IRT 2PL/3PL), chuẩn hóa về thang điểm chuẩn 1200 điểm của kỳ thi Đánh giá năng lực ĐHQG. Khác với điểm số thô chỉ đếm số lượng câu đúng đơn thuần, điểm neo đề phản ánh chính xác năng lực thực chất của thí sinh bằng cách gán trọng số độ khó và độ phân biệt riêng cho từng câu hỏi.
-              </p>
-            </div>
-          </div>
-        </section>
-
       </div>
 
       {/* Info Section */}

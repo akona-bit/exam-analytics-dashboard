@@ -54,8 +54,8 @@ interface Props {
 }
 
 const METRICS: { key: MetricKey; label: string; short: string }[] = [
+  { key: 'irt', label: 'Điểm Chuẩn Hoá Neo Đề (IRT 0–1200 - Chuẩn VNU-HCM Đợt 1)', short: 'Chuẩn hoá IRT (1200đ - Chuẩn VNU-HCM Đợt 1)' },
   { key: 'tho', label: 'Điểm Thô (Số câu đúng 0–120)', short: 'Điểm Thô (120 câu)' },
-  { key: 'irt', label: 'Điểm Chuẩn Hoá Neo Đề (IRT 0–1200)', short: 'Chuẩn hoá IRT (1200đ)' },
 ];
 
 const BIN_COUNT = 10;
@@ -376,7 +376,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
       </div>
 
       {/* BIỂU ĐỒ PHÂN BỐ ĐIỂM (HISTOGRAM) */}
-      <div className="card p-5 sm:p-6">
+      <div className="card p-5 sm:p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_12px_40px_-5px_rgba(60,80,160,0.18)] rounded-3xl overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
