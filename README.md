@@ -30,6 +30,9 @@ Web app cho phép học sinh tra cứu điểm thi và giáo viên phân tích k
 - **Tra cứu tức thì** theo tên (email bị ẩn hoàn toàn khỏi giao diện), tự gộp lịch sử các lần thi của cùng một thí sinh.
 - **4 tab hồ sơ:**
   - **Tổng quan** — Radar so sánh với điểm TB lớp, thang điểm Thô / IRT / Thưởng–Phạt, biểu đồ cột tổng điểm từng môn, Area "Tiến bộ qua các lần thi".
+    ⚠️ Ba thang Thô (0–30), IRT (~0–280) và Thưởng Phạt là **không cùng đơn vị**. Radar "So với TB Lớp"
+    và biểu đồ cột chỉ vẽ **một thang tại một thời điểm**, chọn bằng thanh "Thang điểm đang hiển thị"
+    ở đầu tab — cộng gộp chúng lại sẽ ra số không có ý nghĩa.
   - **Vùng kiến thức** — số câu đúng theo vùng, filter pill (Tất cả / ≥80% / 50–79% / <50%), chuyển đổi giữa dạng thẻ và bảng, bảng chi tiết câu sai & bỏ trống.
   - **Lịch sử thi** — ma trận so sánh nhiều lần thi (chỉ hiện khi có từ 2 lần).
   - **Lớp học** — phân bổ năng lực + phân tích toàn khóa (lazy-load).
@@ -42,7 +45,7 @@ Web app cho phép học sinh tra cứu điểm thi và giáo viên phân tích k
 - **Histogram** phân bố điểm Toán & TDKH (10 nhóm, bước 2.5), lần thi mới nhất.
 - **Donut xếp loại** 5 mức Yếu → Xuất sắc.
 - **Scatter Toán – TDKH** kèm đường tham chiếu điểm TB lớp.
-- **Tỷ lệ đạt ngưỡng** 20/25/30/35/40 trên thang 50.
+- **Tỷ lệ đạt ngưỡng** 40/50/60/70/80% trên thang 60.
 - **Bảng thống kê mô tả:** n, min, Q1, trung vị, Q3, P90, max, TB, STĐ.
 - **Xu hướng:** điểm TB toàn khóa qua từng lần thi + phân bố số lần thi.
 - **Bảng xếp hạng:** Top 10 cao nhất / Top 10 cần cải thiện.
@@ -92,7 +95,7 @@ location.hash === "#admin"  →  <AdminPage/>                       (bảng đi�
 - Màn hình splash do `index.html` vẽ sẵn (inline CSS) trước khi bundle JS tải xong → không nháy trắng.
 - Có `<noscript>` chứa nội dung tiếng Việt cho crawler.
 
-> **Timeout bắt buộc.** Cả 3 query Supabase được bọc trong `withTimeout` với `SUPABASE_TIMEOUT_MS = 12000`. Bảng `student_responses` có ~42k dòng và được đọc với RLS cho phép anonymous — nếu mạng chậm hoặc treo, `Promise.all` không bao giờ settle và app sẽ kẹt ở "Đang tài dữ liệu..." **vô hạn**, không kịp fallback. Hết giờ thì trả `null` và rơi xuống `/api/*` → file JSON tĩnh. Tăng hẳn giá trị này nếu mạng nội bộ chậm hơn.
+> **Timeout bắt buộc.** Cả 3 query Supabase được bọc trong `withTimeout` với `SUPABASE_TIMEOUT_MS = 12000`. Bảng `student_responses` có ~41k dòng và được đọc với RLS cho phép anonymous — nếu mạng chậm hoặc treo, `Promise.all` không bao giờ settle và app sẽ kẹt ở "Đang tài dữ liệu..." **vô hạn**, không kịp fallback. Hết giờ thì trả `null` và rơi xuống `/api/*` → file JSON tĩnh. Tăng hẳn giá trị này nếu mạng nội bộ chậm hơn.
 
 ### `server.ts` — API tùy chọn (chỉ dùng khi chạy Node server)
 Chỉ có **2 endpoint**, dữ liệu nạp 1 lần lúc khởi động từ `process.cwd()`:
@@ -128,7 +131,7 @@ Bước 2 có kiểm tra content-type để tránh nuốt phải `index.html` do
 | File | Vai trò |
 |---|---|
 | `lib/csvParser.ts` | **Nguồn sự thật duy nhất** cho việc đọc CSV. Thuần JS logic, không đụng `fs`/mạng nên chạy được ở cả server, script Node lẫn trình duyệt. Xuất ra đúng tên cột trong `schema.sql` (`tp_*`, `student_stt`, `question_id`, `is_error`) |
-| `analytics.ts` | Toàn bộ hàm thống kê thuần JS: `latestAttempts`, `mean`, `quantile`, `stdDev`, `describe`, `rankList`, `bandOf`, `thresholdRows`, `attemptAverages`… + hằng số `MAX_SUBJECT_SCORE = 25`, `MAX_TOTAL_SCORE = 50`, `ABILITY_BANDS` |
+| `analytics.ts` | Toàn bộ hàm thống kê thuần JS: `latestAttempts`, `mean`, `quantile`, `stdDev`, `describe`, `rankList`, `bandOf`, `thresholdRows`, `attemptAverages`… + hằng số `MAX_SUBJECT_SCORE = 30` (= số câu/môn, khớp `QUESTIONS_PER_STUDENT`), `MAX_TOTAL_SCORE = 60`, `MAX_ALL_SUBJECT_SCORE = 120`, `GIOI_MIN`, `ABILITY_BANDS`, `THRESHOLDS` |
 | `types.ts` | `StudentData`, `QuestionData`, `MetricKey`, `SubjectKey`, `ExamType` |
 | `lib/supabase.ts` | Khởi tạo client, export `isSupabaseConfigured` + `supabase` (hoặc `null`) |
 | `lib/contentFiles.ts` | Nạp nội dung tĩnh từ file: `knowledgeCsvFile` (CSV vùng kiến thức), `questionTextsFile` — qua `import.meta.glob` nên thiếu file vẫn build được |
@@ -148,12 +151,14 @@ raw_*.csv ──► lib/csvParser.ts ──► server.ts       → map sang shap
 Hai hàm dùng nhiều nhất:
 
 - `parseStudentsCsv(csv)` — đọc theo tên cột trước, tự lùi về vị trí cố định nếu header chỉ ghi chung ("Thô", "IRT"). Cần gọi `parseResponsesCsv` **truyền vào kết quả của hàm này** để email được back-fill.
-- `parseResponsesCsv(csv, students)` — trả về **toàn bộ 60 câu** mỗi thí sinh; dùng `failedOnly()` để chỉ giữ câu sai/bỏ trống.
+- `parseResponsesCsv(csv, students)` — trả về **toàn bộ 120 câu** mỗi thí sinh; dùng `failedOnly()` để chỉ giữ câu sai/bỏ trống. Vì `responses` **chỉ chứa câu sai**, mọi nơi tính "tỉ lệ đúng" phải lấy tổng số câu từ đề thi (`QUESTIONS_PER_STUDENT`), tuyệt đối không dùng `responses.length`.
 
 **Quy ước ma trận kiến thức** (`lib/knowledgeStructure.ts`):
-- Các dòng trùng "Ngữ pháp" / "Đọc hiểu" được tách thành `(Tiếng Việt)` / `(Tiếng Anh)`.
-- Các dòng liên tiếp giống nhau được gộp và cộng dồn số câu.
-- Nếu đề thi có **≤ 60 câu** nhưng CSV mẫu có 120 câu, tự động lọc về đúng nhóm Toán/TDKH cộng dồn = 60 câu.
+- Ma trận được dựng **từ CSV** (`parseKnowledgeCSV`), môn của mỗi vùng suy ra từ vị trí câu (30 câu/môn). CSV rỗng thì mới lùi về ma trận 120 câu hardcode.
+- Các tên vùng trùng nhau giữa các môn ("Ngữ pháp" của Tiếng Việt và của Tiếng Anh) được phân biệt bằng khoá màu `Tên vùng (Tên môn)`.
+- Các dòng liên tiếp cùng vùng được gộp, số câu cộng dồn.
+- Cột "câu cuối của vùng" trong CSV bị bỏ qua có chủ đích — nó thừa và sai ở vài vùng, để lại sẽ làm lệch số thứ tự câu.
+- Nếu đề thi có **≤ 60 câu**, tự động lọc về đúng nhóm Toán/TDKH và **đánh số lại 1..60**.
 
 ---
 
@@ -272,7 +277,7 @@ STT,id,Họ và tên,Email,Thô,,IRT,,Thưởng phạt,
 Server ưu tiên đọc theo **tên cột**; nếu thiếu cột `tho_toan` thì chuyển sang **chỉ số cố định** (0, 2, 3, 4–9). Loại kỳ thi lấy từ cột đầu khớp trong `EXAM_TYPE_HEADERS` (`exam_type`, `examtype`, `loai_ky_thi`, `loai_ki_thi`, `ky_thi`), mặc định `survey`.
 
 ### `raw_student_responses.csv` — ma trận trả lời
-**1 dòng header**, 60 câu mỗi thí sinh. Bỏ qua dòng có `< 74` cột. Vị trí tên/email được dò bằng heuristic (tìm ô bằng `TRUE`, hoặc ô đầu tiên không rỗng trong cột 1–6). Email được back-fill vào danh sách học sinh.
+**1 dòng header**, **120 câu** mỗi thí sinh (14 cột thông tin + 120 cột đáp án = 134 cột). Bỏ qua dòng có ít hơn `MIN_RESPONSE_COLUMNS` cột. Vị trí tên/email được dò bằng heuristic (tìm ô bằng `TRUE`, hoặc ô đầu tiên không rỗng trong cột 1–6). Email được back-fill vào danh sách học sinh.
 
 Quy ước trạng thái:
 

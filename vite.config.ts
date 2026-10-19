@@ -11,7 +11,7 @@ export default defineConfig(() => {
     resolve: {
       preserveSymlinks: true,
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, 'src'),
       },
     },
     server: {

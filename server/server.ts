@@ -1,19 +1,14 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import {
   parseStudentsCsv,
   parseResponsesCsv,
   parseQuestionsCsv,
-  failedOnly,
   type ParsedStudent,
   type ParsedResponse,
   type ParsedQuestion,
-} from './lib/csvParser.js';
-
-const __filename = typeof import.meta !== "undefined" && typeof import.meta.url === "string" ? fileURLToPath(import.meta.url) : "";
-const __dirname = __filename ? path.dirname(__filename) : process.cwd();
+} from '../src/lib/csvParser.js';
 
 let memStudents: ParsedStudent[] = [];
 let memResponses: ParsedResponse[] = [];
@@ -60,7 +55,7 @@ async function startServer() {
   app.get('/api/students', (req, res) => {
     try {
       const responsesMap = new Map<number, { question_num: number; status: string }[]>();
-      for (const r of failedOnly(memResponses)) {
+      for (const r of memResponses) {
         let list = responsesMap.get(r.student_stt);
         if (!list) {
           list = [];
@@ -73,12 +68,13 @@ async function startServer() {
         .sort((a, b) => a.stt - b.stt)
         .map(s => ({
           stt: s.stt,
+          sbd: s.sbd,
           name: s.name,
           email: s.email,
-          examType: s.exam_type,
-          tho: { toan: s.tho_toan, tdkh: s.tho_tdkh },
-          irt: { toan: s.irt_toan, tdkh: s.irt_tdkh },
-          thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh },
+          gender: s.gender,
+          maDe: s.ma_de,
+          tho: { toan: s.tho_toan, tdkh: s.tho_tdkh, tv: s.tho_tv, ta: s.tho_ta },
+          irt: { toan: s.irt_toan, tdkh: s.irt_tdkh, tv: s.irt_tv, ta: s.irt_ta },
           note: s.note,
           responses: responsesMap.get(s.stt) || [],
         }));
@@ -95,7 +91,6 @@ async function startServer() {
       const formatted = memQuestions.map(q => ({
         id: q.question_id,
         subject: q.subject,
-        examType: q.exam_type,
         totalAttempts: q.total_attempts,
         correct: q.correct,
         incorrect: q.incorrect,

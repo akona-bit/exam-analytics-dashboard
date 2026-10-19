@@ -17,7 +17,7 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
     },
     "allowImportingTsExtensions": true,
@@ -25,11 +25,11 @@
     "types": ["vite/client", "node"]
   },
   "include": [
-    "*.ts",
-    "*.tsx",
-    "lib/**/*.ts",
-    "lib/**/*.js",
-    "scripts/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "server/**/*.ts",
+    "scripts/**/*.ts",
+    "*.ts"
   ],
   "exclude": [
     "node_modules",

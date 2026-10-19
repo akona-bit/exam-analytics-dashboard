@@ -15,4 +15,6 @@ response.json
 api_data.json
 question_texts.json
 *.pdf
+*.xlsx
+build-out.txt
 .wrangler/

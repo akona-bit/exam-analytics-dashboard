@@ -1,32 +1,11 @@
-import { ExamType, MetricKey, StudentData, SubjectKey } from './types';
+import { MetricKey, StudentData, SubjectKey } from '../types';
 
-export const EXAM_TYPES: ExamType[] = ['survey', 'mock'];
-
-export const EXAM_TYPE_LABEL: Record<ExamType, string> = {
-  survey: 'Kì Thi Khảo Sát',
-  mock: 'Kì Thi Thử',
-};
-
-export const normalizeExamType = (v: unknown): ExamType => {
-  const raw = String(v ?? '').trim().toLowerCase();
-  return raw === 'mock' || raw === 'thi_thu' || raw === 'thu' || raw === 'kì thi thử' ? 'mock' : 'survey';
-};
-
-export const examTypeOf = (row: { examType?: ExamType }): ExamType => normalizeExamType(row.examType);
-
-export const filterByExamType = <T extends { examType?: ExamType }>(rows: T[], type: ExamType): T[] =>
-  rows.filter(r => examTypeOf(r) === type);
-
-export const countByExamType = <T extends { examType?: ExamType }>(rows: T[]): Record<ExamType, number> => {
-  const counts: Record<ExamType, number> = { survey: 0, mock: 0 };
-  for (const r of rows) counts[examTypeOf(r)] += 1;
-  return counts;
-};
+/** Trang phục vụ đúng một kỳ thi nên không còn khái niệm "loại kỳ thi". */
+export const EXAM_LABEL = 'Kì Thi Thử';
 
 export const METRIC_LABEL: Record<MetricKey, string> = {
   tho: 'Điểm Thô',
-  irt: 'Điểm IRT',
-  thuongPhat: 'Thưởng Phạt',
+  irt: 'Điểm Neo Đề',
 };
 
 export const SUBJECT_LABEL: Record<SubjectKey, string> = {
@@ -34,13 +13,29 @@ export const SUBJECT_LABEL: Record<SubjectKey, string> = {
   tdkh: 'TDKH',
 };
 
-export const MAX_SUBJECT_SCORE = 25;
-export const MAX_TOTAL_SCORE = 50;
-/** Thang điểm khi cộng đủ 4 môn (Toán + TDKH + Tiếng Việt + Tiếng Anh). */
-export const MAX_ALL_SUBJECT_SCORE = MAX_SUBJECT_SCORE * 4;
+/** Số câu mỗi môn — đề thi có 4 môn nên tổng cộng 120 câu. */
+export const QUESTIONS_PER_SUBJECT = 30;
+export const SUBJECT_COUNT = 4;
+export const QUESTIONS_TOTAL = QUESTIONS_PER_SUBJECT * SUBJECT_COUNT;
+
+/** Thang điểm tối đa của MỘT môn, khác nhau theo từng thang đo. */
+export const METRIC_MAX_SUBJECT: Record<MetricKey, number> = {
+  tho: QUESTIONS_PER_SUBJECT, // số câu đúng
+  irt: 300,                   // điểm neo đề chuẩn hoá
+};
+
+/** Thang điểm tối đa của một môn theo `metric`. */
+export const subjectMax = (metric: MetricKey): number => METRIC_MAX_SUBJECT[metric];
+
+/** Tổng Toán + TDKH theo `metric`. */
+export const totalMax = (metric: MetricKey): number => METRIC_MAX_SUBJECT[metric] * 2;
+
+/** Tổng đủ 4 môn — chỉ dùng được cho thang `tho`. */
+export const MAX_ALL_SUBJECT_SCORE = QUESTIONS_TOTAL;
 
 export const toNumber = (v: number | null | undefined): number | null =>
   typeof v === 'number' && Number.isFinite(v) ? v : null;
+
 
 export const latestAttempts = (students: StudentData[]): StudentData[] => {
   const map = new Map<string, StudentData>();
@@ -129,24 +124,24 @@ export interface AbilityBand {
   max: number;
 }
 
-export const ABILITY_BANDS: AbilityBand[] = [
-  { label: 'Yếu · 0–20%', short: 'Yếu', color: '#f43f5e', min: 0, max: 10 },
-  { label: 'Trung bình · 20–40%', short: 'Trung bình', color: '#f59e0b', min: 10, max: 20 },
-  { label: 'Khá · 40–60%', short: 'Khá', color: '#0ea5e9', min: 20, max: 30 },
-  { label: 'Giỏi · 60–80%', short: 'Giỏi', color: '#6366f1', min: 30, max: 40 },
-  { label: 'Xuất sắc · 80–100%', short: 'Xuất sắc', color: '#10b981', min: 40, max: Infinity },
-];
+/** 5 mức xếp loại, ranh giới tính theo % của tổng điểm của `metric`. */
+export const abilityBands = (metric: MetricKey): AbilityBand[] => {
+  const max = totalMax(metric);
+  return [
+    { label: 'Yếu · 0–20%', short: 'Yếu', color: '#f43f5e', min: 0, max: max * 0.2 },
+    { label: 'Trung bình · 20–40%', short: 'Trung bình', color: '#f59e0b', min: max * 0.2, max: max * 0.4 },
+    { label: 'Khá · 40–60%', short: 'Khá', color: '#0ea5e9', min: max * 0.4, max: max * 0.6 },
+    { label: 'Giỏi · 60–80%', short: 'Giỏi', color: '#6366f1', min: max * 0.6, max: max * 0.8 },
+    { label: 'Xuất sắc · 80–100%', short: 'Xuất sắc', color: '#10b981', min: max * 0.8, max: Infinity },
+  ];
+};
 
-export const bandOf = (total: number): number =>
-  ABILITY_BANDS.findIndex(b => total >= b.min && total < b.max);
+/** Trả về -1 nếu tổng điểm rơi ngoài mọi mức (ví dụ âm). */
+export const bandOf = (total: number, metric: MetricKey): number =>
+  abilityBands(metric).findIndex(b => total >= b.min && total < b.max);
 
-/**
- * Ngưỡng "Giỏi" quy đổi từ thang tổng Toán + TDKH sang thang đủ 4 môn,
- * để cùng một tỉ lệ 60% dùng được trên cả hai cách cộng điểm.
- */
-export const GIOI_MIN =
-  ((ABILITY_BANDS.find(b => b.short === 'Giỏi')?.min ?? MAX_TOTAL_SCORE * 0.6) / MAX_TOTAL_SCORE) *
-  MAX_ALL_SUBJECT_SCORE;
+/** Ngưỡng "Giỏi" quy đổi từ thang Toán + TDKH sang thang đủ 4 môn, để cùng một tỉ lệ 60% dùng được trên cả hai cách cộng điểm. */
+export const GIOI_MIN = MAX_ALL_SUBJECT_SCORE * 0.6;
 
 export interface ThresholdRow {
   name: string;
@@ -154,17 +149,19 @@ export interface ThresholdRow {
   percent: number;
 }
 
-export const THRESHOLDS = [20, 25, 30, 35, 40];
-
-export const thresholdRows = (students: StudentData[], metric: MetricKey): ThresholdRow[] =>
-  THRESHOLDS.map(t => {
+/** Ngưỡng tương ứng 40 / 50 / 60 / 70 / 80% của tổng điểm `metric`. */
+export const thresholdRows = (students: StudentData[], metric: MetricKey): ThresholdRow[] => {
+  const max = totalMax(metric);
+  return [0.4, 0.5, 0.6, 0.7, 0.8].map(p => {
+    const t = max * p;
     const count = students.filter(s => totalScore(s, metric) >= t).length;
     return {
-      name: `≥ ${t}đ ${Math.round((t / MAX_TOTAL_SCORE) * 100)}%`,
+      name: `≥ ${Math.round(t)}đ ${Math.round(p * 100)}%`,
       count,
       percent: students.length ? (count / students.length) * 100 : 0,
     };
   });
+};
 
 export const attemptAverages = (students: StudentData[], metric: MetricKey): { name: string; Toán: number; TDKH: number }[] => {
   const groups = groupByStudent(students);

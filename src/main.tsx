@@ -1,7 +1,7 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import App from './App';
+import './styles/index.css';
 
 // Disable DevTools
 document.addEventListener('contextmenu', (e) => e.preventDefault());

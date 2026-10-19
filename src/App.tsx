@@ -4,36 +4,33 @@ import { Moon, Sun } from 'lucide-react';
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Dashboard } from './Dashboard';
-import { AdminPage } from './AdminPage';
+import { Dashboard } from './components/dashboard/Dashboard';
+import { AdminPage } from './components/admin/AdminPage';
 import { QuestionData, StudentData } from './types';
-import { normalizeExamType } from './analytics';
 import { questionTextsFile } from './lib/contentFiles';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
-import { SkyBackground } from './SkyBackground';
+import { SkyBackground } from './components/layout/SkyBackground';
 
 /* ──────────── Supabase → App type mapping ──────────── */
 
 interface SupabaseStudent {
   stt: number; name: string; email: string | null;
+  sbd: string | null; gender: string | null; ma_de: string | null;
   tho_toan: number | null; tho_tdkh: number | null; tho_tv: number | null; tho_ta: number | null;
   irt_toan: number | null; irt_tdkh: number | null; irt_tv: number | null; irt_ta: number | null;
-  tp_toan: number | null; tp_tdkh: number | null; tp_tv: number | null; tp_ta: number | null;
+  total_correct: number | null; total_points: number | null;
   note: string | null;
-  exam_type?: string | null;
 }
 interface SupabaseQuestion {
   question_id: string; subject: string;
   total_attempts: number | null; correct: number | null; incorrect: number | null;
   penalty_score: number | null; bonus1: number | null; bonus2: number | null;
   bonus3: number | null; bonus_correct: number | null; is_error: boolean | null;
-  exam_type?: string | null;
 }
 interface SupabaseResponse {
-  student_stt: number; student_name: string;
+  student_stt: number;
   question_num: number; status: string;
-  exam_type?: string | null;
 }
 
 /**
@@ -94,35 +91,31 @@ async function fetchFromSupabase(): Promise<{ questions: QuestionData[]; student
       return null;
     }
 
-    // Group responses by exam type + student_stt
-    const responsesByKey = new Map<string, { question_num: number; status: string }[]>();
+    // Group responses by student_stt
+    const responsesByKey = new Map<number, { question_num: number; status: string }[]>();
     for (const r of rawResponses) {
-      const key = `${normalizeExamType(r.exam_type)}::${r.student_stt}`;
-      if (!responsesByKey.has(key)) responsesByKey.set(key, []);
-      responsesByKey.get(key)!.push({ question_num: r.question_num, status: r.status });
+      if (!responsesByKey.has(r.student_stt)) responsesByKey.set(r.student_stt, []);
+      responsesByKey.get(r.student_stt)!.push({ question_num: r.question_num, status: r.status });
     }
 
     // Map students
-    const students: StudentData[] = rawStudents.map(s => {
-      const examType = normalizeExamType(s.exam_type);
-      return {
-        stt: s.stt,
-        name: s.name,
-        email: s.email || undefined,
-        examType,
-        tho: { toan: s.tho_toan, tdkh: s.tho_tdkh, tv: s.tho_tv ?? null, ta: s.tho_ta ?? null },
-        irt: { toan: s.irt_toan, tdkh: s.irt_tdkh, tv: s.irt_tv ?? null, ta: s.irt_ta ?? null },
-        thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh, tv: s.tp_tv ?? null, ta: s.tp_ta ?? null },
-        note: s.note || undefined,
-        responses: responsesByKey.get(`${examType}::${s.stt}`),
-      };
-    });
+    const students: StudentData[] = rawStudents.map(s => ({
+      stt: s.stt,
+      name: s.name,
+      email: s.email || undefined,
+      sbd: s.sbd || undefined,
+      gender: s.gender || undefined,
+      maDe: s.ma_de || undefined,
+      tho: { toan: s.tho_toan, tdkh: s.tho_tdkh, tv: s.tho_tv, ta: s.tho_ta },
+      irt: { toan: s.irt_toan, tdkh: s.irt_tdkh, tv: s.irt_tv, ta: s.irt_ta },
+      note: s.note || undefined,
+      responses: responsesByKey.get(s.stt),
+    }));
 
     // Map questions
     const questions: QuestionData[] = rawQuestions.map(q => ({
       id: q.question_id,
       subject: q.subject,
-      examType: normalizeExamType(q.exam_type),
       totalAttempts: q.total_attempts,
       correct: q.correct,
       incorrect: q.incorrect,
@@ -174,7 +167,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [examName, setExamName] = useState('Kì Thi Khảo Sát');
+  const [examName, setExamName] = useState('Kì Thi Thử');
   const [knowledgeCsv, setKnowledgeCsv] = useState<string>(() => localStorage.getItem('knowledge_csv') || DEFAULT_KNOWLEDGE_CSV);
   const [questionTexts, setQuestionTexts] = useState<Record<string, string>>(questionTextsFile);
   const [answerLink, setAnswerLink] = useState('');
@@ -319,11 +312,9 @@ export default function App() {
             questions={data} 
             students={studentData} 
             examName={examName} 
-            knowledgeCsv={knowledgeCsv}
-            questionTexts={questionTexts} 
-            answerLink={answerLink} 
+knowledgeCsv={knowledgeCsv}
+            answerLink={answerLink}
             nextExamDate={nextExamDate}
-            sbdMap={sbdMap}
             visibleParts={{ tv: showTv, ta: showTa, toan: showToan, tdkh: showTdkh }}
           />
         )}

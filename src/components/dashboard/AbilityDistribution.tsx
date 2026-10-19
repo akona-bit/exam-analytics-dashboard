@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { MetricKey, StudentData, SubjectKey } from './types';
+import { MetricKey, StudentData, SubjectKey } from '../../types';
 import {
-  ABILITY_BANDS, METRIC_LABEL, SUBJECT_LABEL, latestAttempts, describe, sortedScores,
-  thresholdRows, totalScore, subjectScore, bandOf, MAX_TOTAL_SCORE,
-} from './analytics';
+  METRIC_LABEL, SUBJECT_LABEL, latestAttempts, describe, sortedScores,
+  thresholdRows, totalScore, subjectScore, bandOf, abilityBands, subjectMax, totalMax,
+} from '../../lib/analytics';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, ScatterChart, Scatter, ReferenceLine, LabelList,
@@ -19,10 +19,9 @@ interface Props {
 const METRICS: { key: MetricKey; label: string }[] = [
   { key: 'tho', label: METRIC_LABEL.tho },
   { key: 'irt', label: METRIC_LABEL.irt },
-  { key: 'thuongPhat', label: METRIC_LABEL.thuongPhat },
 ];
 
-const BIN_SIZE = 2.5;
+/** Số nhóm của biểu đồ cột — mỗi nhóm chiếm 1/10 thang điểm của một môn. */
 const BIN_COUNT = 10;
 
 const tooltipStyle = { borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '13px' };
@@ -38,7 +37,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
   }, [latest, metric]);
 
   const kpis = useMemo(() => {
-    const reached = stats.totals.filter(v => v >= MAX_TOTAL_SCORE * 0.6).length;
+    const reached = stats.totals.filter(v => v >= totalMax(metric) * 0.6).length;
     return {
       total: latest.length,
       avgToan: stats.toan.avg,
@@ -50,8 +49,9 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
   }, [latest, stats]);
 
   const histogramData = useMemo(() => {
+    const binSize = subjectMax(metric) / BIN_COUNT;
     const bins = Array.from({ length: BIN_COUNT }, (_, i) => ({
-      label: `${+(i * BIN_SIZE).toFixed(2)}`,
+      label: `${+(i * binSize).toFixed(2)}`,
       'Toán': 0,
       'TDKH': 0,
     }));
@@ -59,7 +59,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
       (['toan', 'tdkh'] as SubjectKey[]).forEach(subj => {
         const v = subjectScore(s, metric, subj);
         if (v === null) return;
-        const idx = Math.min(BIN_COUNT - 1, Math.max(0, Math.floor(v / BIN_SIZE)));
+        const idx = Math.min(BIN_COUNT - 1, Math.max(0, Math.floor(v / binSize)));
         bins[idx][SUBJECT_LABEL[subj] as 'Toán' | 'TDKH'] += 1;
       });
     }
@@ -67,9 +67,9 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
   }, [latest, metric]);
 
   const bandData = useMemo(() => {
-    const counts = ABILITY_BANDS.map(b => ({ name: b.label, value: 0, color: b.color }));
+    const counts = abilityBands(metric).map(b => ({ name: b.label, value: 0, color: b.color }));
     for (const s of latest) {
-      const idx = bandOf(totalScore(s, metric));
+      const idx = bandOf(totalScore(s, metric), metric);
       if (idx >= 0) counts[idx].value += 1;
     }
     return counts;
@@ -105,7 +105,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
     { label: 'Tổng thí sinh', value: String(kpis.total), note: 'lần thi mới nhất', icon: <Users className="w-5 h-5" />, box: 'bg-indigo-50 text-indigo-600', accent: 'text-indigo-600' },
     { label: `TB ${METRIC_LABEL[metric]} Toán`, value: kpis.avgToan.toFixed(2), note: `trung vị ${stats.toan.med.toFixed(2)}`, icon: <BarChartIcon className="w-5 h-5" />, box: 'bg-indigo-50 text-indigo-600', accent: 'text-indigo-600' },
     { label: `TB ${METRIC_LABEL[metric]} TDKH`, value: kpis.avgTdkh.toFixed(2), note: `trung vị ${stats.tdkh.med.toFixed(2)}`, icon: <BarChartIcon className="w-5 h-5" />, box: 'bg-sky-50 text-sky-600', accent: 'text-sky-600' },
-    { label: 'Trung vị tổng điểm', value: kpis.medTotal.toFixed(1), note: `trên thang ${MAX_TOTAL_SCORE}`, icon: <Award className="w-5 h-5" />, box: 'bg-emerald-50 text-emerald-600', accent: 'text-emerald-600' },
+    { label: 'Trung vị tổng điểm', value: kpis.medTotal.toFixed(1), note: `trên thang ${totalMax(metric)}`, icon: <Award className="w-5 h-5" />, box: 'bg-emerald-50 text-emerald-600', accent: 'text-emerald-600' },
     { label: 'Tỷ lệ đạt ≥ 60%', value: `${kpis.pct60.toFixed(1)}%`, note: `${kpis.reached}/${kpis.total} thí sinh`, icon: <Target className="w-5 h-5" />, box: 'bg-amber-50 text-amber-600', accent: 'text-amber-600' },
   ];
 
@@ -118,7 +118,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
             Phân Bổ Năng Lực Toàn Bộ Thí Sinh
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1 ml-11">
-            Lấy lần thi mới nhất của {latest.length} thí sinh · Thang điểm 0–25/môn, tổng {MAX_TOTAL_SCORE}
+            Lấy lần thi mới nhất của {latest.length} thí sinh · Thang điểm 0–{subjectMax(metric)}/môn, tổng {totalMax(metric)}
           </p>
         </div>
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit shadow-inner">
@@ -158,7 +158,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
             <span className="font-semibold text-sky-600">TDKH {stats.tdkh.avg.toFixed(2)}</span>
           </p>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-4">Trục ngang: khoảng điểm (bước 2.5) · Trục dọc: số thí sinh trong khoảng điểm đó</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-4">Trục ngang: khoảng điểm (bước {(subjectMax(metric) / BIN_COUNT).toFixed(2)}) · Trục dọc: số thí sinh trong khoảng điểm đó</p>
         <div className="h-[260px] sm:h-[320px] w-full -ml-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={histogramData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
@@ -220,12 +220,13 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
             Mối Quan Hệ Toán – TDKH
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2">Mỗi điểm là một thí sinh · Đường nét nét đứt là trung bình {METRIC_LABEL[metric]}</p>
-          <div className="h-[260px] sm:h-[280px] w-full -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis type="number" dataKey="toan" name="Toán" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} domain={[0, 26]} />
-                <YAxis type="number" dataKey="tdkh" name="TDKH" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} domain={[0, 26]} />
+<div className="h-[260px] sm:h-[280px] w-full -ml-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  {/* +1 để mọi điểm nằm trong khung, không bị Rechats cắt ở biên */}
+                  <XAxis type="number" dataKey="toan" name="Toán" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} domain={[0, subjectMax(metric) + 1]} />
+                  <YAxis type="number" dataKey="tdkh" name="TDKH" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} domain={[0, subjectMax(metric) + 1]} />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }}
@@ -256,7 +257,7 @@ export function AbilityDistribution({ students, metric, onMetricChange }: Props)
             <span className="icon-box bg-amber-50 text-amber-600"><Target className="w-[18px] h-[18px]" /></span>
             Tỷ Lệ Đạt Ngưỡng Điểm
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-4">Tỷ lệ thí sinh có tổng điểm {METRIC_LABEL[metric]} đạt từng ngưỡng trên thang {MAX_TOTAL_SCORE}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-4">Tỷ lệ thí sinh có tổng điểm {METRIC_LABEL[metric]} đạt từng ngưỡng trên thang {totalMax(metric)}</p>
           <div className="h-[220px] sm:h-[240px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={thresholdData} layout="vertical" margin={{ top: 5, right: 56, left: 8, bottom: 5 }}>

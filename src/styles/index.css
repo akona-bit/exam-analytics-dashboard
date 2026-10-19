@@ -117,42 +117,22 @@ html, body, #root {
   filter: none;
 }
 
-@keyframes skyTwinkle {
-  0%, 100% { opacity: 0.35; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.2); }
+@keyframes skyDrift {
+  0% { transform: scale(1.04) translate3d(0, 0, 0); }
+  100% { transform: scale(1.12) translate3d(-1.2%, -0.8%, 0); }
 }
-.sky-star {
-  animation: skyTwinkle 3s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-@keyframes skyShootingStar {
-  0%, 60% { opacity: 0; transform: translate(120px, -80px); }
-  10% { opacity: 0.9; }
-  55% { opacity: 0.5; }
-  100% { opacity: 0; transform: translate(-60px, 60px); }
-}
-.sky-shooting-star {
-  animation: skyShootingStar 7s ease-in infinite;
-  transform-box: fill-box;
-  transform-origin: center;
+.sky-bg-photo {
+  animation: skyDrift 60s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sky-star,
-  .sky-shooting-star,
+  .sky-bg-photo,
   .animate-pulse,
   .fade-in,
   .scale-in {
     animation: none !important;
     transition: none !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .cloud-desktop-only {
-    display: none !important;
   }
 }
 

@@ -30,9 +30,7 @@ import {
   parseStudentsCsv,
   parseResponsesCsv,
   parseQuestionsCsv,
-  failedOnly,
-  type ExamType,
-} from '../lib/csvParser.js';
+} from '../src/lib/csvParser.js';
 
 const root = process.cwd();
 const args = process.argv.slice(2);
@@ -45,7 +43,7 @@ const value = (name: string, fallback?: string) => {
 const dryRun = flag('dry-run');
 const allowDelete = !flag('no-delete');
 const pruneUnknown = flag('prune-unknown');
-const examType = (value('type', 'survey') as ExamType) === 'mock' ? 'mock' : 'survey';
+const examType = value('type', 'survey') === 'mock' ? 'mock' : 'survey';
 
 /** .env chỉ chứa biến VITE_*; đọc thẳng để script Node không cần dotenv. */
 function readEnvFile(): Record<string, string> {
@@ -79,7 +77,7 @@ const supabase = createClient(url, serviceRoleKey || anonKey, {
 const readCsv = (name: string): string => fs.readFileSync(path.join(root, name), 'utf-8');
 
 const students = parseStudentsCsv(readCsv('raw_students.csv'));
-const responses = failedOnly(parseResponsesCsv(readCsv('raw_student_responses.csv'), students));
+const responses = parseResponsesCsv(readCsv('raw_student_responses.csv'), students);
 const questions = parseQuestionsCsv(readCsv('questions.csv'));
 
 /** Cột thực sự tồn tại trên database, đọc từ OpenAPI của PostgREST. */
@@ -98,9 +96,6 @@ if (pruneUnknown) {
   );
 }
 
-const withType = (rows: unknown[]) =>
-  rows.map(r => ({ ...(r as object), exam_type: examType }));
-
 /** Bỏ mọi key không có giá trị, và bỏ cột database không có (nếu --prune-unknown). */
 const sanitize = (row: object, table: string) => {
   const known = liveColumns.get(table);
@@ -111,7 +106,7 @@ const sanitize = (row: object, table: string) => {
   );
 };
 
-console.log(`Đọc từ CSV: ${students.length} học sinh · ${questions.length} câu hỏi · ${responses.length} câu sai/bỏ trống`);
+console.log(`Đọc từ CSV: ${students.length} học sinh · ${questions.length} câu hỏi · ${responses.length} phản hồi (đủ ${responses.length / Math.max(students.length, 1)} câu/TS)`);
 console.log(`Exam type: ${examType}`);
 
 if (dryRun) {
@@ -152,18 +147,15 @@ for (const [table, rows] of [
   ['student_responses', responses],
 ] as const) {
   const known = liveColumns.get(table);
-  const hasExamType = !known || known.has('exam_type');
 
-  if (allowDelete && hasExamType) {
-    const { error } = await supabase.from(table).delete().eq('exam_type', examType);
+  if (allowDelete) {
+    const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if (error) throw new Error(`xoá ${table}: ${error.message}`);
-    console.log(`Đã xoá ${table} cũ của exam_type="${examType}"`);
-  } else if (allowDelete) {
-    console.log(`⚠ ${table} không có cột exam_type — bỏ qua bước xoá, dữ liệu sẽ chồng lên nhau nếu chạy lại.`);
+    console.log(`Đã xoá ${table} cũ`);
   }
 
-  const payload = withType(rows).map(r => sanitize(r, table));
-  const dropped = Object.keys(withType(rows)[0]).length - Object.keys(payload[0]).length;
+  const payload = rows.map(r => sanitize(r, table));
+  const dropped = Object.keys(rows[0] as object).length - Object.keys(payload[0]).length;
   if (dropped > 0) console.log(`  (bỏ ${dropped} cột không có trong database: ${table})`);
 
   await insertChunked(table, payload);

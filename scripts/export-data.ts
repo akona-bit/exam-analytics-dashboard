@@ -14,8 +14,7 @@ import {
   parseStudentsCsv,
   parseResponsesCsv,
   parseQuestionsCsv,
-  failedOnly,
-} from '../lib/csvParser.js';
+} from '../src/lib/csvParser.js';
 
 const root = process.cwd();
 
@@ -39,13 +38,17 @@ const students = parseStudentsCsv(readCsv('raw_students.csv'));
 const responses = parseResponsesCsv(readCsv('raw_student_responses.csv'), students);
 const questions = parseQuestionsCsv(readCsv('questions.csv'));
 
-/** Gom câu sai/bỏ trống theo STT — frontend chỉ cần những câu này. */
-const failedByStt = new Map<number, { question_num: number; status: string }[]>();
-for (const r of failedOnly(responses)) {
-  let list = failedByStt.get(r.student_stt);
+/**
+ * Gom phản hồi theo STT — giữ **đủ 120 câu** (kể cả câu đúng) để giao diện có thể
+ * dựng bảng trạng thái toàn bộ đề. `csvParser` đã bảo đảm mỗi thí sinh có đúng
+ * 120 dòng theo thứ tự đề gốc.
+ */
+const responsesByStt = new Map<number, { question_num: number; status: string }[]>();
+for (const r of responses) {
+  let list = responsesByStt.get(r.student_stt);
   if (!list) {
     list = [];
-    failedByStt.set(r.student_stt, list);
+    responsesByStt.set(r.student_stt, list);
   }
   list.push({ question_num: r.question_num, status: r.status });
 }
@@ -54,20 +57,20 @@ const studentsJson = [...students]
   .sort((a, b) => a.stt - b.stt)
   .map(s => ({
     stt: s.stt,
+    sbd: s.sbd,
     name: s.name,
     email: s.email,
-    examType: s.exam_type,
-    tho: { toan: s.tho_toan, tdkh: s.tho_tdkh },
-    irt: { toan: s.irt_toan, tdkh: s.irt_tdkh },
-    thuongPhat: { toan: s.tp_toan, tdkh: s.tp_tdkh },
+    gender: s.gender,
+    maDe: s.ma_de,
+    tho: { tv: s.tho_tv, ta: s.tho_ta, toan: s.tho_toan, tdkh: s.tho_tdkh },
+    irt: { tv: s.irt_tv, ta: s.irt_ta, toan: s.irt_toan, tdkh: s.irt_tdkh },
     note: s.note,
-    responses: failedByStt.get(s.stt) || [],
+    responses: responsesByStt.get(s.stt) || [],
   }));
 
 const questionsJson = questions.map(q => ({
   id: q.question_id,
   subject: q.subject,
-  examType: q.exam_type,
   totalAttempts: q.total_attempts,
   correct: q.correct,
   incorrect: q.incorrect,
