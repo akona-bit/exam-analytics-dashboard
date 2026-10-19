@@ -57,6 +57,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
   const [subjectMetric, setSubjectMetric] = useState<MetricKey>('irt');
   const [knowledgeFilter, setKnowledgeFilter] = useState<'all' | 'strong' | 'medium' | 'weak'>('all');
   const [knowledgeViewMode, setKnowledgeViewMode] = useState<'cards' | 'table'>('cards');
+  const [knowledgeSubjectTab, setKnowledgeSubjectTab] = useState<'all' | 'TV' | 'TA' | 'TO' | 'TDKH'>('all');
   /** Bộ lọc bảng 120 câu: xem tất cả hay chỉ nhóm trạng thái. */
   const [questionStatusFilter, setQuestionStatusFilter] = useState<'all' | 'correct' | 'wrong' | 'missing'>('all');
   const [questionSubjectFilter, setQuestionSubjectFilter] = useState<'all' | 'TV' | 'TA' | 'TO' | 'TDKH'>('all');
@@ -1519,26 +1520,28 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                   })()}
 
                   {/* SECTION: KẾT QUẢ THEO NHÓM KIẾN THỨC (PHẦN THI -> GOM NHÓM -> CHUYÊN ĐỀ) */}
-                  <div className="card overflow-hidden w-full min-w-0 shadow-lg border border-slate-200/80 dark:border-slate-800">
+                  <div className="card overflow-hidden w-full min-w-0 shadow-md border border-slate-200/80 dark:border-slate-800">
                     {/* Header Bar */}
-                    <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex flex-col gap-3.5">
+                    <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex flex-col gap-3">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Target className="w-5 h-5 text-indigo-500 shrink-0" />
-                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base sm:text-lg">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                            <Target className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-black text-slate-800 dark:text-slate-100 text-base sm:text-lg">
                               Kết Quả Chi Tiết Theo Nhóm Kiến Thức
                             </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              Tỷ lệ nắm vững theo 4 phần thi và từng chuyên đề ma trận
+                            </p>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            Hiển thị phân cấp 3 cấp: Phần thi (4 môn) → Gom nhóm vùng kiến thức → Chuyên đề chi tiết
-                          </p>
                         </div>
 
                         {/* Overall Badge */}
-                        <div className="flex items-center flex-wrap gap-2 text-xs font-bold">
+                        <div className="flex items-center flex-wrap gap-1.5 text-xs font-bold">
                           <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" /> {totalCorrect} Đúng ({totalPct}%)
+                            <Check className="w-3.5 h-3.5" /> {totalCorrect}/{totalQ} Đúng ({totalPct}%)
                           </span>
                           <span className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 flex items-center gap-1">
                             <X className="w-3.5 h-3.5" /> {totalWrong} Sai
@@ -1549,41 +1552,57 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                         </div>
                       </div>
 
+                      {/* Subject Selector Tabs */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                        <span className="text-[10.5px] font-semibold text-slate-400 mr-1">Phần thi:</span>
+                        {([
+                          ['all', `Tất cả (${activePhanThis.length} phần)`],
+                          ['TV', 'Tiếng Việt'],
+                          ['TA', 'Tiếng Anh'],
+                          ['TO', 'Toán học'],
+                          ['TDKH', 'Tư duy KH'],
+                        ] as const).map(([code, label]) => (
+                          <button
+                            key={code}
+                            type="button"
+                            onClick={() => setKnowledgeSubjectTab(code)}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                              knowledgeSubjectTab === code
+                                ? 'bg-indigo-600 text-white shadow-xs'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+
                       {/* Filter & View Mode Controls */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
                         {/* Filter pills */}
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs font-semibold">
-                          <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1 mr-1">
-                            <Filter className="w-3.5 h-3.5" /> Lọc:
+                          <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1 mr-1 text-[11px]">
+                            <Filter className="w-3.5 h-3.5" /> Mức độ:
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => setKnowledgeFilter('all')}
-                            className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
-                          >
-                            Tất cả 4 phần thi
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setKnowledgeFilter('strong')}
-                            className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'strong' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
-                          >
-                            Tốt (≥80%)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setKnowledgeFilter('medium')}
-                            className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'medium' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
-                          >
-                            Khá (50-79%)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setKnowledgeFilter('weak')}
-                            className={`px-3 py-1 rounded-full transition-all whitespace-nowrap ${knowledgeFilter === 'weak' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
-                          >
-                            Yếu (&lt;50%)
-                          </button>
+                          {([
+                            ['all', 'Tất cả'],
+                            ['strong', 'Tốt (≥80%)'],
+                            ['medium', 'Khá (50-79%)'],
+                            ['weak', 'Cần ôn (<50%)'],
+                          ] as const).map(([key, label]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setKnowledgeFilter(key)}
+                              className={`px-2.5 py-0.5 rounded-full text-xs transition-all whitespace-nowrap ${
+                                knowledgeFilter === key
+                                  ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 font-bold shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
                         </div>
 
                         {/* View Mode Toggle */}
@@ -1593,229 +1612,249 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                             onClick={() => setKnowledgeViewMode('cards')}
                             className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all font-medium ${knowledgeViewMode === 'cards' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
                           >
-                            <LayoutGrid className="w-3.5 h-3.5" /> Dạng Nhóm
+                            <LayoutGrid className="w-3.5 h-3.5" /> Dạng Thẻ
                           </button>
                           <button
                             type="button"
                             onClick={() => setKnowledgeViewMode('table')}
                             className={`flex items-center gap-1 px-2.5 py-1 rounded-md transition-all font-medium ${knowledgeViewMode === 'table' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
                           >
-                            <Table className="w-3.5 h-3.5" /> Dạng Bảng Ma Trận
+                            <Table className="w-3.5 h-3.5" /> Dạng Bảng
                           </button>
                         </div>
                       </div>
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-4 sm:p-5 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col gap-6">
+                    <div className="p-4 sm:p-5 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col gap-4">
                       {knowledgeViewMode === 'cards' ? (
-                        /* 4 PHẦN THI HIERARCHICAL CARDS */
-                        activePhanThis.map((pt) => {
-                          const ptWrong = pt.qNums.filter(q => wrongSet.has(q)).length;
-                          const ptMissing = pt.qNums.filter(q => missingSet.has(q)).length;
-                          const ptCorrect = Math.max(0, pt.total - ptWrong - ptMissing);
-                          const ptPct = pt.total > 0 ? Math.round((ptCorrect / pt.total) * 100) : 0;
+                        /* GỌN GÀNG: 4 PHẦN THI HIERARCHICAL COMPACT CARDS */
+                        activePhanThis
+                          .filter(pt => knowledgeSubjectTab === 'all' || pt.code === knowledgeSubjectTab)
+                          .map((pt) => {
+                            const ptWrong = pt.qNums.filter(q => wrongSet.has(q)).length;
+                            const ptMissing = pt.qNums.filter(q => missingSet.has(q)).length;
+                            const ptCorrect = Math.max(0, pt.total - ptWrong - ptMissing);
+                            const ptPct = pt.total > 0 ? Math.round((ptCorrect / pt.total) * 100) : 0;
 
-                          // Filter condition
-                          if (knowledgeFilter === 'strong' && ptPct < 80) return null;
-                          if (knowledgeFilter === 'medium' && (ptPct < 50 || ptPct >= 80)) return null;
-                          if (knowledgeFilter === 'weak' && ptPct >= 50) return null;
+                            // Filter condition
+                            if (knowledgeFilter === 'strong' && ptPct < 80) return null;
+                            if (knowledgeFilter === 'medium' && (ptPct < 50 || ptPct >= 80)) return null;
+                            if (knowledgeFilter === 'weak' && ptPct >= 50) return null;
 
-                          return (
-                            <div 
-                              key={pt.code}
-                              className={`rounded-2xl border p-4 sm:p-5 bg-white dark:bg-slate-800/90 shadow-sm flex flex-col gap-4 ${pt.borderColor || 'border-slate-200'}`}
-                            >
-                              {/* Phần thi Header */}
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/60">
-                                <div className="flex items-center gap-3">
-                                  <span className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider ${pt.badgeBg || 'bg-indigo-100 text-indigo-800'}`}>
-                                    {pt.code}
-                                  </span>
-                                  <div>
-                                    <h4 className="font-black text-base sm:text-lg text-slate-900 dark:text-white">
-                                      Phần thi {pt.name}
-                                    </h4>
-                                    <p className="text-xs text-slate-400">
-                                      Tổng {pt.total} câu ({pt.qNums[0]} - {pt.qNums[pt.qNums.length - 1]})
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 self-end sm:self-center">
-                                  <div className="text-right">
-                                    <span className={`text-base sm:text-lg font-black tabular-nums ${getPctColor(ptPct)}`}>
-                                      {ptCorrect}/{pt.total} đúng
+                            return (
+                              <div 
+                                key={pt.code}
+                                className={`rounded-2xl border p-3.5 sm:p-4 bg-white dark:bg-slate-800/90 shadow-xs flex flex-col gap-3 ${pt.borderColor || 'border-slate-200'}`}
+                              >
+                                {/* Phần thi Header Compact */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100 dark:border-slate-700/60">
+                                  <div className="flex items-center gap-2.5">
+                                    <span className={`px-2 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider ${pt.badgeBg || 'bg-indigo-100 text-indigo-800'}`}>
+                                      {pt.code}
                                     </span>
-                                    <p className="text-[11px] font-bold text-slate-400">Độ chính xác: {ptPct}%</p>
+                                    <div>
+                                      <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                                        Phần thi {pt.name}
+                                      </h4>
+                                      <p className="text-[11px] text-slate-400">
+                                        Tổng {pt.total} câu (từ câu {pt.qNums[0]} đến {pt.qNums[pt.qNums.length - 1]})
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div className="w-20 sm:w-28 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden shrink-0">
-                                    <div className={`h-full ${getBarGradient(ptPct)}`} style={{ width: `${ptPct}%` }} />
+
+                                  <div className="flex items-center gap-2.5 self-end sm:self-center">
+                                    <span className={`text-sm font-black tabular-nums ${getPctColor(ptPct)}`}>
+                                      {ptCorrect}/{pt.total} câu ({ptPct}%)
+                                    </span>
+                                    <div className="w-16 sm:w-24 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden shrink-0">
+                                      <div className={`h-full ${getBarGradient(ptPct)}`} style={{ width: `${ptPct}%` }} />
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              {/* Gom nhóm Grid */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                                {pt.gomNhoms.map((gn) => {
-                                  const gnWrong = gn.qNums.filter(q => wrongSet.has(q)).length;
-                                  const gnMissing = gn.qNums.filter(q => missingSet.has(q)).length;
-                                  const gnCorrect = Math.max(0, gn.total - gnWrong - gnMissing);
-                                  const gnPct = gn.total > 0 ? Math.round((gnCorrect / gn.total) * 100) : 0;
+                                {/* Gom nhóm Grid Compact */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {pt.gomNhoms.map((gn) => {
+                                    const gnWrong = gn.qNums.filter(q => wrongSet.has(q)).length;
+                                    const gnMissing = gn.qNums.filter(q => missingSet.has(q)).length;
+                                    const gnCorrect = Math.max(0, gn.total - gnWrong - gnMissing);
+                                    const gnPct = gn.total > 0 ? Math.round((gnCorrect / gn.total) * 100) : 0;
 
-                                  return (
-                                    <div
-                                      key={gn.domain}
-                                      className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-900/50 flex flex-col justify-between gap-3"
-                                    >
-                                      <div>
-                                        <div className="flex items-center justify-between gap-2 mb-1">
-                                          <h5 className="font-extrabold text-xs sm:text-sm text-slate-800 dark:text-slate-100 line-clamp-1">
-                                            {gn.domain}
-                                          </h5>
-                                          <span className={`text-xs font-black tabular-nums shrink-0 ${getPctColor(gnPct)}`}>
-                                            {gnCorrect}/{gn.total} ({gnPct}%)
-                                          </span>
-                                        </div>
-                                        <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
-                                          <div className={`h-full ${getBarGradient(gnPct)}`} style={{ width: `${gnPct}%` }} />
-                                        </div>
+                                    const filteredTopics = gn.topics.filter(t => {
+                                      const tWrong = t.qNums.filter(q => wrongSet.has(q)).length;
+                                      const tMissing = t.qNums.filter(q => missingSet.has(q)).length;
+                                      const tCorrect = Math.max(0, t.count - tWrong - tMissing);
+                                      const tPct = t.count > 0 ? Math.round((tCorrect / t.count) * 100) : 0;
+                                      if (knowledgeFilter === 'strong' && tPct < 80) return false;
+                                      if (knowledgeFilter === 'medium' && (tPct < 50 || tPct >= 80)) return false;
+                                      if (knowledgeFilter === 'weak' && tPct >= 50) return false;
+                                      return true;
+                                    });
 
-                                        {/* Chuyên đề con */}
-                                        <div className="flex flex-col gap-2 pt-1">
-                                          {gn.topics.map((t) => {
-                                            const tWrong = t.qNums.filter(q => wrongSet.has(q)).length;
-                                            const tMissing = t.qNums.filter(q => missingSet.has(q)).length;
-                                            const tCorrect = Math.max(0, t.count - tWrong - tMissing);
-                                            const tPct = t.count > 0 ? Math.round((tCorrect / t.count) * 100) : 0;
-
-                                            return (
-                                              <div 
-                                                key={t.name}
-                                                className="p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 text-xs flex flex-col gap-1.5"
-                                              >
-                                                <div className="flex items-center justify-between gap-2">
-                                                  <span className="font-semibold text-slate-700 dark:text-slate-200 line-clamp-1">{t.name}</span>
-                                                  <span className={`font-bold tabular-nums shrink-0 text-[11px] ${getPctColor(tPct)}`}>
-                                                    {tCorrect}/{t.count} ({tPct}%)
-                                                  </span>
-                                                </div>
-
-                                                {/* Question Badges */}
-                                                <div className="flex items-center flex-wrap gap-1">
-                                                  {t.qNums.map(q => {
-                                                    const isWrong = wrongSet.has(q);
-                                                    const isMissed = missingSet.has(q);
-
-                                                    let badgeStyle = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200';
-                                                    let symbol = '✓';
-                                                    if (isWrong) {
-                                                      badgeStyle = 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 font-bold';
-                                                      symbol = '✗';
-                                                    } else if (isMissed) {
-                                                      badgeStyle = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 font-bold';
-                                                      symbol = '-';
-                                                    }
-
-                                                    return (
-                                                      <span
-                                                        key={q}
-                                                        className={`px-1.5 py-0.5 rounded text-[10px] border flex items-center gap-1 ${badgeStyle}`}
-                                                        title={`Câu ${q} - ${isWrong ? 'Sai' : isMissed ? 'Bỏ trống' : 'Đúng'}`}
-                                                      >
-                                                        <span>C.{q}</span>
-                                                        <span className="text-[9px] opacity-75">{symbol}</span>
-                                                      </span>
-                                                    );
-                                                  })}
-                                                </div>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        /* TABLE VIEW */
-                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                          <table className="w-full text-xs text-left border-collapse">
-                            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider">
-                              <tr>
-                                <th className="px-3.5 py-3 border-b border-slate-200 dark:border-slate-700">Phần thi / Nhóm</th>
-                                <th className="px-3 py-3 border-b border-slate-200 dark:border-slate-700">Chuyên đề ma trận</th>
-                                <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center">Số câu</th>
-                                <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center text-emerald-600">Đúng</th>
-                                <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center text-rose-500">Sai</th>
-                                <th className="px-2.5 py-3 border-b border-slate-200 dark:border-slate-700 text-center text-amber-600">Bỏ trống</th>
-                                <th className="px-3 py-3 border-b border-slate-200 dark:border-slate-700 w-32">Tỷ lệ đúng</th>
-                                <th className="px-3.5 py-3 border-b border-slate-200 dark:border-slate-700">Các câu hỏi</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                              {activePhanThis.flatMap(pt => 
-                                pt.gomNhoms.flatMap(gn => 
-                                  gn.topics.map((t, idx) => {
-                                    const tWrong = t.qNums.filter(q => wrongSet.has(q)).length;
-                                    const tMissing = t.qNums.filter(q => missingSet.has(q)).length;
-                                    const tCorrect = Math.max(0, t.count - tWrong - tMissing);
-                                    const tPct = t.count > 0 ? Math.round((tCorrect / t.count) * 100) : 0;
+                                    if (filteredTopics.length === 0 && knowledgeFilter !== 'all') return null;
 
                                     return (
-                                      <tr key={`${pt.code}-${gn.domain}-${t.name}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                                        <td className="px-3.5 py-2.5 font-bold text-slate-800 dark:text-slate-100">
-                                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-white font-black mr-1.5">{pt.code}</span>
-                                          <span className="text-slate-600 dark:text-slate-300">{gn.domain}</span>
-                                        </td>
-                                        <td className="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-200">{t.name}</td>
-                                        <td className="px-2.5 py-2.5 text-center font-semibold">{t.count}</td>
-                                        <td className="px-2.5 py-2.5 text-center font-bold text-emerald-600">{tCorrect}</td>
-                                        <td className="px-2.5 py-2.5 text-center font-bold text-rose-500">{tWrong}</td>
-                                        <td className="px-2.5 py-2.5 text-center font-bold text-amber-600">{tMissing}</td>
-                                        <td className="px-3 py-2.5">
-                                          <div className="flex items-center gap-2">
-                                            <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                              <div className={`h-full ${getBarGradient(tPct)}`} style={{ width: `${tPct}%` }} />
-                                            </div>
-                                            <span className={`font-bold tabular-nums text-[11px] ${getPctColor(tPct)}`}>{tPct}%</span>
+                                      <div
+                                        key={gn.domain}
+                                        className="p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/70 bg-slate-50/70 dark:bg-slate-900/50 flex flex-col justify-between gap-2 shadow-2xs"
+                                      >
+                                        <div>
+                                          <div className="flex items-center justify-between gap-2 mb-1">
+                                            <h5 className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate" title={gn.domain}>
+                                              {gn.domain}
+                                            </h5>
+                                            <span className={`text-[11px] font-bold tabular-nums shrink-0 ${getPctColor(gnPct)}`}>
+                                              {gnCorrect}/{gn.total} ({gnPct}%)
+                                            </span>
                                           </div>
-                                        </td>
-                                        <td className="px-3.5 py-2.5">
-                                          <div className="flex items-center flex-wrap gap-1">
-                                            {t.qNums.map(q => {
-                                              const isWrong = wrongSet.has(q);
-                                              const isMissed = missingSet.has(q);
-                                              let style = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                                              let sym = '✓';
-                                              if (isWrong) {
-                                                style = 'bg-rose-100 text-rose-700 border-rose-300 font-bold';
-                                                sym = '✗';
-                                              } else if (isMissed) {
-                                                style = 'bg-amber-100 text-amber-700 border-amber-300 font-bold';
-                                                sym = '-';
-                                              }
+                                          <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
+                                            <div className={`h-full ${getBarGradient(gnPct)}`} style={{ width: `${gnPct}%` }} />
+                                          </div>
+
+                                          {/* Compact Chuyên Đề Con */}
+                                          <div className="divide-y divide-slate-100 dark:divide-slate-800/60 pt-0.5">
+                                            {filteredTopics.map((t) => {
+                                              const tWrong = t.qNums.filter(q => wrongSet.has(q)).length;
+                                              const tMissing = t.qNums.filter(q => missingSet.has(q)).length;
+                                              const tCorrect = Math.max(0, t.count - tWrong - tMissing);
+                                              const tPct = t.count > 0 ? Math.round((tCorrect / t.count) * 100) : 0;
+
+                                              const wrongQs = t.qNums.filter(q => wrongSet.has(q));
+                                              const missingQs = t.qNums.filter(q => missingSet.has(q));
+
                                               return (
-                                                <span
-                                                  key={q}
-                                                  className={`px-1.5 py-0.5 rounded text-[10px] border ${style}`}
-                                                  title={`Câu ${q} - ${isWrong ? 'Sai' : isMissed ? 'Bỏ trống' : 'Đúng'}`}
+                                                <div 
+                                                  key={t.name}
+                                                  className="py-1.5 flex flex-col gap-1 text-xs"
                                                 >
-                                                  C.{q} {sym}
-                                                </span>
+                                                  <div className="flex items-center justify-between gap-2">
+                                                    <span className="font-medium text-slate-700 dark:text-slate-200 truncate" title={t.name}>
+                                                      {t.name}
+                                                    </span>
+                                                    <span className={`font-bold tabular-nums shrink-0 text-[10.5px] ${getPctColor(tPct)}`}>
+                                                      {tCorrect}/{t.count} ({tPct}%)
+                                                    </span>
+                                                  </div>
+
+                                                  {/* Chỉ hiện lỗi sai/bỏ trống nếu có để giao diện gọn gàng */}
+                                                  {(wrongQs.length > 0 || missingQs.length > 0) && (
+                                                    <div className="flex items-center flex-wrap gap-1 text-[10px]">
+                                                      {wrongQs.map(q => (
+                                                        <span
+                                                          key={q}
+                                                          className="px-1 py-0.2 rounded font-semibold bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300"
+                                                          title={`Câu ${q}: Sai`}
+                                                        >
+                                                          C.{q} (Sai)
+                                                        </span>
+                                                      ))}
+                                                      {missingQs.map(q => (
+                                                        <span
+                                                          key={q}
+                                                          className="px-1 py-0.2 rounded font-semibold bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300"
+                                                          title={`Câu ${q}: Bỏ trống`}
+                                                        >
+                                                          C.{q} (Trống)
+                                                        </span>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                </div>
                                               );
                                             })}
                                           </div>
-                                        </td>
-                                      </tr>
+                                        </div>
+                                      </div>
                                     );
-                                  })
-                                )
-                              )}
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })
+                      ) : (
+                        /* GỌN GÀNG: TABLE VIEW VỚI KHUNG CUỘN MAX HEIGHT */
+                        <div className="overflow-x-auto overflow-y-auto max-h-[360px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                          <table className="w-full text-xs text-left border-collapse min-w-[620px]">
+                            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider sticky top-0 z-10 shadow-xs">
+                              <tr>
+                                <th className="px-3 py-2 border-b border-slate-200 dark:border-slate-700 w-36">Phần thi / Nhóm</th>
+                                <th className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">Chuyên đề ma trận</th>
+                                <th className="px-2 py-2 border-b border-slate-200 dark:border-slate-700 text-center w-14">Tổng</th>
+                                <th className="px-2 py-2 border-b border-slate-200 dark:border-slate-700 text-center text-emerald-600 w-14">Đúng</th>
+                                <th className="px-2 py-2 border-b border-slate-200 dark:border-slate-700 text-center text-rose-500 w-14">Sai</th>
+                                <th className="px-2 py-2 border-b border-slate-200 dark:border-slate-700 text-center text-amber-600 w-14">Trống</th>
+                                <th className="px-2.5 py-2 border-b border-slate-200 dark:border-slate-700 w-28">Tỷ lệ</th>
+                                <th className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">Lỗi sai (nếu có)</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                              {activePhanThis
+                                .filter(pt => knowledgeSubjectTab === 'all' || pt.code === knowledgeSubjectTab)
+                                .flatMap(pt => 
+                                  pt.gomNhoms.flatMap(gn => 
+                                    gn.topics
+                                      .filter(t => {
+                                        const tWrong = t.qNums.filter(q => wrongSet.has(q)).length;
+                                        const tMissing = t.qNums.filter(q => missingSet.has(q)).length;
+                                        const tCorrect = Math.max(0, t.count - tWrong - tMissing);
+                                        const tPct = t.count > 0 ? Math.round((tCorrect / t.count) * 100) : 0;
+                                        if (knowledgeFilter === 'strong' && tPct < 80) return false;
+                                        if (knowledgeFilter === 'medium' && (tPct < 50 || tPct >= 80)) return false;
+                                        if (knowledgeFilter === 'weak' && tPct >= 50) return false;
+                                        return true;
+                                      })
+                                      .map((t) => {
+                                        const tWrong = t.qNums.filter(q => wrongSet.has(q)).length;
+                                        const tMissing = t.qNums.filter(q => missingSet.has(q)).length;
+                                        const tCorrect = Math.max(0, t.count - tWrong - tMissing);
+                                        const tPct = t.count > 0 ? Math.round((tCorrect / t.count) * 100) : 0;
+
+                                        const wrongQs = t.qNums.filter(q => wrongSet.has(q));
+                                        const missingQs = t.qNums.filter(q => missingSet.has(q));
+
+                                        return (
+                                          <tr key={`${pt.code}-${gn.domain}-${t.name}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                            <td className="px-3 py-2 font-bold text-slate-800 dark:text-slate-100">
+                                              <span className="px-1 py-0.5 rounded text-[9.5px] bg-slate-800 text-white font-black mr-1">{pt.code}</span>
+                                              <span className="text-slate-600 dark:text-slate-300 text-[11px]">{gn.domain}</span>
+                                            </td>
+                                            <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-200 text-[11.5px]">{t.name}</td>
+                                            <td className="px-2 py-2 text-center font-semibold">{t.count}</td>
+                                            <td className="px-2 py-2 text-center font-bold text-emerald-600">{tCorrect}</td>
+                                            <td className="px-2 py-2 text-center font-bold text-rose-500">{tWrong}</td>
+                                            <td className="px-2 py-2 text-center font-bold text-amber-600">{tMissing}</td>
+                                            <td className="px-2.5 py-2">
+                                              <div className="flex items-center gap-1.5">
+                                                <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                  <div className={`h-full ${getBarGradient(tPct)}`} style={{ width: `${tPct}%` }} />
+                                                </div>
+                                                <span className={`font-bold tabular-nums text-[10.5px] ${getPctColor(tPct)}`}>{tPct}%</span>
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              {wrongQs.length === 0 && missingQs.length === 0 ? (
+                                                <span className="text-emerald-600 font-semibold text-[11px]">✓ Đúng hết</span>
+                                              ) : (
+                                                <div className="flex items-center flex-wrap gap-1 text-[10px]">
+                                                  {wrongQs.map(q => (
+                                                    <span key={q} className="px-1 py-0.2 rounded font-semibold bg-rose-100 text-rose-700 border border-rose-200">
+                                                      C.{q} (Sai)
+                                                    </span>
+                                                  ))}
+                                                  {missingQs.map(q => (
+                                                    <span key={q} className="px-1 py-0.2 rounded font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                                      C.{q} (Trống)
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      })
+                                  )
+                                )}
                             </tbody>
                           </table>
                         </div>
