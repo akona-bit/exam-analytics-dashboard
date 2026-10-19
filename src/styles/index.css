@@ -10,8 +10,7 @@ html, body, #root {
   padding: 0;
   font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   background: #9cc3fb;
-  color: #020617;
-  font-weight: 700;
+  color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -172,27 +171,27 @@ html, body, #root {
   --accent: #4f46e5;
   --accent-light: #6366f1;
   --accent-glow: rgba(79, 70, 229, 0.18);
-  --ink: #020617;
-  --ink-secondary: #0f172a;
-  --muted: #1e293b;
-  --line: #cbd5e1;
-  --line-strong: #94a3b8;
+  --ink: #1e293b;
+  --ink-secondary: #475569;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
   --surface-solid: #ffffff;
   --surface-muted: #f8fafc;
   --surface-hover: #f1f5f9;
 }
 .dark {
-  --accent: #6366f1;
-  --accent-light: #818cf8;
+  --accent: #818cf8;
+  --accent-light: #a5b4fc;
   --accent-glow: rgba(129, 140, 248, 0.22);
-  --ink: #020617;
-  --ink-secondary: #0f172a;
-  --muted: #1e293b;
-  --line: #cbd5e1;
-  --line-strong: #94a3b8;
-  --surface-solid: #ffffff;
-  --surface-muted: #f8fafc;
-  --surface-hover: #f1f5f9;
+  --ink: #e2e8f0;
+  --ink-secondary: #94a3b8;
+  --muted: #64748b;
+  --line: #334155;
+  --line-strong: #475569;
+  --surface-solid: #0f172a;
+  --surface-muted: #1e293b;
+  --surface-hover: #334155;
 }
 
 
@@ -400,77 +399,24 @@ html, body, #root {
 .dark .table-wrap { background: var(--surface-solid); }
 
 /* ════════════════════════════════════════════════════════════════
-   HỆ THỐNG CHỮ ĐEN SẮC NÉT & PHÂN CẤP RÕ RÀNG (TYPOGRAPHY SYSTEM)
+   GLOBAL TYPOGRAPHY & TITLE STYLES
    ════════════════════════════════════════════════════════════════ */
-
-/* Màu chữ mặc định là đen sắc nét */
-body, .card, .glass-panel {
-  color: #020617;
-}
-
-/* Tôn trọng các cấp độ font-weight tự nhiên để giao diện có chính phụ rõ ràng */
-.font-normal { font-weight: 400 !important; }
-.font-medium { font-weight: 500 !important; }
-.font-semibold { font-weight: 600 !important; }
-.font-bold { font-weight: 700 !important; }
-.font-extrabold { font-weight: 800 !important; }
-.font-black { font-weight: 900 !important; }
-
-/* Text tối màu luôn sắc nét, rõ ràng, không bị mờ hoặc chìm */
-.text-slate-900, .text-slate-800 {
-  color: #020617;
-}
-
-.text-slate-700, .text-slate-600 {
-  color: #1e293b;
-}
-
-.text-slate-500 {
-  color: #334155;
-}
-
-/* Tiêu đề chính, tiêu đề card: Đen đậm nổi bật */
-h1:not(.modern-title), h2:not(.modern-title), h3, h4, h5, h6,
-.card-header h3, .section-title {
-  color: #020617;
-  font-weight: 800;
-  letter-spacing: -0.015em;
-}
-
-/* Tiêu đề bảng cột */
-table th {
-  color: #020617;
-  font-weight: 800;
-}
-
-table td {
-  color: #020617;
-}
-
-/* Mô tả phụ, chú thích, subtitle: Chữ đen mềm thanh lịch, không bị in đậm cứng */
-.section-subtitle,
-.card p.text-xs,
-.card p.text-sm {
-  color: #334155;
-  font-weight: 500;
-}
-
-/* Input & Form controls */
-input, select, textarea {
-  color: #020617;
-  font-weight: 600;
-}
-input::placeholder {
-  color: #64748b;
-  font-weight: 400;
-}
 
 /* Bảo toàn màu trắng viền xanh cho tên kỳ thi modern-title */
 .modern-title {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   -webkit-text-stroke: 1.5px #2563eb !important;
+  paint-order: stroke fill;
+  text-shadow: 
+    -1.5px -1.5px 0 #2563eb,
+     1.5px -1.5px 0 #2563eb,
+    -1.5px  1.5px 0 #2563eb,
+     1.5px  1.5px 0 #2563eb,
+     0 0 14px rgba(37, 99, 235, 0.65),
+     0 3px 10px rgba(0, 0, 0, 0.4);
 }
+
 
 
 

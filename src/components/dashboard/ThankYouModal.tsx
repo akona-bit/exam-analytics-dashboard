@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Sparkles, X, Check, Award, MailOpen } from 'lucide-react';
+import { Heart, X, Check, MailOpen } from 'lucide-react';
 
 interface Props {
   show: boolean;
@@ -64,12 +64,6 @@ export function ThankYouModal({ show, studentName, onClose }: Props) {
                 </span>
               </div>
 
-              {/* Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-xs font-black uppercase tracking-wider mb-2 border border-amber-300/80 dark:border-amber-700/60">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>Kỳ Thi Thử Đợt 1 · Team MIT Hàn Thuyên</span>
-              </div>
-
               {/* Title */}
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
                 Thư Cảm Ơn Thí Sinh
@@ -83,8 +77,7 @@ export function ThankYouModal({ show, studentName, onClose }: Props) {
                 <p className="font-normal text-slate-700 dark:text-slate-200">
                   Toàn thể đội ngũ <strong>Team MIT Hàn Thuyên</strong> xin gửi lời cảm ơn chân thành và nồng nhiệt nhất đến bạn vì đã dành thời gian và tâm huyết tham gia <strong>Kỳ thi thử Đánh giá năng lực (ĐGNL) Đợt 1</strong>.
                 </p>
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Team Khảo thí &amp; Học thuật</span>
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end">
                   <span className="font-black text-amber-700 dark:text-amber-400 text-sm">MIT Hàn Thuyên</span>
                 </div>
               </div>
