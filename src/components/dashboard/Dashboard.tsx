@@ -913,7 +913,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
         {/* TAB 1: OVERVIEW */}
         {studentTab === 'overview' && (
           <div className="flex flex-col gap-4 sm:gap-5 fade-in">
-            {/* BẢNG ĐIỂM NEO ĐỀ CHUẨN HOÁ (MÔ HÌNH IRT THANG 1200 - CHUẨN ĐGNL ĐHQG-HCM ĐỢT 1) */}
+            {/* BẢNG ĐIỂM NEO ĐỀ CHUẨN HOÁ (MÔ HÌNH IRT THANG 1200) */}
             <section className="card p-5 sm:p-7 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-indigo-100 dark:border-slate-800 rounded-3xl shadow-[0_12px_40px_-5px_rgba(60,80,160,0.18)] relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -926,16 +926,11 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                       <Award className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2.5 py-0.5 rounded-md text-[10.5px] font-black uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
-                          Chuẩn hóa IRT · VNU-HCM Đợt 1
-                        </span>
-                        <h3 className="font-black text-lg sm:text-xl text-slate-800 dark:text-white tracking-tight">
-                          Bảng Điểm Neo Đề Chuẩn Hóa (Mô Hình IRT Thang 1200 - Chuẩn ĐGNL ĐHQG-HCM Đợt 1)
-                        </h3>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Quy đổi chuẩn hóa theo độ khó và độ phân biệt câu hỏi kỳ thi ĐGNL ĐHQG TP.HCM (VNU-HCM) Đợt 1 · Thang điểm tối đa: 1200 điểm
+                      <h3 className="font-black text-lg sm:text-xl text-slate-800 dark:text-white tracking-tight">
+                        Bảng Điểm Neo Đề
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Điểm chuẩn hóa quy đổi theo mô hình IRT (Thang điểm tối đa: 1200 điểm)
                       </p>
                     </div>
                   </div>
@@ -944,7 +939,7 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                   <div className="flex items-center gap-3 self-start sm:self-center bg-indigo-50/70 dark:bg-slate-800/80 px-5 py-2.5 rounded-2xl border border-indigo-100 dark:border-slate-700">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">
-                        Tổng Điểm Neo Đề (VNU-HCM Đợt 1)
+                        Tổng Điểm Neo Đề
                       </span>
                       <div className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
                         {((visibleParts?.tv !== false ? selectedStudent.irt.tv || 0 : 0) + 
@@ -1076,14 +1071,6 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                       </div>
                     </div>
                   )}
-                </div>
-
-                {/* Note & Explanation */}
-                <div className="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-slate-800/70 border border-indigo-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 leading-relaxed flex items-start gap-2.5">
-                  <span className="text-base shrink-0">💡</span>
-                  <p>
-                    <strong className="text-indigo-900 dark:text-indigo-200">Cơ chế Neo Đề Chuẩn VNU-HCM Đợt 1:</strong> Điểm neo đề được tính toán theo mô hình lý thuyết ứng đáp câu hỏi (Item Response Theory - IRT 2PL/3PL), chuẩn hóa về thang điểm chuẩn 1200 điểm của kỳ thi Đánh giá năng lực ĐHQG TP.HCM (VNU-HCM) Đợt 1. Thang điểm 4 môn: Tiếng Việt (300đ), Tiếng Anh (300đ), Toán học (300đ), Tư duy khoa học (300đ). Khác với điểm thô chỉ đếm số lượng câu đúng đơn thuần, điểm neo đề phản ánh chính xác năng lực thực chất của thí sinh bằng cách gán trọng số độ khó và độ phân biệt riêng cho từng câu hỏi neo theo chuẩn đề thi VNU-HCM Đợt 1.
-                  </p>
                 </div>
               </div>
             </section>
@@ -1507,17 +1494,63 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                           ))}
                         </div>
 
-                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                        {/* LƯỚI TRỰC QUAN 120 Ô CÂU HỎI RÚT GỌN */}
+                        <div className="p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 mb-4 flex flex-col gap-2.5">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 flex-wrap gap-2">
+                            <span>Ma trận trực quan 120 câu hỏi:</span>
+                            <div className="flex items-center gap-3">
+                              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Đúng ({countBy('correct')})</span>
+                              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Sai ({countBy('wrong')})</span>
+                              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Bỏ trống ({countBy('missing')})</span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2 pt-1">
+                            {[
+                              { label: 'Phần 1: TV', color: '#ec4899', range: [1, 30] },
+                              { label: 'Phần 2: TA', color: '#8b5cf6', range: [31, 60] },
+                              { label: 'Phần 3: TO', color: '#6366f1', range: [61, 90] },
+                              { label: 'Phần 4: TDKH', color: '#0ea5e9', range: [91, 120] },
+                            ].map(sec => {
+                              const secRows = allRows.slice(sec.range[0] - 1, sec.range[1]);
+                              return (
+                                <div key={sec.label} className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-[10.5px] font-black uppercase tracking-wider w-22 shrink-0" style={{ color: sec.color }}>
+                                    {sec.label}
+                                  </span>
+                                  <div className="flex items-center gap-1 flex-wrap flex-1">
+                                    {secRows.map(r => {
+                                      const st = statusOf(r.status);
+                                      const bg = st === 'correct' ? 'bg-emerald-500 text-white' : st === 'wrong' ? 'bg-rose-500 text-white' : 'bg-amber-400 text-white';
+                                      return (
+                                        <div
+                                          key={r.q}
+                                          title={`Câu ${r.q} (Mã đề: ${r.qInMaDe}) · ${r.subjectName}: ${st === 'correct' ? 'Đúng' : st === 'wrong' ? 'Sai' : 'Bỏ trống'}`}
+                                          className={`w-5.5 h-5.5 sm:w-6 sm:h-6 rounded flex items-center justify-center font-bold text-[9.5px] sm:text-[10px] ${bg} shadow-2xs cursor-default hover:scale-115 transition-transform`}
+                                        >
+                                          {r.q}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* BẢNG CHI TIẾT CUỘN RÚT GỌN */}
+                        <div className="overflow-x-auto overflow-y-auto max-h-[260px] rounded-xl border border-slate-200 dark:border-slate-700">
                           <table className="w-full text-[10px] text-left border-collapse min-w-[560px]">
-                            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider">
+                            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider sticky top-0 z-10 shadow-xs">
                               <tr>
-                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-16">Câu</th>
-                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-24">
+                                <th className="px-2.5 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-16">Câu</th>
+                                <th className="px-2.5 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-24">
                                   Mã đề {maDe || '—'}
                                 </th>
-                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700">Phần thi</th>
-                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700">Chuyên đề</th>
-                                <th className="px-2 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-28">Kết quả</th>
+                                <th className="px-2.5 py-1.5 border-b border-slate-200 dark:border-slate-700">Phần thi</th>
+                                <th className="px-2.5 py-1.5 border-b border-slate-200 dark:border-slate-700">Chuyên đề</th>
+                                <th className="px-2.5 py-1.5 border-b border-slate-200 dark:border-slate-700 text-center w-28">Kết quả</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1532,23 +1565,23 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                                   const st = statusStyle[statusOf(r.status)];
                                   return (
                                     <tr key={r.q} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                                      <td className="px-2 py-1.5 text-center font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+                                      <td className="px-2.5 py-1 text-center font-bold text-slate-800 dark:text-slate-100 tabular-nums">
                                         {r.q}
                                       </td>
-                                      <td className="px-2 py-1.5 text-center text-slate-500 dark:text-slate-400 tabular-nums">
+                                      <td className="px-2.5 py-1 text-center text-slate-500 dark:text-slate-400 tabular-nums">
                                         {r.qInMaDe}
                                       </td>
-                                      <td className="px-2 py-1.5 text-slate-600 dark:text-slate-300">
+                                      <td className="px-2.5 py-1 text-slate-600 dark:text-slate-300">
                                         <span className="px-1 py-0.5 rounded text-[9px] bg-slate-800 text-white font-black mr-1">
                                           {r.subjectCode}
                                         </span>
                                         {r.subjectName}
                                       </td>
-                                      <td className="px-2 py-1.5 text-slate-600 dark:text-slate-300">
+                                      <td className="px-2.5 py-1 text-slate-600 dark:text-slate-300">
                                         <span className="text-slate-400">{r.groupName} · </span>
                                         {r.topicName}
                                       </td>
-                                      <td className="px-2 py-1.5 text-center">
+                                      <td className="px-2.5 py-1 text-center">
                                         <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-bold ${st.chip}`}>
                                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                                           {st.label}
@@ -1562,8 +1595,8 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                           </table>
                         </div>
 
-                        <p className="text-[11.5px] text-slate-400 mt-3">
-                          Cột <strong>Câu</strong> là số thứ tự trong đề gốc; cột <strong>Mã đề</strong> là vị trí tương ứng trong mã đề thí sinh làm bài — hai danh sách này được hoán vị khác nhau.
+                        <p className="text-[11px] text-slate-400 mt-2.5">
+                          Cột <strong>Câu</strong> là số thứ tự trong đề gốc; cột <strong>Mã đề</strong> là vị trí tương ứng trong mã đề thí sinh làm bài.
                         </p>
                       </div>
                     );

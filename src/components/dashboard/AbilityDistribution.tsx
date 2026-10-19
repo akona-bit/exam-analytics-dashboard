@@ -54,7 +54,7 @@ interface Props {
 }
 
 const METRICS: { key: MetricKey; label: string; short: string }[] = [
-  { key: 'irt', label: 'Điểm Chuẩn Hoá Neo Đề (IRT 0–1200 - Chuẩn VNU-HCM Đợt 1)', short: 'Chuẩn hoá IRT (1200đ - Chuẩn VNU-HCM Đợt 1)' },
+  { key: 'irt', label: 'Điểm Chuẩn Hoá Neo Đề (IRT 0–1200)', short: 'Chuẩn hoá IRT (1200đ)' },
   { key: 'tho', label: 'Điểm Thô (Số câu đúng 0–120)', short: 'Điểm Thô (120 câu)' },
 ];
 

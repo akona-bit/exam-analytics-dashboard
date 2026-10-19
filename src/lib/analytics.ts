@@ -5,7 +5,7 @@ export const EXAM_LABEL = 'Kì Thi Thử ĐGNL';
 
 export const METRIC_LABEL: Record<MetricKey, string> = {
   tho: 'Điểm Thô (Số câu đúng 0–120)',
-  irt: 'Điểm Chuẩn Hoá Neo Đề (IRT 1200 - Chuẩn VNU-HCM Đợt 1)',
+  irt: 'Điểm Chuẩn Hoá Neo Đề (IRT 1200đ)',
 };
 
 export const ALL_SUBJECTS: SubjectKey[] = ['tv', 'ta', 'toan', 'tdkh'];

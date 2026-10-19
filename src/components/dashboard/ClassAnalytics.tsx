@@ -390,7 +390,7 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
               {activeMetric === 'irt'
-                ? 'Xếp hạng theo mô hình chuẩn hóa IRT Thang 1200 (Chuẩn ĐGNL ĐHQG-HCM Đợt 1)'
+                ? 'Xếp hạng theo mô hình chuẩn hóa IRT (Thang tối đa: 1200 điểm)'
                 : 'Xếp hạng theo tổng số câu trả lời đúng (Thang tối đa: 120 câu)'}
             </p>
           </div>
@@ -406,7 +406,7 @@ export function ClassAnalytics({ students, questions, metric }: Props) {
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              Chuẩn hoá IRT (1200đ - Chuẩn VNU-HCM Đợt 1)
+              Chuẩn hoá IRT (1200đ)
             </button>
             <button
               type="button"
