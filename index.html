@@ -45,7 +45,23 @@
     <!-- Fonts Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" fetchpriority="high">
+    <!--
+      Google Fonts KHÔNG được chặn render: đo thực tế có lần css2 mất ~6.3s, đẩy
+      LCP/ready lên ~13s. Tải bằng media="print" rồi đổi sang "all" khi xong;
+      trình duyệt dùng font hệ thống để hiển thị ngay (display=swap).
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    >
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+      >
+    </noscript>
 
     <!-- Structured Data (JSON-LD) for Search Engines -->
     <script type="application/ld+json">

@@ -1,4 +1,8 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap');
+﻿/*
+ * Font Google được nạp trong index.html bằng cơ chế không chặn render.
+ * Không @import ở đây — @import trong CSS vẫn là render-blocking và từng làm
+ * trang chờ ~13s khi fonts.googleapis.com phản hồi chậm.
+ */
 @import "tailwindcss";
 
 * { box-sizing: border-box; }
