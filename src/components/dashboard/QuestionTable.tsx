@@ -47,6 +47,7 @@ const pctClass = (pct: number | null): string => {
  */
 export function QuestionTable({ data, selectedSubject = 'all', examCode = null }: Props) {
   const showExamOrder = !!examCode;
+  const thBase = 'sticky top-0 z-10 bg-slate-50 px-2 py-2 border-b border-slate-200';
 
   const filteredData = useMemo(() => {
     const base = selectedSubject === 'all' ? data : data.filter(q => q.subject === selectedSubject);
@@ -67,15 +68,15 @@ export function QuestionTable({ data, selectedSubject = 'all', examCode = null }
         <table className="w-full table-fixed text-[11px] text-left border-collapse">
           <thead className="text-[9.5px] text-slate-500 bg-slate-50 uppercase font-bold">
             <tr>
-              <th className="px-2 py-2 border-b border-slate-200 w-14">Phần</th>
-              <th className="px-2 py-2 border-b border-slate-200 w-20">Câu</th>
-              <th className="px-2 py-2 border-b border-slate-200 text-right w-20">% đúng</th>
-              <th className="px-2 py-2 border-b border-slate-200 text-right w-14 text-emerald-600" title="Số thí sinh làm đúng">Đúng</th>
-              <th className="px-2 py-2 border-b border-slate-200 text-right w-16 text-amber-600" title="Độ khó (b)">b</th>
-              <th className="px-2 py-2 border-b border-slate-200 text-right w-14 text-indigo-600" title="Độ phân biệt (a)">a</th>
-              <th className="px-2 py-2 border-b border-slate-200 text-right w-14 text-sky-700" title="D-index">D</th>
-              <th className="px-2 py-2 border-b border-slate-200 text-right w-14 text-teal-700" title="Infit">Infit</th>
-              <th className="px-2 py-2 border-b border-slate-200 text-right w-14 text-teal-700" title="Outfit">Outfit</th>
+              <th className={`${thBase} w-14`}>Phần</th>
+              <th className={`${thBase} w-20`}>Câu</th>
+              <th className={`${thBase} text-right w-20`}>% đúng</th>
+              <th className={`${thBase} text-right w-14 text-emerald-600`} title="Số thí sinh làm đúng">Đúng</th>
+              <th className={`${thBase} text-right w-16 text-amber-600`} title="Độ khó (b)">b</th>
+              <th className={`${thBase} text-right w-14 text-indigo-600`} title="Độ phân biệt (a)">a</th>
+              <th className={`${thBase} text-right w-14 text-sky-700`} title="D-index">D</th>
+              <th className={`${thBase} text-right w-14 text-teal-700`} title="Infit">Infit</th>
+              <th className={`${thBase} text-right w-14 text-teal-700`} title="Outfit">Outfit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

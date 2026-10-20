@@ -4,12 +4,11 @@ import { EXAM_LABEL, QUESTIONS_TOTAL, sortedScores, quantile } from '../../lib/a
 import { Area, AreaChart, CartesianGrid, Legend, Line, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   Search, BarChart as BarChartIcon, TrendingUp, ChevronLeft, ChevronDown, AlertCircle, BookOpen,
-  Target, PieChart as PieChartIcon, HelpCircle, MailOpen, ArrowRight, Sparkles, LifeBuoy,
+  Target, PieChart as PieChartIcon, HelpCircle, ArrowRight, Sparkles, LifeBuoy, Heart,
   Lock, Eye, EyeOff, User,
 } from 'lucide-react';
 
 import { CelebrationOverlay } from './CelebrationOverlay';
-import { ThankYouModal } from './ThankYouModal';
 import { QuestionStatsTable } from './QuestionStatsTable';
 import { QuestionMap } from './QuestionMap';
 import { KnowledgeBreakdown } from './KnowledgeBreakdown';
@@ -37,18 +36,49 @@ function LazyFallback() {
   );
 }
 
+type SubjectKey = 'tv' | 'ta' | 'toan' | 'tdkh';
+
+function SubjectMarker({
+  subject,
+  color,
+  x,
+  y,
+  hollow = false,
+}: {
+  subject: SubjectKey;
+  color: string;
+  x: number;
+  y: number;
+  hollow?: boolean;
+}) {
+  const fill = hollow ? '#fff' : color;
+  const stroke = hollow ? color : '#fff';
+  const strokeWidth = hollow ? 2 : 1.5;
+
+  if (subject === 'ta') {
+    return <polygon points={`${x},${y - 5} ${x + 5},${y} ${x},${y + 5} ${x - 5},${y}`} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+  }
+  if (subject === 'toan') {
+    return <rect x={x - 4.5} y={y - 4.5} width={9} height={9} rx={1.5} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+  }
+  if (subject === 'tdkh') {
+    return <polygon points={`${x},${y - 5.5} ${x + 5},${y + 4} ${x - 5},${y + 4}`} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+  }
+  return <circle cx={x} cy={y} r={4.5} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+}
+
 export function Dashboard({ questions, students, examName, knowledgeCsv, answerLink, nextExamDate, visibleParts }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [passwordSbd, setPasswordSbd] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
+  const tabNavRef = useRef<HTMLElement | null>(null);
 
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [progressMetric, setProgressMetric] = useState<MetricKey>('tho');
   const [progressSubject, setProgressSubject] = useState<'Toán' | 'TDKH'>('Toán');
   const [showCelebration, setShowCelebration] = useState(false);
-  const [showThankYouModal, setShowThankYouModal] = useState(false);
   const [classMetric, setClassMetric] = useState<MetricKey>('irt');
   const [studentTab, setStudentTab] = useState<'overview' | 'review' | 'history' | 'class'>('overview');
   const [reviewView, setReviewView] = useState<'questions' | 'topics'>('questions');
@@ -115,12 +145,16 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
     return () => clearTimeout(timer);
   }, [selectedStudent]);
 
-  const handleCloseThankYou = () => {
-    setShowThankYouModal(false);
-  };
-  
-
-
+  React.useEffect(() => {
+    const nav = tabNavRef.current;
+    if (!nav) return;
+    const active = nav.querySelector<HTMLElement>('[data-active="true"]');
+    if (!active) return;
+    const navRect = nav.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    const left = nav.scrollLeft + (activeRect.left - navRect.left) - (nav.clientWidth - activeRect.width) / 2;
+    nav.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+  }, [studentTab]);
 
   const classProgressData = useMemo(() => {
     const am = new Map<number, { vT: number, vD: number, c: number }>();
@@ -384,24 +418,14 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
       <div className="flex flex-col items-center justify-center min-h-[70vh] fade-in relative w-full py-4">
         <div className="relative z-10 w-full flex flex-col items-center px-3">
 
-          {/* Logo + tên kỳ thi, gọn hơn để form là trọng tâm */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm shrink-0">
-              <img src="/logo.png" alt="Logo" className="w-12 h-12 sm:w-14 sm:h-14 object-contain" />
+          <div className="mb-5 flex w-full max-w-md flex-col items-center text-center">
+            <div className="mb-3 rounded-2xl border border-white/80 bg-white/90 p-2.5 shadow-sm ring-1 ring-slate-200/70">
+              <img src="/logo.png" alt="Logo" className="h-12 w-12 object-contain sm:h-14 sm:w-14" />
             </div>
-            <div className="text-left min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-500">
-                Tra cứu kết quả
-              </p>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-tight modern-title">
-                {examName}
-              </h1>
-            </div>
+            <h1 className="modern-title text-xl font-black leading-tight tracking-tight text-slate-900 sm:text-2xl">
+              {examName}
+            </h1>
           </div>
-
-          <p className="text-xs text-slate-500 mb-5 text-center max-w-md leading-relaxed">
-            Nhập họ tên hoặc email, sau đó dùng <strong className="text-slate-700">Số báo danh (SBD)</strong> để mở kết quả của bạn.
-          </p>
 
           <form onSubmit={handleLoginSubmit} className="relative w-full max-w-md px-1">
             <div className="w-full rounded-2xl bg-white p-5 sm:p-6 flex flex-col gap-4 fade-in border border-slate-200 shadow-[0_18px_50px_-18px_rgba(30,40,90,0.35)]">
@@ -510,9 +534,6 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
             </div>
           </form>
 
-          <p className="mt-4 text-[10px] text-slate-400 text-center">
-            Kết quả chỉ hiển thị cho đúng thí sinh · Email không công khai
-          </p>
         </div>
       </div>
     );
@@ -552,6 +573,49 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
       };
     })
     .filter(item => visibleParts?.[item.key] !== false);
+
+  const renderRadarShape = (series: 'student' | 'median') => (props: {
+    points?: Array<{ x: number; y: number; value?: number; payload?: Record<string, string | number> }>;
+    cx?: number;
+    cy?: number;
+    stroke?: string;
+    fill?: string;
+    fillOpacity?: number;
+  }) => {
+    const points = props.points ?? [];
+    if (points.length === 0) return <g />;
+
+    const polygonPoints = points.map(point => `${point.x},${point.y}`).join(' ');
+    const markers = points.map((point, index) => {
+      const subject = subjectCards.find(item => item.key === point.payload?.key);
+      return (
+        <g key={`${series}-${subject?.key ?? index}`}>
+          <SubjectMarker
+            subject={subject?.key ?? 'tv'}
+            color={subject?.color ?? '#4f46e5'}
+            x={point.x}
+            y={point.y}
+            hollow={series === 'median'}
+          />
+        </g>
+      );
+    });
+
+    return (
+      <g>
+        <polygon
+          points={polygonPoints}
+          fill={series === 'student' ? '#6366f1' : 'none'}
+          fillOpacity={series === 'student' ? 0.12 : 0}
+          stroke={props.stroke ?? (series === 'student' ? '#4f46e5' : '#0f766e')}
+          strokeWidth={series === 'student' ? 2.5 : 2}
+          strokeDasharray={series === 'median' ? '5 4' : undefined}
+          strokeLinejoin="round"
+        />
+        {markers}
+      </g>
+    );
+  };
 
   const totalIrt = subjectCards.reduce((sum, item) => sum + item.score, 0);
   const hasNextExamDate = Boolean(nextExamDate && !/chưa có/i.test(nextExamDate));
@@ -595,12 +659,6 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
           onComplete={() => setShowCelebration(false)}
         />
       )}
-      <ThankYouModal
-        show={showThankYouModal}
-        studentName={selectedStudent.customDisplayName || selectedStudent.name}
-        onClose={handleCloseThankYou}
-      />
-
       {/* Thanh thao tác gọn */}
       <div className="flex items-center justify-between gap-2">
         <button
@@ -611,15 +669,10 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
           <span>Tra cứu khác</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setShowThankYouModal(true)}
-          className="flex items-center gap-1.5 text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 font-bold transition-all px-3 sm:px-4 py-2 rounded-xl border border-amber-200 text-[11px] sm:text-xs cursor-pointer group"
-          title="Xem lại thư cảm ơn từ Team MIT Hàn Thuyên"
-        >
-          <MailOpen className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
-          <span>Thư cảm ơn</span>
-        </button>
+        <div className="flex min-w-0 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-900 sm:text-xs">
+          <Heart className="h-4 w-4 shrink-0 fill-amber-500 text-amber-500" />
+          <span>Cảm ơn bạn đã dành thời gian tham gia kỳ thi!</span>
+        </div>
       </div>
 
       {/* Hồ sơ + điểm tổng: một khối duy nhất, thay cho 4 thẻ số liệu rời rạc */}
@@ -750,22 +803,22 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
           </div>
         </div>
 
-        <nav className="flex items-center overflow-x-auto hide-scrollbar border-t border-slate-100 px-1.5 sm:px-3">
-          <button onClick={() => switchTab('overview')} className={tabClass(studentTab === 'overview')}>
+        <nav ref={tabNavRef} className="flex items-center overflow-x-auto hide-scrollbar border-t border-slate-100 px-1.5 sm:px-3">
+          <button data-active={studentTab === 'overview'} onClick={() => switchTab('overview')} className={tabClass(studentTab === 'overview')}>
             <BarChartIcon className="w-3.5 h-3.5" />
             <span>Tổng quan</span>
           </button>
-          <button onClick={() => switchTab('review')} className={tabClass(studentTab === 'review')}>
+          <button data-active={studentTab === 'review'} onClick={() => switchTab('review')} className={tabClass(studentTab === 'review')}>
             <Target className="w-3.5 h-3.5" />
             <span>Bài làm &amp; kiến thức</span>
           </button>
           {studentHistory.length > 1 && (
-            <button onClick={() => switchTab('history')} className={tabClass(studentTab === 'history')}>
+            <button data-active={studentTab === 'history'} onClick={() => switchTab('history')} className={tabClass(studentTab === 'history')}>
               <TrendingUp className="w-3.5 h-3.5" />
               <span>Lịch sử {studentHistory.length} lần</span>
             </button>
           )}
-          <button onClick={() => switchTab('class')} className={tabClass(studentTab === 'class')}>
+          <button data-active={studentTab === 'class'} onClick={() => switchTab('class')} className={tabClass(studentTab === 'class')}>
             <PieChartIcon className="w-3.5 h-3.5" />
             <span>Toàn khóa</span>
           </button>
@@ -853,47 +906,81 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                     <PolarAngleAxis
                       dataKey="subject"
                       tick={(tickProps: any) => (
-                        <text
-                          x={tickProps.x}
-                          y={tickProps.y}
-                          textAnchor={tickProps.textAnchor}
-                          dominantBaseline="central"
-                          fill="#334155"
-                          fontSize={11}
-                          fontWeight={700}
-                        >
-                          {tickProps.payload.value}
-                        </text>
+                        (() => {
+                          const label = String(tickProps.payload.value);
+                          const color = subjectCards.find(subject => subject.name === label)?.color ?? '#334155';
+                          const width = label.length * 6.5 + 14;
+                          const left = tickProps.textAnchor === 'middle'
+                            ? tickProps.x - width / 2
+                            : tickProps.textAnchor === 'end'
+                              ? tickProps.x - width
+                              : tickProps.x;
+                          return (
+                            <g>
+                              <rect
+                                x={left}
+                                y={tickProps.y - 10}
+                                width={width}
+                                height={20}
+                                rx={8}
+                                fill={`${color}12`}
+                                stroke={`${color}55`}
+                              />
+                              <text
+                                x={left + width / 2}
+                                y={tickProps.y}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                fill={color}
+                                fontSize={10}
+                                fontWeight={800}
+                              >
+                                {label}
+                              </text>
+                            </g>
+                          );
+                        })()
                       )}
                     />
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => value.toFixed(1)} />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '2px' }} />
                     <Radar
                       name="Điểm của bạn"
                       dataKey="Điểm Của Bạn"
-                      stroke="#4f46e5"
-                      strokeWidth={2.5}
-                      fill="#6366f1"
-                      fillOpacity={0.18}
-                      dot={{ r: 3, fill: '#4f46e5', strokeWidth: 0 }}
+                      shape={renderRadarShape('student')}
+                      dot={false}
                     />
                     <Radar
                       name="Trung vị lớp"
                       dataKey="Trung Vị"
-                      stroke="#0f766e"
-                      strokeWidth={2}
-                      strokeDasharray="5 4"
-                      fill="#14b8a6"
-                      fillOpacity={0.1}
+                      shape={renderRadarShape('median')}
                       dot={false}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
 
+              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 pb-2 text-[9px] font-semibold text-slate-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-5 border-t-2 border-indigo-600" />
+                  Điểm của bạn
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-5 border-t-2 border-dashed border-teal-700" />
+                  Trung vị lớp
+                </span>
+                {subjectCards.map(subject => (
+                  <span key={subject.key} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5" style={{ color: subject.color, borderColor: `${subject.color}55`, backgroundColor: `${subject.color}0d` }}>
+                    <svg className="h-3 w-3" viewBox="0 0 12 12" aria-hidden="true">
+                      <SubjectMarker subject={subject.key} color={subject.color} x={6} y={6} />
+                    </svg>
+                    {subject.code}
+                  </span>
+                ))}
+              </div>
+
               <div className="mt-1 border-t border-slate-100 pt-2.5">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Bạn so với trung vị lớp</span>
+                  <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Bạn so với trung vị</span>
                   <span className="text-[10px] font-semibold text-slate-400">IRT /300</span>
                 </div>
                 <table className="w-full text-[11px]">
@@ -1089,11 +1176,11 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
                 Vùng kiến thức
               </button>
             </div>
-            <p className="text-[10.5px] text-slate-500">
-              {reviewView === 'questions'
-                ? 'Bảng đầy đủ, tự co giãn theo màn hình.'
-                : 'Mặc định chỉ hiện các vùng dưới 50%; đổi bộ lọc để xem thêm.'}
-            </p>
+            {reviewView === 'topics' && (
+              <p className="text-[10.5px] text-slate-500">
+                Mặc định chỉ hiện các vùng dưới 50%; đổi bộ lọc để xem thêm.
+              </p>
+            )}
           </div>
 
           {reviewView === 'questions' ? (
@@ -1278,15 +1365,15 @@ export function Dashboard({ questions, students, examName, knowledgeCsv, answerL
 
       {/* Hỗ trợ: mặc định thu gọn để không chiếm màn hình */}
       <details className="card overflow-hidden group">
-        <summary className="flex items-center gap-3 px-4 py-3.5 cursor-pointer list-none hover:bg-slate-50 transition-colors [&::-webkit-details-marker]:hidden">
-          <span className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <LifeBuoy className="w-4 h-4" />
+        <summary className="flex items-center gap-3 px-4 py-3.5 cursor-pointer list-none bg-indigo-50/60 hover:bg-indigo-50 transition-colors [&::-webkit-details-marker]:hidden">
+          <span className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-indigo-600/20">
+            <LifeBuoy className="w-5 h-5" />
           </span>
           <span className="min-w-0">
-            <span className="block text-xs font-bold text-slate-800">Cần hỗ trợ?</span>
-            <span className="block text-[10px] text-slate-500 mt-0.5">Nhắn qua các Discord</span>
+            <span className="block text-sm font-extrabold text-indigo-900 sm:text-base">Cần hỗ trợ?</span>
+            <span className="mt-0.5 block text-[10px] font-medium text-indigo-700/80">Liên hệ team qua Discord</span>
           </span>
-          <ChevronDown className="w-4 h-4 text-slate-400 ml-auto shrink-0 transition-transform group-open:rotate-180" />
+          <ChevronDown className="w-5 h-5 text-indigo-600 ml-auto shrink-0 transition-transform group-open:rotate-180" />
         </summary>
         <div className="px-4 pb-4 pt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {[

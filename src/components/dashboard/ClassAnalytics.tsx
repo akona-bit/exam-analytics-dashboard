@@ -21,13 +21,8 @@ import {
   attemptDistribution,
 } from '../../lib/analytics';
 import { QuestionTable } from './QuestionTable';
-import {
-  AbilityDifficultyKdeSection,
-  DifficultyDiscriminationScatter,
-  ItemCurveSection,
-  ItemQualitySection,
-  TestCharacteristicSection,
-} from './PsychometricInsights';
+import { ItemCurveSection } from './PsychometricInsights';
+import { DeepAnalysis } from './DeepAnalysis';
 import { AVAILABLE_EXAM_CODES } from '../../lib/examCodesMapping';
 import {
   BarChart,
@@ -304,28 +299,33 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-[13px]">
-            {rows.map(r => {
+            {rows.map((r, index) => {
               const tv = subjectScore(r.student, activeMetric, 'tv') ?? 0;
               const ta = subjectScore(r.student, activeMetric, 'ta') ?? 0;
               const toan = subjectScore(r.student, activeMetric, 'toan') ?? 0;
               const tdkh = subjectScore(r.student, activeMetric, 'tdkh') ?? 0;
               const pct = Math.min(100, Math.round((r.score / maxTotalVal) * 100));
+              const rankClass =
+                r.rank === 1
+                  ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-300'
+                  : r.rank === 2
+                  ? 'bg-slate-200 text-slate-700 ring-2 ring-slate-300'
+                  : r.rank === 3
+                  ? 'bg-orange-100 text-orange-800 ring-2 ring-orange-300'
+                  : 'bg-slate-100 text-slate-600 group-hover:bg-white group-hover:text-indigo-600 group-hover:shadow-xs';
 
               return (
                 <tr
-                  key={r.student.sbd || r.student.email || r.student.name}
+                  key={`${r.rank}-${r.student.email || r.student.name}-${index}`}
                   className="group transition-colors hover:bg-indigo-50/40"
                 >
                   <td className="px-4 py-3 text-center">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-xs font-black text-slate-600 transition-colors group-hover:bg-white group-hover:text-indigo-600 group-hover:shadow-xs">
+                    <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black transition-colors ${rankClass}`}>
                       {r.rank}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-bold leading-tight text-slate-800">{r.student.name}</div>
-                    {r.student.sbd && (
-                      <div className="mt-0.5 text-[10px] font-medium text-slate-400">SBD {r.student.sbd}</div>
-                    )}
                   </td>
                   <td className="px-3 py-3 text-center font-semibold tabular-nums" style={{ color: SUBJECT_COLOR.tv }}>{tv}</td>
                   <td className="px-3 py-3 text-center font-semibold tabular-nums" style={{ color: SUBJECT_COLOR.ta }}>{ta}</td>
@@ -1160,26 +1160,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             </div>
           </div>
 
-          {/* ═════════════════════════════════════════════════════════
-              PHÂN TÍCH TÂM TRẮC CHUYÊN SÂU (BOXPLOT · TCC · KDE · b–a)
-              ═════════════════════════════════════════════════════════ */}
-          <div className="pt-3 border-t border-slate-200/80">
-            <h4 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-slate-500" />
-              Phân Tích Tâm Trắc Chuyên Sâu Đề Thi
-            </h4>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Boxplot độ khó/độ phân biệt · đường cong đặc tính bài thi (TCC) · phân bố năng lực – độ khó (KDE) · bản đồ b–a
-            </p>
-          </div>
-
-          <ItemQualitySection questions={questions} />
-
-          <TestCharacteristicSection questions={questions} students={latest} />
-
-          <AbilityDifficultyKdeSection questions={questions} students={latest} />
-
-          <DifficultyDiscriminationScatter questions={questions} />
+          <DeepAnalysis students={latest} questions={questions} />
         </section>
       )}
 
@@ -1199,7 +1180,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       )}
 
       {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* PHẦN 4: TIẾN TRÌNH & XU HƯỚNG QUA TỪNG LẦN THI                 */}
+      {/* PHẦN 5: TIẾN TRÌNH & XU HƯỚNG QUA TỪNG LẦN THI                 */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {(activeSection === 'trends' || activeSection === 'all') && (
         <section id="xu-huong" className="flex flex-col gap-5">

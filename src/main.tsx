@@ -18,20 +18,8 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Ẩn splash + lớp nền ban đầu (xem index.html) sau khi React đã mount.
-// KHÔNG xoá innerHTML của #root ở đây: rAF có thể chạy SAU khi React commit,
-// xoá mất DOM vừa render và để lại trang trắng vĩnh viễn. React tự thay thế
-// splash khi mount; ở đây chỉ cần bật cờ CSS.
-const markAppReady = () => {
-  const root = document.getElementById('root');
-  if (!root) return;
-  root.setAttribute('data-ready', '1');
-};
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
 );
-
-requestAnimationFrame(markAppReady);
