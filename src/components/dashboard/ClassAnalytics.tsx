@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState, useEffect } from 'react';
 import { MetricKey, QuestionData, StudentData } from '../../types';
 import {
   METRIC_LABEL,
@@ -21,6 +21,14 @@ import {
   attemptDistribution,
 } from '../../lib/analytics';
 import { QuestionTable } from './QuestionTable';
+import {
+  AbilityDifficultyKdeSection,
+  DifficultyDiscriminationScatter,
+  ItemCurveSection,
+  ItemQualitySection,
+  TestCharacteristicSection,
+} from './PsychometricInsights';
+import { AVAILABLE_EXAM_CODES } from '../../lib/examCodesMapping';
 import {
   BarChart,
   Bar,
@@ -58,6 +66,8 @@ import {
   Flame,
   CheckSquare,
   Layers,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface Props {
@@ -67,14 +77,28 @@ interface Props {
   onMetricChange?: (m: MetricKey) => void;
 }
 
-const tooltipStyle = {
+/**
+ * Tooltip dùng chung cho mọi biểu đồ: chỉ style khung, KHÔNG đặt color/màu nền,
+ * để item/tên hiển thị đúng màu series thay vì bị ép về một màu duy nhất.
+ */
+const tooltipBox = {
   borderRadius: '12px',
   border: '1px solid #e2e8f0',
   boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
   fontSize: '13px',
-  backgroundColor: 'rgba(255, 255, 255, 0.98)',
-  backdropFilter: 'blur(8px)',
-  color: '#1e293b',
+  backgroundColor: '#ffffff',
+  padding: '8px 12px',
+};
+
+/** Nhãn trục dễ đọc trên nền sáng (thay #94a3b8 quá nhạt). */
+const AXIS_TICK = { fill: '#475569', fontSize: 11 } as const;
+const AXIS_TICK_SM = { fill: '#475569', fontSize: 12 } as const;
+const GRID_STROKE = '#e2e8f0';
+
+/** id câu có thể đã chứa sẵn chữ "Câu" (vd. "Câu 27") — tránh hiển thị "Câu Câu 27". */
+const questionLabel = (id: string | number): string => {
+  const s = String(id).trim();
+  return /^c[âa]u\b/i.test(s) ? s.replace(/^c[âa]u\s*/i, 'Câu ') : `Câu ${s}`;
 };
 
 const BUCKET_COLORS = ['#f43f5e', '#fb7185', '#f59e0b', '#38bdf8', '#34d399'];
@@ -88,6 +112,10 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
   const [activeSection, setActiveSection] = useState<SectionKey>('questions');
   const [histView, setHistView] = useState<'total' | 'subjects'>('total');
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
+  /** Mã đề để xem thứ tự câu theo đề thí sinh thực làm; `null` = theo đề gốc. */
+  const [examCodeFilter, setExamCodeFilter] = useState<string | null>(null);
+  /** Bảng 120 câu rất dài — mặc định mở, nhưng cho phép thu gọn để trang nhẹ hơn. */
+  const [showQuestionTable, setShowQuestionTable] = useState(true);
 
   useEffect(() => {
     if (metric) setActiveMetric(metric);
@@ -181,34 +209,17 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
     return counts;
   }, [latest, activeMetric]);
 
-  // Radar chart cân bằng 4 môn
+  // Radar chart cân bằng 4 môn — dựa trên TRUNG VỊ (không bị lệch bởi outlier/bài bỏ trống)
   const radarData = useMemo(() => {
-    return [
-      {
-        subject: 'Tiếng Việt',
-        'Điểm Trung Bình': stats.tv.avg,
-        'Tỷ Lệ Đạt': +((stats.tv.avg / maxSubjectVal) * 100).toFixed(1),
+    return ALL_SUBJECTS.map(subj => {
+      const med = stats[subj].med;
+      return {
+        subject: SUBJECT_LABEL[subj],
+        'Trung Vị': med,
+        'Tỷ Lệ Đạt': +(stats[subj].n ? (med / maxSubjectVal) * 100 : 0).toFixed(1),
         max: maxSubjectVal,
-      },
-      {
-        subject: 'Tiếng Anh',
-        'Điểm Trung Bình': stats.ta.avg,
-        'Tỷ Lệ Đạt': +((stats.ta.avg / maxSubjectVal) * 100).toFixed(1),
-        max: maxSubjectVal,
-      },
-      {
-        subject: 'Toán',
-        'Điểm Trung Bình': stats.toan.avg,
-        'Tỷ Lệ Đạt': +((stats.toan.avg / maxSubjectVal) * 100).toFixed(1),
-        max: maxSubjectVal,
-      },
-      {
-        subject: 'Tư Duy Khoa Học',
-        'Điểm Trung Bình': stats.tdkh.avg,
-        'Tỷ Lệ Đạt': +((stats.tdkh.avg / maxSubjectVal) * 100).toFixed(1),
-        max: maxSubjectVal,
-      },
-    ];
+      };
+    });
   }, [stats, maxSubjectVal]);
 
   const thresholdData = useMemo(() => thresholdRows(latest, activeMetric), [latest, activeMetric]);
@@ -278,40 +289,22 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
 
   if (students.length === 0) return null;
 
-  // Render Table Ranking
-  const renderRankTable = (
-    title: string,
-    rows: { student: StudentData; score: number; rank: number }[],
-    isTop: boolean,
-    icon: React.ReactNode,
-    iconBox: string,
-    scoreColor: string
-  ) => (
-    <div className="card overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.08)] rounded-2xl flex flex-col justify-between">
-      <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
-          <span className={`icon-box ${iconBox}`}>{icon}</span>
-          <span>{title}</span>
-        </h3>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-          Thang {maxTotalVal} {activeMetric === 'tho' ? 'câu' : 'điểm'}
-        </span>
-      </div>
+  const renderRankTable = (rows: { student: StudentData; score: number; rank: number }[]) => (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left border-collapse min-w-[540px]">
-          <thead className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 uppercase font-semibold">
-            <tr>
-              <th className="px-3 py-2.5 w-14 text-center">Hạng</th>
-              <th className="px-3 py-2.5">Thí sinh</th>
-              <th className="px-2 py-2.5 text-center text-rose-500 w-14">TV</th>
-              <th className="px-2 py-2.5 text-center text-purple-500 w-14">TA</th>
-              <th className="px-2 py-2.5 text-center text-indigo-500 w-14">Toán</th>
-              <th className="px-2 py-2.5 text-center text-sky-500 w-14">TDKH</th>
-              <th className="px-3 py-2.5 text-right w-24">Tổng</th>
-              <th className="px-3 py-2.5 text-right w-20">Tỷ lệ</th>
+        <table className="w-full min-w-[640px] border-collapse text-left">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/80 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
+              <th className="w-16 px-4 py-3 text-center">Hạng</th>
+              <th className="px-4 py-3">Thí sinh</th>
+              <th className="w-20 px-3 py-3 text-center" style={{ color: SUBJECT_COLOR.tv }}>TV</th>
+              <th className="w-20 px-3 py-3 text-center" style={{ color: SUBJECT_COLOR.ta }}>TA</th>
+              <th className="w-20 px-3 py-3 text-center" style={{ color: SUBJECT_COLOR.toan }}>Toán</th>
+              <th className="w-20 px-3 py-3 text-center" style={{ color: SUBJECT_COLOR.tdkh }}>TDKH</th>
+              <th className="w-40 px-4 py-3 text-right">Tổng</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+          <tbody className="divide-y divide-slate-100 text-[13px]">
             {rows.map(r => {
               const tv = subjectScore(r.student, activeMetric, 'tv') ?? 0;
               const ta = subjectScore(r.student, activeMetric, 'ta') ?? 0;
@@ -322,40 +315,34 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               return (
                 <tr
                   key={r.student.sbd || r.student.email || r.student.name}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  className="group transition-colors hover:bg-indigo-50/40"
                 >
-                  <td className="px-3 py-2.5 text-center">
-                    <span
-                      className={`inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full text-xs font-bold ${
-                        isTop && r.rank === 1
-                          ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-400 shadow-xs'
-                          : isTop && r.rank === 2
-                          ? 'bg-slate-200 text-slate-800 ring-2 ring-slate-300 shadow-xs'
-                          : isTop && r.rank === 3
-                          ? 'bg-amber-50 text-amber-900 border border-amber-300 shadow-xs'
-                          : isTop
-                          ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                      }`}
-                    >
-                      {isTop && r.rank === 1 ? '🥇 1' : isTop && r.rank === 2 ? '🥈 2' : isTop && r.rank === 3 ? '🥉 3' : `#${r.rank}`}
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-xs font-black text-slate-600 transition-colors group-hover:bg-white group-hover:text-indigo-600 group-hover:shadow-xs">
+                      {r.rank}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-200">
-                    <div>{r.student.name}</div>
+                  <td className="px-4 py-3">
+                    <div className="font-bold leading-tight text-slate-800">{r.student.name}</div>
                     {r.student.sbd && (
-                      <div className="text-[10px] text-slate-400 font-normal">SBD: {r.student.sbd}</div>
+                      <div className="mt-0.5 text-[10px] font-medium text-slate-400">SBD {r.student.sbd}</div>
                     )}
                   </td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{tv}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{ta}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{toan}</td>
-                  <td className="px-2 py-2.5 text-center tabular-nums text-slate-600 dark:text-slate-400 font-medium">{tdkh}</td>
-                  <td className={`px-3 py-2.5 text-right font-bold tabular-nums text-sm ${scoreColor}`}>
-                    {r.score.toFixed(0)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-500 font-medium">
-                    {pct}%
+                  <td className="px-3 py-3 text-center font-semibold tabular-nums" style={{ color: SUBJECT_COLOR.tv }}>{tv}</td>
+                  <td className="px-3 py-3 text-center font-semibold tabular-nums" style={{ color: SUBJECT_COLOR.ta }}>{ta}</td>
+                  <td className="px-3 py-3 text-center font-semibold tabular-nums" style={{ color: SUBJECT_COLOR.toan }}>{toan}</td>
+                  <td className="px-3 py-3 text-center font-semibold tabular-nums" style={{ color: SUBJECT_COLOR.tdkh }}>{tdkh}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-baseline justify-end gap-2">
+                      <span className="text-sm font-black tabular-nums text-emerald-600">{r.score.toFixed(0)}</span>
+                      <span className="w-8 text-right text-[10px] font-semibold tabular-nums text-slate-400">{pct}%</span>
+                    </div>
+                    <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </td>
                 </tr>
               );
@@ -374,52 +361,52 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
     isHard: boolean,
     iconNode: React.ReactNode
   ) => (
-    <div className="card p-5 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95 border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.08)] rounded-2xl">
-      <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-2.5">
-          <span className={`icon-box ${isHard ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/60' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60'}`}>
+    <div className="rounded-2xl bg-white border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-slate-100">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className={`icon-box ${isHard ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
             {iconNode}
           </span>
-          <div>
-            <h4 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
+          <div className="min-w-0">
+            <h4 className="text-sm font-bold text-slate-900 truncate">
               {title}
             </h4>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+            <p className="text-[11px] text-slate-500 font-normal truncate">
               {subtitle}
             </p>
           </div>
         </div>
-        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium shrink-0">
+        <span className="text-[11px] text-slate-400 font-semibold shrink-0">
           Tỷ lệ đúng
         </span>
       </div>
 
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2 p-3 sm:p-4">
         {rows.map(q => {
           const pct = Math.round(q.ratio * 100);
           return (
             <div
               key={q.id}
-              className="p-3 rounded-xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-all flex flex-col gap-2"
+              className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors flex flex-col gap-2"
             >
               {/* Row 1: Badges & Numbers with ample breathing room */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-600 shrink-0 shadow-2xs">
-                    Câu {q.id}
+                  <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-white text-slate-900 border border-slate-200 shrink-0 whitespace-nowrap">
+                    {questionLabel(q.id)}
                   </span>
-                  <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 truncate">
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold text-slate-700 truncate max-w-[140px]">
                     {q.subject}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2.5 shrink-0">
-                  <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums font-normal">
+                  <span className="text-xs text-slate-500 tabular-nums font-medium">
                     {q.correct}/{q.attempts} đúng
                   </span>
                   <span
-                    className={`text-xs sm:text-sm font-bold tabular-nums min-w-[40px] text-right ${
-                      isHard ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
+                    className={`text-sm font-bold tabular-nums min-w-[40px] text-right ${
+                      isHard ? 'text-rose-600' : 'text-emerald-600'
                     }`}
                   >
                     {pct}%
@@ -428,7 +415,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               </div>
 
               {/* Row 2: Full-width Progress Bar */}
-              <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     isHard
@@ -450,61 +437,49 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* HEADER CARD: TỔNG HỢP TOÀN KHÓA & BỘ CHỌN THANG ĐIỂM          */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <div className="card p-5 sm:p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.08)] rounded-3xl flex flex-col gap-4">
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
-                Thống Kê Toàn Khóa
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                {latest.length} thí sinh · {questions.length} câu hỏi
-              </span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
-              Báo Cáo Phân Tích &amp; Thống Kê Toàn Khóa
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Tổng hợp dữ liệu lần thi mới nhất · Thang {activeMetric === 'tho' ? '120 câu đúng' : 'chuẩn hóa 1200 điểm'}
+            <p className="text-xs text-slate-500 font-medium">
+              {latest.length} thí sinh · {questions.length} câu hỏi
             </p>
+            <h2 className="mt-1 text-lg sm:text-xl font-bold text-slate-900">
+              Báo Cáo Phân Tích Toàn Khóa
+            </h2>
           </div>
 
           {/* Metric Switcher */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl w-fit shadow-inner border border-slate-200/60 dark:border-slate-700 shrink-0 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => handleMetricToggle('irt')}
-              className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeMetric === 'irt'
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              Chuẩn hoá IRT (1200đ)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleMetricToggle('tho')}
-              className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeMetric === 'tho'
-                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              Điểm Thô (120 câu)
-            </button>
+          <div className="flex bg-slate-100 p-1 rounded-xl w-fit shrink-0 self-start sm:self-auto flex-wrap">
+            {([
+              ['irt', 'Chuẩn hoá IRT MIT (1200đ)'],
+              ['tho', 'Điểm Thô (120 câu)'],
+              ['vnno1', 'Quy đổi VNNo1 (1200đ)'],
+            ] as [MetricKey, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleMetricToggle(key)}
+                className={`px-3 sm:px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                  activeMetric === key
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Section Navigation Tabs (Gọn gàng & Chia đúng phần) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto hide-scrollbar pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto hide-scrollbar pt-2 border-t border-slate-100">
           <button
             type="button"
             onClick={() => setActiveSection('questions')}
             className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
               activeSection === 'questions'
                 ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
             }`}
           >
             <ListFilter className="w-4 h-4" />
@@ -517,7 +492,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
               activeSection === 'scores'
                 ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -530,7 +505,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
               activeSection === 'ranking'
                 ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
             }`}
           >
             <Trophy className="w-4 h-4 text-amber-500" />
@@ -543,7 +518,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
               activeSection === 'trends'
                 ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-slate-700'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
             }`}
           >
             <TrendingUp className="w-4 h-4 text-emerald-500" />
@@ -555,8 +530,8 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             onClick={() => setActiveSection('all')}
             className={`px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ml-auto ${
               activeSection === 'all'
-                ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                ? 'bg-slate-800 text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -570,33 +545,33 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* ═══════════════════════════════════════════════════════════════ */}
       {(activeSection === 'questions' || activeSection === 'all') && (
         <section id="cau-hoi" className="flex flex-col gap-5">
-          <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-l-rose-500 bg-white/95 dark:bg-slate-900/95">
+          <div className="pt-1">
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <ListFilter className="w-5 h-5 text-rose-500" />
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <ListFilter className="w-5 h-5 text-slate-500" />
                 Phân Tích Câu Hỏi &amp; Độ Phân Hóa Đề Thi
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {questionStats.length} câu hỏi hợp lệ · Đánh giá độ khó, độ phân biệt và câu hỏi tiêu biểu
               </p>
             </div>
           </div>
 
           {/* Biểu đồ Phân Bố Độ Khó Đề Thi */}
-          <div className="card p-5 sm:p-6 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
+          <div className="card p-5 sm:p-6 flex flex-col justify-between">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <span className="icon-box bg-sky-50 dark:bg-sky-950/60 text-sky-600">
+                <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <span className="icon-box bg-slate-100 text-slate-600">
                     <Activity className="w-4 h-4" />
                   </span>
                   Phân Bố Độ Khó Đề Thi (Item Difficulty Distribution)
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Số lượng câu hỏi theo từng khoảng tỷ lệ làm đúng (%)
                 </p>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 w-fit">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 w-fit">
                 10 khoảng tỷ lệ (0% - 100%)
               </span>
             </div>
@@ -604,17 +579,17 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             <div className="h-[240px] sm:h-[260px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={difficultyBuckets} margin={{ top: 15, right: 15, left: -18, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID_STROKE} />
                   <XAxis
                     dataKey="label"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#64748b', fontSize: 11 }}
+                    tick={AXIS_TICK}
                   />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK_SM} allowDecimals={false} />
+                  <Tooltip contentStyle={tooltipBox} cursor={{ fill: '#f1f5f9' }} />
                   <Bar dataKey="value" name="Số câu" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                    <LabelList dataKey="value" position="top" style={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} />
+                    <LabelList dataKey="value" position="top" style={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
                     {difficultyBuckets.map((entry, i) => (
                       <Cell key={`c-${i}`} fill={entry.fill} />
                     ))}
@@ -643,42 +618,92 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           </div>
 
           {/* Bảng Thống Kê Toàn Bộ 120 Câu Hỏi */}
-          <div className="card overflow-hidden bg-white/95 dark:bg-slate-900/95">
-            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="card overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
+                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <span className="icon-box bg-slate-100 text-slate-600">
                     <ListFilter className="w-4 h-4" />
                   </span>
-                  Bảng Thống Kê Chi Tiết Toàn Bộ 120 Câu Hỏi
+                  Chi Tiết 120 Câu Hỏi
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Xem thông số IRT: độ khó (b), độ phân biệt (a), số thí sinh làm đúng/sai
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tỷ lệ đúng · đúng/sai · độ khó (b) · độ phân biệt (a) · D · Infit/Outfit
+                  {examCodeFilter ? ` · theo mã đề ${examCodeFilter}` : ''}
                 </p>
               </div>
 
-              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap">
+              <div className="flex bg-slate-100 p-1 rounded-lg w-fit flex-wrap gap-0.5">
                 {(['all', ...subjectOptions] as const).map(s => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setSubjectFilter(s)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors cursor-pointer ${
                       subjectFilter === s
-                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        ? 'bg-white text-indigo-700 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    {s === 'all' ? 'Tất cả 120 câu' : s}
+                    {s === 'all' ? 'Tất cả' : s}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="max-h-[520px] overflow-y-auto bg-white dark:bg-slate-800">
-              <QuestionTable data={questions} selectedSubject={subjectFilter} />
+            {/* Chọn mã đề: xem thông số theo thứ tự câu thí sinh đã làm. */}
+            <div className="px-4 sm:px-5 py-2.5 border-b border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 whitespace-nowrap">
+                <Layers className="w-3.5 h-3.5" />
+                Thứ tự câu theo
+              </span>
+              <div className="flex bg-white border border-slate-200 p-0.5 rounded-lg w-fit flex-wrap gap-0.5">
+                {([null, ...AVAILABLE_EXAM_CODES] as (string | null)[]).map(code => (
+                  <button
+                    key={code ?? 'original'}
+                    type="button"
+                    onClick={() => setExamCodeFilter(code)}
+                    title={code ? `Thứ tự câu trên mã đề ${code}` : 'Thứ tự câu theo đề gốc'}
+                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors cursor-pointer ${
+                      examCodeFilter === code
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {code ?? 'Đề gốc'}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-2.5 border-b border-slate-100">
+              <span className="text-[11px] font-semibold text-slate-500">
+                {examCodeFilter ? `Theo thứ tự câu trên mã đề ${examCodeFilter}` : 'Theo thứ tự đề gốc'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowQuestionTable(v => !v)}
+                aria-expanded={showQuestionTable}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                {showQuestionTable ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                {showQuestionTable ? 'Thu gọn bảng' : `Mở bảng (${questions.length} câu)`}
+              </button>
+            </div>
+
+            {showQuestionTable && (
+              <div className="max-h-[560px] overflow-y-auto">
+                <QuestionTable
+                  data={questions}
+                  selectedSubject={subjectFilter}
+                  examCode={examCodeFilter}
+                />
+              </div>
+            )}
           </div>
+
+          {/* ICC / IIF tương tác cho từng câu hỏi */}
+          <ItemCurveSection questions={questions} />
         </section>
       )}
 
@@ -687,13 +712,13 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* ═══════════════════════════════════════════════════════════════ */}
       {(activeSection === 'scores' || activeSection === 'all') && (
         <section id="pho-diem" className="flex flex-col gap-5">
-          <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-l-indigo-600 bg-white/95 dark:bg-slate-900/95">
+          <div className="pt-1">
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-slate-500" />
                 Phổ Điểm &amp; Phân Bổ Năng Lực Toàn Bộ Thí Sinh
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Chỉ số KPI, phổ điểm 4 môn thi, xếp loại và độ cân bằng năng lực
               </p>
             </div>
@@ -701,34 +726,34 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
 
           {/* 5 KPI Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <span className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                   <Users className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
                   Tổng Thí Sinh
                 </span>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+                <p className="text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums">
                   {kpis.totalStudents}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">Lần thi mới nhất</p>
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <span className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
                   <BarChart3 className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
                   Điểm Trung Bình
                 </span>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">
                   {kpis.avgTotal.toFixed(1)}{' '}
                   <span className="text-xs font-semibold text-slate-400">/ {maxTotalVal}</span>
                 </p>
@@ -736,17 +761,17 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <span className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
                   <Award className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
                   Điểm Cao Nhất
                 </span>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">
                   {kpis.maxTotal.toFixed(1)}{' '}
                   <span className="text-xs font-semibold text-slate-400">/ {maxTotalVal}</span>
                 </p>
@@ -754,17 +779,17 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 flex items-center justify-center text-sky-600 dark:text-sky-400">
+                <span className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600">
                   <Target className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
                   Đạt ≥ 50% Điểm
                 </span>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl font-bold text-sky-600 dark:text-sky-400 tabular-nums">
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">
                   {kpis.pass50Rate.toFixed(1)}%
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -773,17 +798,17 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               </div>
             </div>
 
-            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform col-span-2 lg:col-span-1 bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                <span className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
                   <Sparkles className="w-4 h-4" />
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
                   Giỏi &amp; Xuất Sắc
                 </span>
               </div>
               <div>
-                <p className="text-2xl sm:text-3xl font-bold text-violet-600 dark:text-violet-400 tabular-nums">
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">
                   {kpis.good65Rate.toFixed(1)}%
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -801,25 +826,26 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               return (
                 <div
                   key={subj}
-                  className="card p-3.5 flex flex-col justify-between border-t-2 bg-white/95 dark:bg-slate-900/95"
+                  className="card p-3.5 flex flex-col justify-between border-t-2"
                   style={{ borderTopColor: color }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold" style={{ color }}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-slate-700">
+                      <span className="inline-block w-2 h-2 rounded-full mr-1.5 align-middle" style={{ backgroundColor: color }} />
                       {SUBJECT_LABEL[subj]}
                     </span>
                     <span className="text-[10px] font-semibold text-slate-400">Max {maxSubjectVal}</span>
                   </div>
                   <div className="my-1.5 flex items-baseline gap-2">
-                    <span className="text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+                    <span className="text-xl font-bold tabular-nums text-slate-900">
                       {s.avg.toFixed(1)}
                     </span>
-                    <span className="text-xs font-medium text-slate-400">
+                    <span className="text-xs font-medium text-slate-500">
                       TB ({((s.avg / maxSubjectVal) * 100).toFixed(0)}%)
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">
-                    <span>Trung vị: {s.med.toFixed(1)}</span>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 pt-1">
+                    <span>Trung vị: <span className="font-semibold text-slate-700">{s.med.toFixed(1)}</span></span>
                     <span>Max: {s.max.toFixed(0)}</span>
                   </div>
                 </div>
@@ -828,30 +854,30 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           </div>
 
           {/* Biểu đồ Phân Bố Tần Suất Điểm Số (Histogram) */}
-          <div className="card p-5 sm:p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/90 dark:border-slate-800 shadow-[0_10px_30px_-5px_rgba(60,80,160,0.08)] rounded-3xl overflow-hidden">
+          <div className="card p-5 sm:p-6 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
+                <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <span className="icon-box bg-slate-100 text-slate-600">
                     <BarChart3 className="w-4 h-4" />
                   </span>
                   Phân Bố Tần Suất Điểm Số
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {histView === 'total'
                     ? `Phổ điểm tổng toàn bài thi (thang 0–${maxTotalVal})`
                     : `Phổ điểm chi tiết của từng môn (thang 0–${maxSubjectVal}/môn)`}
                 </p>
               </div>
 
-              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
+              <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
                 <button
                   type="button"
                   onClick={() => setHistView('total')}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                     histView === 'total'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      ? 'bg-white text-indigo-600 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   Tổng Toàn Bài Thi
@@ -861,8 +887,8 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                   onClick={() => setHistView('subjects')}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                     histView === 'subjects'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      ? 'bg-white text-indigo-600 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   Từng Môn (4 Môn)
@@ -874,20 +900,20 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               <ResponsiveContainer width="100%" height="100%">
                 {histView === 'total' ? (
                   <BarChart data={totalHistogramData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID_STROKE} />
+                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+                    <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK_SM} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipBox} cursor={{ fill: '#f1f5f9' }} />
                     <Bar dataKey="Số thí sinh" name="Số thí sinh" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                      <LabelList dataKey="Số thí sinh" position="top" style={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} />
+                      <LabelList dataKey="Số thí sinh" position="top" style={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
                     </Bar>
                   </BarChart>
                 ) : (
                   <BarChart data={subjectHistogramData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID_STROKE} />
+                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+                    <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK_SM} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipBox} cursor={{ fill: '#f1f5f9' }} />
                     <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
                     <Bar dataKey="Tiếng Việt" name="Tiếng Việt" fill={SUBJECT_COLOR.tv} radius={[4, 4, 0, 0]} maxBarSize={16} />
                     <Bar dataKey="Tiếng Anh" name="Tiếng Anh" fill={SUBJECT_COLOR.ta} radius={[4, 4, 0, 0]} maxBarSize={16} />
@@ -902,15 +928,15 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           {/* 2 Cột: Donut Xếp Loại & Radar Cân Bằng */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Donut Chart: Xếp loại năng lực */}
-            <div className="card p-5 sm:p-6 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-5 sm:p-6 flex flex-col justify-between">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
-                  <span className="icon-box bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
+                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-1">
+                  <span className="icon-box bg-emerald-50 text-emerald-600">
                     <Award className="w-4 h-4" />
                   </span>
                   Xếp Loại Năng Lực Toàn Khóa
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                <p className="text-xs text-slate-500 mb-3">
                   Cơ cấu 5 mức xếp loại tính trên tổng điểm 4 môn (0–{maxTotalVal})
                 </p>
               </div>
@@ -933,7 +959,7 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={tooltipStyle}
+                      contentStyle={tooltipBox}
                       formatter={(val: any, _name: any, p: any) => [
                         `${val} thí sinh (${((+val / latest.length) * 100).toFixed(1)}%)`,
                         p.payload.name,
@@ -954,37 +980,38 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             </div>
 
             {/* Radar Chart: Đánh giá cân bằng 4 môn */}
-            <div className="card p-5 sm:p-6 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-5 sm:p-6 flex flex-col justify-between">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
-                  <span className="icon-box bg-purple-50 dark:bg-purple-950/60 text-purple-600">
+                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-1">
+                  <span className="icon-box bg-sky-50 text-sky-600">
                     <Compass className="w-4 h-4" />
                   </span>
-                  Đánh Giá Cân Bằng Năng Lực 4 Môn
+                  Đánh Giá Cân Bằng Năng Lực 4 Môn (Trung Vị)
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                  Tỷ lệ hoàn thành trung bình của toàn khóa ở từng phân môn (%)
+                <p className="text-xs text-slate-500 mb-3">
+                  Trung vị điểm từng phân môn của toàn khóa, quy về % thang điểm môn ({maxSubjectVal}đ)
                 </p>
               </div>
 
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                    <PolarGrid stroke="#e2e8f0" strokeDasharray="3 3" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: '#94a3b8' }} unit="%" />
+                    <PolarGrid stroke="#cbd5e1" strokeOpacity={0.7} strokeDasharray="3 3" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: '#64748b' }} unit="%" />
                     <Radar
-                      name="Tỷ lệ đạt TB"
+                      name="Trung vị (%)"
                       dataKey="Tỷ Lệ Đạt"
-                      stroke="#8b5cf6"
+                      stroke="#0284c7"
                       strokeWidth={2.5}
-                      fill="#8b5cf6"
-                      fillOpacity={0.4}
+                      fill="#38bdf8"
+                      fillOpacity={0.28}
+                      dot={{ r: 4, fill: '#0284c7', strokeWidth: 0 }}
                     />
                     <Tooltip
-                      contentStyle={tooltipStyle}
+                      contentStyle={tooltipBox}
                       formatter={(val: any, _name: any, p: any) => [
-                        `${val}% (TB: ${p.payload['Điểm Trung Bình'].toFixed(1)}/${p.payload.max})`,
+                        `${val}% (Trung vị: ${p.payload['Trung Vị'].toFixed(1)}/${p.payload.max})`,
                         p.payload.subject,
                       ]}
                     />
@@ -995,34 +1022,34 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           </div>
 
           {/* Tỷ Lệ Đạt Các Ngưỡng Điểm */}
-          <div className="card p-5 sm:p-6 bg-white/95 dark:bg-slate-900/95">
-            <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
-              <span className="icon-box bg-amber-50 dark:bg-amber-950/60 text-amber-600">
+          <div className="card p-5 sm:p-6">
+            <h4 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-1">
+              <span className="icon-box bg-slate-100 text-slate-600">
                 <Target className="w-4 h-4" />
               </span>
-              Tỷ Lệ Đạt Các Ngưỡng Chuẩn Toàn Khóa
+              Tỷ Lệ Đạt Các Ngưỡng Chuẩn Toàn Khóa (Theo Trung Vị)
             </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Tỷ lệ thí sinh vượt qua các mốc điểm quan trọng trên thang tổng {maxTotalVal}
+            <p className="text-xs text-slate-500 mb-4">
+              Tỷ lệ thí sinh có trung vị 4 môn (quy về thang {maxTotalVal}) đạt từng mốc — đếm theo trung vị để không bị kéo lệch bởi bài bỏ trống
             </p>
 
             <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={thresholdData} layout="vertical" margin={{ top: 5, right: 60, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={140} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={GRID_STROKE} />
+                  <XAxis type="number" domain={[0, 100]} unit="%" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+                  <YAxis type="category" dataKey="name" width={140} axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }} />
                   <Tooltip
-                    contentStyle={tooltipStyle}
+                    contentStyle={tooltipBox}
                     formatter={(v: any, _n: any, p: any) => [`${(+v).toFixed(1)}% (${p.payload.count} thí sinh)`, 'Tỷ lệ']}
-                    cursor={{ fill: '#f8fafc' }}
+                    cursor={{ fill: '#f1f5f9' }}
                   />
                   <Bar dataKey="percent" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={20}>
                     <LabelList
                       dataKey="percent"
                       position="right"
                       formatter={(v: any) => `${(+v).toFixed(1)}%`}
-                      style={{ fill: '#475569', fontSize: 11, fontWeight: 700 }}
+                      style={{ fill: '#334155', fontSize: 11, fontWeight: 700 }}
                     />
                   </Bar>
                 </BarChart>
@@ -1031,101 +1058,101 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
           </div>
 
           {/* Bảng Thống Kê Phân Tán Chi Tiết */}
-          <div className="card overflow-hidden bg-white/95 dark:bg-slate-900/95">
-            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="card overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
+                <h4 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <span className="icon-box bg-indigo-50 text-indigo-600">
                     <FileSpreadsheet className="w-4 h-4" />
                   </span>
                   Bảng Thống Kê Phân Tán Chi Tiết
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Toàn bộ các chỉ số thống kê mô tả học thuật: Min, Q1, Trung vị, Q3, P90, Max, Trung bình, STĐ
                 </p>
               </div>
             </div>
 
-            <div className="overflow-x-auto bg-white dark:bg-slate-800">
-              <table className="w-full text-sm text-left border-collapse border border-slate-200 dark:border-slate-700 min-w-[860px]">
-                <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 text-xs font-semibold uppercase tracking-wider">
+            <div className="overflow-x-auto bg-white">
+              <table className="w-full text-sm text-left border-collapse border border-slate-200 min-w-[860px]">
+                <thead className="bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
                   <tr>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3.5 py-3">Phần Thi / Tổng</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Số TS</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Thấp nhất</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Q1 (25%)</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center font-bold">Trung vị</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Q3 (75%)</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">P90</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Cao nhất</th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-center bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-600 dark:text-indigo-400">
+                    <th className="border border-slate-200 px-3.5 py-3">Phần Thi / Tổng</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center">Số TS</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center">Thấp nhất</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center">Q1 (25%)</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center font-bold">Trung vị</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center">Q3 (75%)</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center">P90</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center">Cao nhất</th>
+                    <th className="border border-slate-200 px-3.5 py-3 text-center bg-indigo-50/70 font-bold text-indigo-600">
                       Trung bình
                     </th>
-                    <th className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center">Độ lệch chuẩn (STĐ)</th>
+                    <th className="border border-slate-200 px-3 py-3 text-center">Độ lệch chuẩn (STĐ)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                <tbody className="divide-y divide-slate-100 text-xs">
                   {ALL_SUBJECTS.map(subj => {
                     const d = stats[subj];
                     return (
-                      <tr key={subj} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                      <tr key={subj} className="hover:bg-slate-50 transition-colors">
+                        <td className="border border-slate-200 px-3.5 py-2.5 font-semibold text-slate-700 flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: SUBJECT_COLOR[subj] }} />
                           <span>{SUBJECT_LABEL[subj]}</span>
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-500">
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums text-slate-500">
                           {d.n}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.min.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.q1.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums font-bold text-slate-800 dark:text-slate-100">
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.min.toFixed(1)}</td>
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.q1.toFixed(1)}</td>
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums font-bold text-slate-800">
                           {d.med.toFixed(1)}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.q3.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.p90.toFixed(1)}</td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums font-bold text-emerald-600">
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.q3.toFixed(1)}</td>
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums text-slate-600">{d.p90.toFixed(1)}</td>
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums font-bold text-emerald-600">
                           {d.max.toFixed(1)}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-center tabular-nums font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/40 dark:bg-indigo-950/20">
+                        <td className="border border-slate-200 px-3.5 py-2.5 text-center tabular-nums font-bold text-indigo-600 bg-indigo-50/40">
                           {d.avg.toFixed(2)}
                         </td>
-                        <td className="border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-center tabular-nums text-slate-500">
+                        <td className="border border-slate-200 px-3 py-2.5 text-center tabular-nums text-slate-500">
                           {d.std.toFixed(2)}
                         </td>
                       </tr>
                     );
                   })}
 
-                  <tr className="bg-indigo-50/50 dark:bg-indigo-950/40 font-semibold text-slate-800 dark:text-slate-100 border-t-2 border-indigo-200 dark:border-indigo-800">
-                    <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-indigo-700 dark:text-indigo-300 flex items-center gap-2 font-bold">
+                  <tr className="bg-indigo-50/50 font-semibold text-slate-800 border-t-2 border-indigo-200">
+                    <td className="border border-slate-200 px-3.5 py-3 text-indigo-700 flex items-center gap-2 font-bold">
                       <CheckCircle2 className="w-4 h-4 text-indigo-600" />
                       <span>TỔNG TOÀN BÀI THI (4 MÔN)</span>
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-slate-600">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-slate-600">
                       {stats.totals.n}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-slate-600">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-slate-600">
                       {stats.totals.min.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-slate-600">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-slate-600">
                       {stats.totals.q1.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-indigo-600 dark:text-indigo-400 text-sm font-bold">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-indigo-600 text-sm font-bold">
                       {stats.totals.med.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-slate-600">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-slate-600">
                       {stats.totals.q3.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-slate-600">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-slate-600">
                       {stats.totals.p90.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-emerald-600 text-sm font-bold">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-emerald-600 text-sm font-bold">
                       {stats.totals.max.toFixed(1)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3.5 py-3 text-center tabular-nums text-indigo-700 dark:text-indigo-300 text-sm font-bold bg-indigo-100/60 dark:bg-indigo-900/50">
+                    <td className="border border-slate-200 px-3.5 py-3 text-center tabular-nums text-indigo-700 text-sm font-bold bg-indigo-100/60">
                       {stats.totals.avg.toFixed(2)}
                     </td>
-                    <td className="border border-slate-200 dark:border-slate-700 px-3 py-3 text-center tabular-nums text-slate-500">
+                    <td className="border border-slate-200 px-3 py-3 text-center tabular-nums text-slate-500">
                       {stats.totals.std.toFixed(2)}
                     </td>
                   </tr>
@@ -1133,6 +1160,27 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               </table>
             </div>
           </div>
+
+          {/* ═════════════════════════════════════════════════════════
+              PHÂN TÍCH TÂM TRẮC CHUYÊN SÂU (BOXPLOT · TCC · KDE · b–a)
+              ═════════════════════════════════════════════════════════ */}
+          <div className="pt-3 border-t border-slate-200/80">
+            <h4 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-slate-500" />
+              Phân Tích Tâm Trắc Chuyên Sâu Đề Thi
+            </h4>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Boxplot độ khó/độ phân biệt · đường cong đặc tính bài thi (TCC) · phân bố năng lực – độ khó (KDE) · bản đồ b–a
+            </p>
+          </div>
+
+          <ItemQualitySection questions={questions} />
+
+          <TestCharacteristicSection questions={questions} students={latest} />
+
+          <AbilityDifficultyKdeSection questions={questions} students={latest} />
+
+          <DifficultyDiscriminationScatter questions={questions} />
         </section>
       )}
 
@@ -1140,37 +1188,14 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* PHẦN 3: BẢNG XẾP HẠNG TOÀN KHÓA                                */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {(activeSection === 'ranking' || activeSection === 'all') && (
-        <section id="xep-hang" className="flex flex-col gap-5">
-          <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-l-amber-500 bg-white/95 dark:bg-slate-900/95">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-500" />
-                Bảng Xếp Hạng Toàn Khóa (Đủ 4 Môn Thi)
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Vinh danh Top 10 điểm cao nhất và thống kê nhóm cần nỗ lực thêm
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {renderRankTable(
-              'Top 10 Thí Sinh Điểm Cao Nhất',
-              topTen,
-              true,
-              <Trophy className="w-4 h-4 text-amber-500" />,
-              'bg-amber-50 dark:bg-amber-950/60 text-amber-500',
-              'text-emerald-600 dark:text-emerald-400'
-            )}
-            {renderRankTable(
-              'Top 10 Thí Sinh Cần Nỗ Lực Thêm',
-              bottomTen,
-              false,
-              <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
-              'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400',
-              'text-slate-700 dark:text-slate-200'
-            )}
-          </div>
+        <section id="xep-hang" className="flex flex-col gap-4">
+          {activeSection === 'all' && (
+            <h3 className="flex items-center gap-2 text-base sm:text-lg font-bold text-slate-900">
+              <Trophy className="w-5 h-5 text-slate-500" />
+              Bảng Xếp Hạng Toàn Khóa
+            </h3>
+          )}
+          {renderRankTable(topTen)}
         </section>
       )}
 
@@ -1179,13 +1204,13 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
       {/* ═══════════════════════════════════════════════════════════════ */}
       {(activeSection === 'trends' || activeSection === 'all') && (
         <section id="xu-huong" className="flex flex-col gap-5">
-          <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-l-emerald-600 bg-white/95 dark:bg-slate-900/95">
+          <div className="pt-1">
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-slate-500" />
                 Xu Hướng &amp; Tiến Trình Qua Từng Lần Thi
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Điểm trung bình 4 môn thi qua từng đợt và cơ cấu số lần tham gia
               </p>
             </div>
@@ -1193,15 +1218,15 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Trend Area Chart (4 Môn) */}
-            <div className="card p-5 lg:col-span-2 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-5 lg:col-span-2 flex flex-col justify-between">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
-                  <span className="icon-box bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
+                <h4 className="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+                  <span className="icon-box bg-indigo-50 text-indigo-600">
                     <Activity className="w-4 h-4" />
                   </span>
                   Điểm Trung Bình 4 Môn Qua Từng Lần Thi
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 mb-4">
                   Điểm trung bình theo {METRIC_LABEL[activeMetric]} của tất cả thí sinh ở lần thi thứ n
                 </p>
               </div>
@@ -1227,10 +1252,10 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
                         <stop offset="95%" stopColor={SUBJECT_COLOR.tdkh} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                    <Tooltip contentStyle={tooltipStyle} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID_STROKE} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={AXIS_TICK_SM} />
+                    <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK_SM} />
+                    <Tooltip contentStyle={tooltipBox} />
                     <Legend iconType="circle" wrapperStyle={{ paddingTop: '12px', fontSize: '12px' }} />
                     <Area
                       type="monotone"
@@ -1270,15 +1295,15 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
             </div>
 
             {/* Cơ cấu số lần thi */}
-            <div className="card p-5 flex flex-col justify-between bg-white/95 dark:bg-slate-900/95">
+            <div className="card p-5 flex flex-col justify-between">
               <div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
-                  <span className="icon-box bg-violet-50 dark:bg-violet-950/60 text-violet-600">
+                <h4 className="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+                  <span className="icon-box bg-violet-50 text-violet-600">
                     <TrendingUp className="w-4 h-4" />
                   </span>
                   Cơ Cấu Số Lần Thi
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 mb-4">
                   Số thí sinh tham gia 1, 2, 3… lần thi
                 </p>
               </div>
@@ -1286,10 +1311,10 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
               <div className="h-[260px] sm:h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={attemptData} margin={{ top: 15, right: 15, left: -16, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f8fafc' }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID_STROKE} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+                    <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK_SM} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipBox} cursor={{ fill: '#f1f5f9' }} />
                     <Bar dataKey="value" name="Số thí sinh" fill="#8b5cf6" radius={[6, 6, 0, 0]} maxBarSize={52} />
                   </BarChart>
                 </ResponsiveContainer>

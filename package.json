@@ -14,7 +14,10 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "monitor": "node scripts/monitor-web.mjs",
+    "monitor:once": "node scripts/monitor-web.mjs --once",
+    "monitor:report": "node scripts/monitor-report.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

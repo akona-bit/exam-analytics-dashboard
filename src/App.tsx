@@ -1,5 +1,4 @@
-import { Moon, Sun } from 'lucide-react';
-/**
+﻿/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,6 +9,8 @@ import { QuestionData, StudentData } from './types';
 import { questionTextsFile } from './lib/contentFiles';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { DEFAULT_KNOWLEDGE_CSV } from './lib/knowledgeStructure';
+import { enrichQuestions, enrichStudents } from './lib/referenceStats';
+import { fillMissingRawScores } from './lib/analytics';
 import { SkyBackground } from './components/layout/SkyBackground';
 
 /* ──────────── Supabase → App type mapping ──────────── */
@@ -25,8 +26,7 @@ interface SupabaseStudent {
 interface SupabaseQuestion {
   question_id: string; subject: string;
   total_attempts: number | null; correct: number | null; incorrect: number | null;
-  penalty_score: number | null; bonus1: number | null; bonus2: number | null;
-  bonus3: number | null; bonus_correct: number | null; is_error: boolean | null;
+  difficulty: number | null; discrimination: number | null; is_error: boolean | null;
 }
 interface SupabaseResponse {
   student_stt: number;
@@ -119,11 +119,8 @@ async function fetchFromSupabase(): Promise<{ questions: QuestionData[]; student
       totalAttempts: q.total_attempts,
       correct: q.correct,
       incorrect: q.incorrect,
-      penaltyScore: q.penalty_score,
-      bonus1: q.bonus1,
-      bonus2: q.bonus2,
-      bonus3: q.bonus3,
-      bonusCorrect: q.bonus_correct,
+      difficulty: q.difficulty,
+      discrimination: q.discrimination,
       isError: q.is_error ?? undefined,
     }));
 
@@ -192,11 +189,17 @@ export default function App() {
   const [showTa, setShowTa] = useState(true);
   const [showToan, setShowToan] = useState(true);
   const [showTdkh, setShowTdkh] = useState(true);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') !== 'light');
+  /**
+   * Toàn bộ site chỉ dùng giao diện sáng (đã bỏ dark mode) — card trắng + chữ tối.
+   * Dọn luôn class `dark` và theme cũ người dùng từng lưu, tránh kẹt nền tối/chữ trắng.
+   */
   useEffect(() => {
-    if (isDark) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
-    else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
-  }, [isDark]);
+    document.documentElement.classList.remove('dark');
+    try {
+      localStorage.removeItem('admin_theme');
+      localStorage.removeItem('theme');
+    } catch {}
+  }, []);
 
 
   // Hash-based routing for hidden admin access
@@ -249,8 +252,13 @@ export default function App() {
     try {
       const staticData = await fetchFromStatic();
       if (staticData.students && staticData.students.length > 0) {
-        setData(staticData.questions);
-        setStudentData(staticData.students);
+        setData(enrichQuestions(staticData.questions));
+        setStudentData(
+          fillMissingRawScores(
+            enrichStudents(staticData.students),
+            staticData.questions,
+          ),
+        );
         setIsLoading(false);
         return;
       }
@@ -262,8 +270,13 @@ export default function App() {
     if (isSupabaseConfigured) {
       const supa = await fetchFromSupabase();
       if (supa !== null && supa.students.length > 0) {
-        setData(supa.questions);
-        setStudentData(supa.students);
+        setData(enrichQuestions(supa.questions));
+        setStudentData(
+          fillMissingRawScores(
+            enrichStudents(supa.students),
+            supa.questions,
+          ),
+        );
         setIsLoading(false);
         return;
       }
@@ -278,10 +291,7 @@ export default function App() {
   // Admin route
   if (isAdmin) {
     return (
-      <div className="min-h-[100dvh] w-full bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300">
-        <button onClick={() => setIsDark(!isDark)} className="fixed top-4 left-4 z-50 p-2.5 rounded-full bg-white dark:bg-slate-800 shadow-md text-slate-700 dark:text-slate-200 hover:scale-110 transition-all">
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+      <div className="min-h-[100dvh] w-full bg-[#f8fafc]">
         <main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
           <AdminPage 
             onExit={() => { window.location.hash = ''; setIsAdmin(false); loadData(); }} 
@@ -301,8 +311,8 @@ export default function App() {
           </svg>
         </div>
         <div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">Không tải được dữ liệu</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 max-w-md">{loadError}</p>
+          <h2 className="text-lg font-bold text-slate-800 mb-1">Không tải được dữ liệu</h2>
+          <p className="text-sm text-slate-500 max-w-md">{loadError}</p>
         </div>
         <button
           onClick={() => window.location.reload()}
@@ -316,47 +326,45 @@ export default function App() {
 
   return (
     <div className="min-h-[100dvh] w-full relative bg-transparent overflow-x-hidden font-sans">
-      {/* Procedural Anime Dawn/Twilight Sky Background (SVG + CSS) */}
+      {/* Nền phẳng tối giản, dịu mắt — đồng bộ với dashboard tham chiếu */}
       <SkyBackground />
-
-
 
       {/* Main Content Layer */}
       <main className="relative z-10 w-full h-full min-h-[100dvh] flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center min-h-[72vh] w-full px-4">
-            <div className="bg-white/92 dark:bg-slate-900/92 backdrop-blur-2xl border border-white/85 dark:border-slate-800 rounded-3xl p-8 sm:p-10 shadow-[0_24px_60px_-12px_rgba(20,30,80,0.3)] flex flex-col items-center text-center max-w-[390px] w-full scale-in">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 shadow-sm flex flex-col items-center text-center max-w-[390px] w-full scale-in">
               {/* Logo box with animated ring */}
               <div className="relative mb-5">
-                <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-800 shadow-md p-3.5 flex items-center justify-center border border-indigo-100 dark:border-slate-700">
+                <div className="w-20 h-20 rounded-2xl bg-white shadow-md p-3.5 flex items-center justify-center border border-indigo-100">
                   <img src="./logo.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <div className="absolute -inset-2 rounded-3xl border-2 border-dashed border-indigo-400/60 animate-spin [animation-duration:12s] pointer-events-none" />
               </div>
 
-              <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-white tracking-tight mb-1">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800 tracking-tight mb-1">
                 {examName || 'Tra Cứu Điểm Thi'}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+              <p className="text-xs text-slate-500 mb-6">
                 Hệ thống phân tích năng lực &amp; tra cứu khảo sát
               </p>
 
               {/* Shimmer progress bar */}
-              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative shadow-inner mb-4">
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative shadow-inner mb-4">
                 <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full w-2/5 animate-shimmer-bar" />
               </div>
 
-              <div className="flex items-center gap-2 text-[11.5px] font-bold text-indigo-600 dark:text-indigo-400">
+              <div className="flex items-center gap-2 text-[11.5px] font-bold text-indigo-600">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                 <span>Đang chuẩn bị dữ liệu kỳ thi &amp; phổ điểm...</span>
               </div>
             </div>
           </div>
         ) : (
-          <Dashboard 
-            questions={data} 
-            students={studentData} 
-            examName={examName} 
+          <Dashboard
+            questions={data}
+            students={studentData}
+            examName={examName}
 knowledgeCsv={knowledgeCsv}
             answerLink={answerLink}
             nextExamDate={nextExamDate}
@@ -367,7 +375,7 @@ knowledgeCsv={knowledgeCsv}
         {/* Footer */}
         {!isLoading && (
           <div className="mt-auto pt-10 pb-6 w-full text-center flex-shrink-0 relative z-20">
-            <p className="text-xs sm:text-sm font-semibold text-slate-800 bg-white/85 backdrop-blur-md inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full shadow-md border border-white/90">
+            <p className="text-xs sm:text-sm font-semibold text-slate-600 bg-white inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full shadow-sm border border-slate-200">
               <span>Nếu có bất kì lỗi gì về trang web, hãy liên hệ qua</span>
               <a href="https://discordapp.com/users/734403880208564235" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center hover:scale-110 transition-transform text-[#5865F2]">
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -391,7 +399,7 @@ knowledgeCsv={knowledgeCsv}
 
       {/* Floating QR Code */}
       {examUrl && !isAdmin && (
-        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="relative sm:fixed sm:bottom-4 sm:right-4 z-40 mx-auto w-fit mt-4 mb-6 sm:mt-0 sm:mb-0 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-white/90 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
+        <a href={examUrl} target="_blank" rel="noopener noreferrer" className="relative sm:fixed sm:bottom-4 sm:right-4 z-40 mx-auto w-fit mt-4 mb-6 sm:mt-0 sm:mb-0 bg-white p-2.5 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center gap-1.5 hover:scale-105 hover:-translate-y-1 transition-all origin-bottom-right group cursor-pointer">
           <p className="text-[10px] sm:text-xs font-black text-indigo-700 uppercase tracking-wide group-hover:text-indigo-800">Mã làm bài thi</p>
           <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(examUrl)}`} alt="QR Code" className="w-14 h-14 sm:w-[120px] sm:h-[120px]" />
         </a>

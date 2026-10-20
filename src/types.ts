@@ -1,4 +1,4 @@
-export type MetricKey = 'tho' | 'irt';
+export type MetricKey = 'tho' | 'irt' | 'vnno1';
 export type SubjectKey = 'tv' | 'ta' | 'toan' | 'tdkh';
 
 export interface QuestionData {
@@ -7,12 +7,27 @@ export interface QuestionData {
   totalAttempts: number | null;
   correct: number | null;
   incorrect: number | null;
-  penaltyScore: number | null;
-  bonus1: number | null;
-  bonus2: number | null;
-  bonus3: number | null;
-  bonusCorrect: number | null;
+  /** Độ khó IRT (b) — sheet "Thông số câu hỏi" của `tonghop.xlsx`. Càng lớn càng khó. */
+  difficulty: number | null;
+  /** Độ phân biệt IRT (a) — sheet "Thông số câu hỏi" của `tonghop.xlsx`. Càng lớn càng phân hoá tốt. */
+  discrimination: number | null;
   isError?: boolean;
+  /** Tỷ lệ làm đúng toàn khóa (%) từ sheet "Thông số câu hỏi" */
+  pct?: number | null;
+  /** Vị trí câu hỏi tham chiếu trong 6 mã đề (167, 204, 361, 477, 516, 642) */
+  codePositions?: Record<string, number>;
+  /** D-index (độ phân biệt CTT, nhóm 27%) — từ file dashboard tham chiếu. */
+  dIndex?: number | null;
+  /** Infit mean-square — mức độ phù hợp mô hình IRT. */
+  infit?: number | null;
+  /** Outfit mean-square — mức độ phù hợp mô hình IRT. */
+  outfit?: number | null;
+  /** Điểm quan sát trên đường cong ICC: [theta, tỷ lệ đúng]. */
+  obs?: [number, number][];
+  /** Nhóm kiến thức lớn (vd. "Tri thức ngữ văn"). */
+  groupName?: string;
+  /** Chuyên đề kiến thức chi tiết. */
+  topicName?: string;
 }
 
 export interface StudentData {
@@ -36,4 +51,13 @@ export interface StudentData {
    * `'correct' | 'wrong' | 'missing'`.
    */
   responses?: { question_num: number; status: string }[];
+  /** Điểm quy đổi theo đề VNNo1 27/1 (ĐGNL ĐHQG TP.HCM) */
+  vnno1?: {
+    tho: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
+    irt: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
+    totalCorrect: number | null;
+    totalPoints: number | null;
+  };
+  /** Năng lực theta từng phần thi (thang IRT, dùng cho TCC/KDE). */
+  theta?: { toan: number | null; tdkh: number | null; tv: number | null; ta: number | null };
 }

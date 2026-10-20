@@ -116,15 +116,14 @@ console.log(`Parsed ${students.length} students.`);
 const totalCandidates = students.length;
 
 // ── 3. Generate questions.csv ────────────────────────────────
-// Header 1: Phần thi,Câu hỏi (đề gốc),Số HS đã làm,Số HS làm đúng,Số HS làm sai,Bước điểm phạt (trả lời sai hoặc không trả lời),Bước điểm thưởng,,,,
-// Header 2: ,,,,,,Đúng 1 ý,Đúng 2 ý,Đúng 3 ý,Đúng,Công thức...
-let questionsCsv = `Phần thi,Câu hỏi (đề gốc),Số HS đã làm,Số HS làm đúng,Số HS làm sai,Bước điểm phạt (trả lời sai hoặc không trả lời),Bước điểm thưởng,,,,\n`;
-questionsCsv += `,,,,,,Đúng 1 ý,Đúng 2 ý,Đúng 3 ý,Đúng,\n`;
+// Header: Phần thi,Câu hỏi (đề gốc),Số HS đã làm,Số HS làm đúng,Số HS làm sai,Độ khó (b),Độ phân biệt (a)
+// Cột 5 = b (độ khó), cột 6 = a (độ phân biệt) — đúng theo sheet "Thông số câu hỏi" của tonghop.xlsx.
+let questionsCsv = `Phần thi,Câu hỏi (đề gốc),Số HS đã làm,Số HS làm đúng,Số HS làm sai,Độ khó (b),Độ phân biệt (a)\n`;
 
 for (const q of questions) {
   const correct = Math.round(totalCandidates * (q.pct / 100));
   const incorrect = totalCandidates - correct;
-  questionsCsv += `${q.subjectName},${q.qId},${totalCandidates},${correct},${incorrect},${q.b.toFixed(4)},,,,${q.a.toFixed(4)},\n`;
+  questionsCsv += `${q.subjectName},${q.qId},${totalCandidates},${correct},${incorrect},${q.b.toFixed(4)},${q.a.toFixed(4)},\n`;
 }
 
 fs.writeFileSync(path.join(root, 'questions.csv'), questionsCsv, 'utf-8');
@@ -206,11 +205,8 @@ const questionsJson = questions.map(q => ({
   totalAttempts: totalCandidates,
   correct: Math.round(totalCandidates * (q.pct / 100)),
   incorrect: totalCandidates - Math.round(totalCandidates * (q.pct / 100)),
-  penaltyScore: q.b,
-  bonus1: q.a,
-  bonus2: null,
-  bonus3: null,
-  bonusCorrect: null,
+  difficulty: q.b,
+  discrimination: q.a,
   isError: false,
 }));
 

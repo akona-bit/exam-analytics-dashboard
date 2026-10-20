@@ -34,6 +34,16 @@ export interface ParsedStudent {
   irt_ta: number | null;
   irt_toan: number | null;
   irt_tdkh: number | null;
+  /** Năng lực IRT (theta, logit) — 3 cột cuối các sheet `TV_X/TA_X/TO_X/KH_X`. */
+  theta_tv: number | null;
+  theta_ta: number | null;
+  theta_toan: number | null;
+  theta_tdkh: number | null;
+  /** Điểm từ cột `True` (đã quy đổi) của sheet `TV_X/TA_X/TO_X/KH_X`. */
+  true_tv: number | null;
+  true_ta: number | null;
+  true_toan: number | null;
+  true_tdkh: number | null;
   total_correct: number | null;
   total_points: number | null;
   note: string;
@@ -52,11 +62,10 @@ export interface ParsedQuestion {
   total_attempts: number | null;
   correct: number | null;
   incorrect: number | null;
-  penalty_score: number | null;
-  bonus1: number | null;
-  bonus2: number | null;
-  bonus3: number | null;
-  bonus_correct: number | null;
+  /** Độ khó IRT (b) — cột 5 của `questions.csv`. */
+  difficulty: number | null;
+  /** Độ phân biệt IRT (a) — cột 6 của `questions.csv`. */
+  discrimination: number | null;
   is_error: boolean;
 }
 
@@ -144,6 +153,10 @@ export function parseStudentsCsv(csv: string): ParsedStudent[] {
       tho_toan: get('tho_toan'), tho_tdkh: get('tho_tdkh'),
       irt_tv: get('irt_tv'), irt_ta: get('irt_ta'),
       irt_toan: get('irt_toan'), irt_tdkh: get('irt_tdkh'),
+      theta_tv: get('theta_tv'), theta_ta: get('theta_ta'),
+      theta_toan: get('theta_toan'), theta_tdkh: get('theta_tdkh'),
+      true_tv: get('true_tv'), true_ta: get('true_ta'),
+      true_toan: get('true_toan'), true_tdkh: get('true_tdkh'),
       total_correct: get('total_correct'),
       total_points: get('total_points'),
       note: textOf('note') ?? '',
@@ -262,11 +275,8 @@ export function parseQuestionsCsv(csv: string): ParsedQuestion[] {
       total_attempts: parseInteger(parts[2]),
       correct: parseInteger(parts[3]),
       incorrect: parseInteger(parts[4]),
-      penalty_score: parseNumber(parts[5]),
-      bonus1: parseNumber(parts[6]),
-      bonus2: parseNumber(parts[7]),
-      bonus3: parseNumber(parts[8]),
-      bonus_correct: parseNumber(parts[9]),
+      difficulty: parseNumber(parts[5]),
+      discrimination: parseNumber(parts[6]),
       is_error: String(parts[2] || '').trim() === 'LỖI ĐỀ THI',
     });
   }

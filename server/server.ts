@@ -94,11 +94,8 @@ async function startServer() {
         totalAttempts: q.total_attempts,
         correct: q.correct,
         incorrect: q.incorrect,
-        penaltyScore: q.penalty_score,
-        bonus1: q.bonus1,
-        bonus2: q.bonus2,
-        bonus3: q.bonus3,
-        bonusCorrect: q.bonus_correct,
+        difficulty: q.difficulty,
+        discrimination: q.discrimination,
         isError: q.is_error,
       }));
       res.json(formatted);

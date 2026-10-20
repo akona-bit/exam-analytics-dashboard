@@ -43,11 +43,8 @@ CREATE TABLE IF NOT EXISTS questions (
   total_attempts  INTEGER,
   correct         INTEGER,
   incorrect       INTEGER,
-  penalty_score   FLOAT,
-  bonus1          FLOAT,
-  bonus2          FLOAT,
-  bonus3          FLOAT,
-  bonus_correct   FLOAT,
+  difficulty      FLOAT,   -- Độ khó IRT (b)
+  discrimination  FLOAT,   -- Độ phân biệt IRT (a)
   is_error        BOOLEAN DEFAULT false,
   created_at      TIMESTAMPTZ DEFAULT now()
 );

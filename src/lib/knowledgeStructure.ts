@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Knowledge Area & Topic Structure Parser
  * Parses CSV mapping of domains, topics, question counts, and question numbers.
  * Supports 3-level hierarchy: Phần thi (TV, TA, TO, TDKH) -> Gom nhóm -> Chuyên đề kiến thức
@@ -78,24 +78,24 @@ function subjectOf(qNum: number): SubjectCode {
 }
 
 const DOMAIN_PALETTES: Record<string, { color: string; bgColor: string; barColor: string }> = {
-  'Tri thức ngữ văn': { color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-500/10 border-amber-500/20', barColor: 'bg-amber-500' },
-  'Ngữ pháp': { color: 'text-teal-700 dark:text-teal-300', bgColor: 'bg-teal-500/10 border-teal-500/20', barColor: 'bg-teal-500' },
-  'Ngữ pháp và Thực hành Tiếng Việt': { color: 'text-teal-700 dark:text-teal-300', bgColor: 'bg-teal-500/10 border-teal-500/20', barColor: 'bg-teal-500' },
-  'Ngữ pháp (Tiếng Việt)': { color: 'text-teal-700 dark:text-teal-300', bgColor: 'bg-teal-500/10 border-teal-500/20', barColor: 'bg-teal-500' },
-  'Ngữ pháp (Tiếng Anh)': { color: 'text-sky-700 dark:text-sky-300', bgColor: 'bg-sky-500/10 border-sky-500/20', barColor: 'bg-sky-500' },
-  'Đọc hiểu văn bản': { color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-500/10 border-emerald-500/20', barColor: 'bg-emerald-500' },
-  'Đọc hiểu': { color: 'text-blue-700 dark:text-blue-300', bgColor: 'bg-blue-500/10 border-blue-500/20', barColor: 'bg-blue-500' },
-  'Đọc hiểu (Tiếng Anh)': { color: 'text-blue-700 dark:text-blue-300', bgColor: 'bg-blue-500/10 border-blue-500/20', barColor: 'bg-blue-500' },
-  'Giải tích': { color: 'text-indigo-700 dark:text-indigo-300', bgColor: 'bg-indigo-500/10 border-indigo-500/20', barColor: 'bg-indigo-500' },
-  'Đại số': { color: 'text-violet-700 dark:text-violet-300', bgColor: 'bg-violet-500/10 border-violet-500/20', barColor: 'bg-violet-500' },
-  'Hình học': { color: 'text-purple-700 dark:text-purple-300', bgColor: 'bg-purple-500/10 border-purple-500/20', barColor: 'bg-purple-500' },
-  'Toán rời rạc và xác suất': { color: 'text-pink-700 dark:text-pink-300', bgColor: 'bg-pink-500/10 border-pink-500/20', barColor: 'bg-pink-500' },
-  'Logic & PTSL': { color: 'text-cyan-700 dark:text-cyan-300', bgColor: 'bg-cyan-500/10 border-cyan-500/20', barColor: 'bg-cyan-500' },
-  'Logic & Phân tích số liệu': { color: 'text-cyan-700 dark:text-cyan-300', bgColor: 'bg-cyan-500/10 border-cyan-500/20', barColor: 'bg-cyan-500' },
-  'SLKH (KHTN)': { color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-500/10 border-emerald-500/20', barColor: 'bg-emerald-500' },
-  'Suy luận khoa học (KHTN)': { color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-500/10 border-emerald-500/20', barColor: 'bg-emerald-500' },
-  'SLKH (KHXH)': { color: 'text-orange-700 dark:text-orange-300', bgColor: 'bg-orange-500/10 border-orange-500/20', barColor: 'bg-orange-500' },
-  'Suy luận khoa học (KHXH)': { color: 'text-orange-700 dark:text-orange-300', bgColor: 'bg-orange-500/10 border-orange-500/20', barColor: 'bg-orange-500' },
+  'Tri thức ngữ văn': { color: 'text-amber-700', bgColor: 'bg-amber-500/10 border-amber-500/20', barColor: 'bg-amber-500' },
+  'Ngữ pháp': { color: 'text-teal-700', bgColor: 'bg-teal-500/10 border-teal-500/20', barColor: 'bg-teal-500' },
+  'Ngữ pháp và Thực hành Tiếng Việt': { color: 'text-teal-700', bgColor: 'bg-teal-500/10 border-teal-500/20', barColor: 'bg-teal-500' },
+  'Ngữ pháp (Tiếng Việt)': { color: 'text-teal-700', bgColor: 'bg-teal-500/10 border-teal-500/20', barColor: 'bg-teal-500' },
+  'Ngữ pháp (Tiếng Anh)': { color: 'text-sky-700', bgColor: 'bg-sky-500/10 border-sky-500/20', barColor: 'bg-sky-500' },
+  'Đọc hiểu văn bản': { color: 'text-emerald-700', bgColor: 'bg-emerald-500/10 border-emerald-500/20', barColor: 'bg-emerald-500' },
+  'Đọc hiểu': { color: 'text-blue-700', bgColor: 'bg-blue-500/10 border-blue-500/20', barColor: 'bg-blue-500' },
+  'Đọc hiểu (Tiếng Anh)': { color: 'text-blue-700', bgColor: 'bg-blue-500/10 border-blue-500/20', barColor: 'bg-blue-500' },
+  'Giải tích': { color: 'text-indigo-700', bgColor: 'bg-indigo-500/10 border-indigo-500/20', barColor: 'bg-indigo-500' },
+  'Đại số': { color: 'text-violet-700', bgColor: 'bg-violet-500/10 border-violet-500/20', barColor: 'bg-violet-500' },
+  'Hình học': { color: 'text-purple-700', bgColor: 'bg-purple-500/10 border-purple-500/20', barColor: 'bg-purple-500' },
+  'Toán rời rạc và xác suất': { color: 'text-pink-700', bgColor: 'bg-pink-500/10 border-pink-500/20', barColor: 'bg-pink-500' },
+  'Logic & PTSL': { color: 'text-cyan-700', bgColor: 'bg-cyan-500/10 border-cyan-500/20', barColor: 'bg-cyan-500' },
+  'Logic & Phân tích số liệu': { color: 'text-cyan-700', bgColor: 'bg-cyan-500/10 border-cyan-500/20', barColor: 'bg-cyan-500' },
+  'SLKH (KHTN)': { color: 'text-emerald-700', bgColor: 'bg-emerald-500/10 border-emerald-500/20', barColor: 'bg-emerald-500' },
+  'Suy luận khoa học (KHTN)': { color: 'text-emerald-700', bgColor: 'bg-emerald-500/10 border-emerald-500/20', barColor: 'bg-emerald-500' },
+  'SLKH (KHXH)': { color: 'text-orange-700', bgColor: 'bg-orange-500/10 border-orange-500/20', barColor: 'bg-orange-500' },
+  'Suy luận khoa học (KHXH)': { color: 'text-orange-700', bgColor: 'bg-orange-500/10 border-orange-500/20', barColor: 'bg-orange-500' },
 };
 
 function hashPalette(name: string) {
@@ -291,28 +291,28 @@ export function buildStandard120Structure(): ParsedKnowledgeStructure {
 
   const PHAN_THI_THEMES = {
     TV: {
-      color: 'text-amber-600 dark:text-amber-400',
-      bgColor: 'bg-amber-500/10 dark:bg-amber-950/20',
-      borderColor: 'border-amber-300 dark:border-amber-800',
-      badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-500/10',
+      borderColor: 'border-amber-300',
+      badgeBg: 'bg-amber-100 text-amber-800',
     },
     TA: {
-      color: 'text-sky-600 dark:text-sky-400',
-      bgColor: 'bg-sky-500/10 dark:bg-sky-950/20',
-      borderColor: 'border-sky-300 dark:border-sky-800',
-      badgeBg: 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200',
+      color: 'text-sky-600',
+      bgColor: 'bg-sky-500/10',
+      borderColor: 'border-sky-300',
+      badgeBg: 'bg-sky-100 text-sky-800',
     },
     TO: {
-      color: 'text-indigo-600 dark:text-indigo-400',
-      bgColor: 'bg-indigo-500/10 dark:bg-indigo-950/20',
-      borderColor: 'border-indigo-300 dark:border-indigo-800',
-      badgeBg: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-500/10',
+      borderColor: 'border-indigo-300',
+      badgeBg: 'bg-indigo-100 text-indigo-800',
     },
     TDKH: {
-      color: 'text-emerald-600 dark:text-emerald-400',
-      bgColor: 'bg-emerald-500/10 dark:bg-emerald-950/20',
-      borderColor: 'border-emerald-300 dark:border-emerald-800',
-      badgeBg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-500/10',
+      borderColor: 'border-emerald-300',
+      badgeBg: 'bg-emerald-100 text-emerald-800',
     },
   };
 
@@ -461,28 +461,28 @@ function buildDomainsFromRows(rows: KnowledgeRow[]): DomainCategory[] {
 function buildPhanThis(domains: DomainCategory[]): PhanThiSection[] {
   const themes: Record<SubjectCode, Omit<PhanThiSection, 'code' | 'name' | 'gomNhoms' | 'topics' | 'qNums' | 'total'>> = {
     TV: {
-      color: 'text-amber-600 dark:text-amber-400',
-      bgColor: 'bg-amber-500/10 dark:bg-amber-950/20',
-      borderColor: 'border-amber-300 dark:border-amber-800',
-      badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-500/10',
+      borderColor: 'border-amber-300',
+      badgeBg: 'bg-amber-100 text-amber-800',
     },
     TA: {
-      color: 'text-sky-600 dark:text-sky-400',
-      bgColor: 'bg-sky-500/10 dark:bg-sky-950/20',
-      borderColor: 'border-sky-300 dark:border-sky-800',
-      badgeBg: 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200',
+      color: 'text-sky-600',
+      bgColor: 'bg-sky-500/10',
+      borderColor: 'border-sky-300',
+      badgeBg: 'bg-sky-100 text-sky-800',
     },
     TO: {
-      color: 'text-indigo-600 dark:text-indigo-400',
-      bgColor: 'bg-indigo-500/10 dark:bg-indigo-950/20',
-      borderColor: 'border-indigo-300 dark:border-indigo-800',
-      badgeBg: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-500/10',
+      borderColor: 'border-indigo-300',
+      badgeBg: 'bg-indigo-100 text-indigo-800',
     },
     TDKH: {
-      color: 'text-emerald-600 dark:text-emerald-400',
-      bgColor: 'bg-emerald-500/10 dark:bg-emerald-950/20',
-      borderColor: 'border-emerald-300 dark:border-emerald-800',
-      badgeBg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-500/10',
+      borderColor: 'border-emerald-300',
+      badgeBg: 'bg-emerald-100 text-emerald-800',
     },
   };
 
@@ -580,5 +580,59 @@ export function getQuestionKnowledgeInfo(qNum: number): QuestionKnowledgeDetail 
   } else {
     return { qNum, subjectCode: 'TDKH', subjectName: 'Tư duy khoa học', groupName: 'Khoa học', topicName: 'Tư duy khoa học' };
   }
+}
+
+/** Kết quả của một chuyên đề, đã gộp đúng/sai/bỏ trống để dùng chung ở nhiều màn hình. */
+export interface TopicPerformance {
+  code: SubjectCode;
+  subjectName: string;
+  groupName: string;
+  name: string;
+  total: number;
+  correct: number;
+  wrong: number;
+  missing: number;
+  pct: number;
+  qNums: number[];
+  wrongQs: number[];
+  missingQs: number[];
+}
+
+export function getTopicPerformance(
+  structure: ParsedKnowledgeStructure,
+  responses?: { question_num: number; status: string }[],
+): TopicPerformance[] {
+  const wrongSet = new Set<number>();
+  const missingSet = new Set<number>();
+  for (const r of responses || []) {
+    if (r.status === 'wrong') wrongSet.add(r.question_num);
+    else if (r.status !== 'correct') missingSet.add(r.question_num);
+  }
+
+  const result: TopicPerformance[] = [];
+  for (const pt of structure.phanThis) {
+    for (const gn of pt.gomNhoms) {
+      for (const topic of gn.topics) {
+        const wrongQs = topic.qNums.filter(q => wrongSet.has(q));
+        const missingQs = topic.qNums.filter(q => missingSet.has(q));
+        const correct = Math.max(0, topic.count - wrongQs.length - missingQs.length);
+        result.push({
+          code: pt.code,
+          subjectName: pt.name,
+          groupName: gn.domain,
+          name: topic.name,
+          total: topic.count,
+          correct,
+          wrong: wrongQs.length,
+          missing: missingQs.length,
+          pct: topic.count > 0 ? Math.round((correct / topic.count) * 100) : 0,
+          qNums: topic.qNums,
+          wrongQs,
+          missingQs,
+        });
+      }
+    }
+  }
+  return result;
 }
 

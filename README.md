@@ -103,7 +103,7 @@ Chỉ có **2 endpoint**, dữ liệu nạp 1 lần lúc khởi động từ `pr
 | Endpoint | Trả về |
 |---|---|
 | `GET /api/students` | Danh sách thí sinh, `responses` **chỉ gồm câu sai/bỏ trống** (`status !== 'correct'`) |
-| `GET /api/questions` | Thống kê từng câu: số lượt làm, đúng, sai, điểm phạt, bước điểm thưởng, cờ `isError` |
+| `GET /api/questions` | Thống kê từng câu: số lượt làm, đúng, sai, độ khó (b), độ phân biệt (a), cờ `isError` |
 
 Ở `NODE_ENV !== 'production'` server gắn `vite.middlewares` (middleware mode) để làm dev server. `PORT` mặc định `3000`. Server **không** tự nạp `.env`.
 
@@ -261,6 +261,31 @@ npm run build:static   # export-data → public/data/*.json, rồi vite build
 npm run preview
 ```
 `vite.config.ts` đặt `base: './'` nên build chạy được cả ở domain gốc lẫn sub-path.
+
+### 7. Giám sát lỗi & độ trễ
+
+Script `scripts/monitor-web.mjs` mở web bằng Chromium headless theo chu kỳ, bắt **lỗi**
+(console.error, exception chưa bắt, HTTP 4xx/5xx, request fail) và **độ trễ**
+(TTFB, FCP, LCP, long task/TBT, thời gian vào dashboard, đăng nhập, mở tab
+"Thống Kê Toàn Khóa", trang `#admin`).
+
+```bash
+npm run monitor                         # mặc định https://ketquathithumitht.pages.dev, 60s/lần, chạy tới Ctrl+C
+npm run monitor -- --interval 30 --duration 60   # mỗi 30s, trong 60 phút
+npm run monitor:once                    # kiểm tra 1 lần (exit code 1 nếu FAIL)
+npm run monitor -- --url http://localhost:3000   # giám sát bản dev
+npm run monitor:report -- --last 2h     # đọc log, in uptime + avg/p95/max
+```
+
+- Log: `.monitor/checks.jsonl` (mỗi lần 1 dòng), `.monitor/latest.json`,
+  `.monitor/summary.json`; ảnh màn hình khi FAIL nằm cùng thư mục. Cả thư mục
+  `.monitor/` đã được gitignore.
+- Ngưỡng cảnh báo mặc định: TTFB > 1.2s, vào dashboard > 6s, LCP > 4s,
+  TBT > 800ms, đăng nhập/chuyển tab > 2.5s. Đổi bằng
+  `--slow-ttfb`, `--slow-ready`, `--slow-interaction`.
+- Bỏ qua bước đăng nhập + chuyển tab (nhẹ hơn): `--no-interact`.
+- Script cần Chromium của **patchright** (CodeGPT extension) hoặc **playwright**
+  đã cài trong máy; không thêm dependency vào project.
 
 ---
 

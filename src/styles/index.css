@@ -1,18 +1,21 @@
-@custom-variant dark (&:where(.dark, .dark *));
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 * { box-sizing: border-box; }
 
-html, body, #root {
-  height: 100%;
+html, body {
+  min-height: 100%;
   margin: 0;
   padding: 0;
   font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
-  background: #9cc3fb;
+  background: #f6f7f9;
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100dvh;
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -20,29 +23,18 @@ html, body, #root {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+/* Card phẳng, nền trắng đặc + viền xám nhạt: chữ luôn tương phản tốt, không phải
+   "box xám + chữ tím/lam đậm". Không blur để render nhẹ và rõ hơn. */
 .card {
   position: relative;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 24px;
-  box-shadow: 0 10px 40px -5px rgba(60, 80, 160, 0.18);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
-}
-.dark .card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 40px -5px rgba(60, 80, 160, 0.22);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px -6px rgba(15, 23, 42, 0.08);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .card:hover {
-  border-color: rgba(59, 130, 246, 0.4);
-}
-.dark .card:hover {
-  border-color: rgba(59, 130, 246, 0.4);
+  border-color: #cbd5e1;
 }
 
 .glass-panel {
@@ -51,14 +43,6 @@ html, body, #root {
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow: 0 10px 30px -5px rgba(60, 80, 160, 0.15);
-}
-
-.dark .glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 10px 30px -5px rgba(60, 80, 160, 0.18);
 }
 
 .gradient-header {
@@ -72,7 +56,9 @@ html, body, #root {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+/* fill-mode both: không có nó thì Safari / bản build tĩnh giữ nguyên frame "from"
+   (opacity: 0) và toàn bộ nội dung chìm mất màu trên nền sáng. */
+.fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes softPulse {
   0%, 100% { transform: scale(1); }
@@ -112,49 +98,21 @@ html, body, #root {
   flex-shrink: 0;
 }
 
+/* Tiêu đề trang: chữ lam đậm đặc trên nền sáng — bỏ hẳn kiểu "chữ trắng viền xanh
+   + quầng sáng" vì dễ chìm vào nền và gây chói. */
 .modern-title {
   font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
   font-weight: 900;
   letter-spacing: -0.035em;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  -webkit-text-stroke: 1.5px #2563eb;
-  paint-order: stroke fill;
-  text-shadow: 
-    -1.5px -1.5px 0 #2563eb,
-     1.5px -1.5px 0 #2563eb,
-    -1.5px  1.5px 0 #2563eb,
-     1.5px  1.5px 0 #2563eb,
-     0 0 14px rgba(37, 99, 235, 0.65),
-     0 3px 10px rgba(0, 0, 0, 0.4);
+  color: #1e293b;
+  -webkit-text-fill-color: #1e293b;
+  -webkit-text-stroke: 0;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-.dark .modern-title {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  -webkit-text-stroke: 1.5px #2563eb;
-  paint-order: stroke fill;
-  text-shadow: 
-    -1.5px -1.5px 0 #2563eb,
-     1.5px -1.5px 0 #2563eb,
-    -1.5px  1.5px 0 #2563eb,
-     1.5px  1.5px 0 #2563eb,
-     0 0 14px rgba(37, 99, 235, 0.65),
-     0 3px 10px rgba(0, 0, 0, 0.4);
-  filter: none;
-}
-
-@keyframes skyDrift {
-  0% { transform: scale(1.04) translate3d(0, 0, 0); }
-  100% { transform: scale(1.12) translate3d(-1.2%, -0.8%, 0); }
-}
-.sky-bg-photo {
-  animation: skyDrift 60s ease-in-out infinite alternate;
-  will-change: transform;
-}
+/* Chế độ tối đã bị gỡ bỏ hoàn toàn — trang luôn dùng nền sáng, chữ tối. */
 
 @media (prefers-reduced-motion: reduce) {
-  .sky-bg-photo,
   .animate-pulse,
   .fade-in,
   .scale-in {
@@ -180,21 +138,6 @@ html, body, #root {
   --surface-muted: #f8fafc;
   --surface-hover: #f1f5f9;
 }
-.dark {
-  --accent: #818cf8;
-  --accent-light: #a5b4fc;
-  --accent-glow: rgba(129, 140, 248, 0.22);
-  --ink: #e2e8f0;
-  --ink-secondary: #94a3b8;
-  --muted: #64748b;
-  --line: #334155;
-  --line-strong: #475569;
-  --surface-solid: #0f172a;
-  --surface-muted: #1e293b;
-  --surface-hover: #334155;
-}
-
-
 /* ════════════════════════════════════════════════════════════════
    DESIGN SYSTEM — Buttons (buttons)
    ═══════════════════════════════════════════════════════════════ */
@@ -248,18 +191,6 @@ html, body, #root {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
-.dark .input-field,
-.dark .select-field {
-  background: var(--surface-solid);
-  border-color: var(--line);
-  color: var(--ink);
-}
-.dark .input-field:focus,
-.dark .select-field:focus {
-  border-color: var(--accent-light);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
 /* ── Badges ── */
 .badge {
   display: inline-flex;
@@ -277,11 +208,6 @@ html, body, #root {
 .badge-high { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 .badge-medium { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
 .badge-low { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-.dark .badge-new { background: rgba(30, 64, 175, 0.15); color: #93c5fd; border-color: rgba(30, 64, 175, 0.35); }
-.dark .badge-high { background: rgba(185, 28, 28, 0.15); color: #fca5a5; border-color: rgba(185, 28, 28, 0.35); }
-.dark .badge-medium { background: rgba(180, 83, 9, 0.15); color: #fcd34d; border-color: rgba(180, 83, 9, 0.35); }
-.dark .badge-low { background: rgba(21, 128, 61, 0.15); color: #86efac; border-color: rgba(21, 128, 61, 0.35); }
-
 /* ── Cards ── */
 .card-header {
   display: flex;
@@ -353,11 +279,6 @@ html, body, #root {
 .alert-warning { background: #fffbeb; border: 1px solid #fcd34d; color: #b45309; }
 .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
 .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
-.dark .alert-info { background: rgba(30, 64, 175, 0.1); border-color: rgba(30, 64, 175, 0.3); color: #93c5fd; }
-.dark .alert-warning { background: rgba(180, 83, 9, 0.1); border-color: rgba(180, 83, 9, 0.3); color: #fcd34d; }
-.dark .alert-error { background: rgba(185, 28, 28, 0.1); border-color: rgba(185, 28, 28, 0.3); color: #fca5a5; }
-.dark .alert-success { background: rgba(21, 128, 61, 0.1); border-color: rgba(21, 128, 61, 0.3); color: #86efac; }
-
 /* ── Section titles ── */
 .section-title {
   display: flex;
@@ -396,26 +317,11 @@ html, body, #root {
   border-radius: 0.75rem;
   background: var(--surface-solid);
 }
-.dark .table-wrap { background: var(--surface-solid); }
-
 /* ════════════════════════════════════════════════════════════════
    GLOBAL TYPOGRAPHY & TITLE STYLES
    ════════════════════════════════════════════════════════════════ */
 
-/* Bảo toàn màu trắng viền xanh cho tên kỳ thi modern-title */
-.modern-title {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  -webkit-text-stroke: 1.5px #2563eb !important;
-  paint-order: stroke fill;
-  text-shadow: 
-    -1.5px -1.5px 0 #2563eb,
-     1.5px -1.5px 0 #2563eb,
-    -1.5px  1.5px 0 #2563eb,
-     1.5px  1.5px 0 #2563eb,
-     0 0 14px rgba(37, 99, 235, 0.65),
-     0 3px 10px rgba(0, 0, 0, 0.4);
-}
+
 
 
 

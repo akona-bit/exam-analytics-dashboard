@@ -131,11 +131,8 @@ const questionsJson = questions.map(q => ({
   totalAttempts: totalCandidates,
   correct: Math.round(totalCandidates * (q.pct / 100)),
   incorrect: totalCandidates - Math.round(totalCandidates * (q.pct / 100)),
-  penaltyScore: q.b,
-  bonus1: q.a,
-  bonus2: null,
-  bonus3: null,
-  bonusCorrect: null,
+  difficulty: q.b,
+  discrimination: q.a,
   isError: false,
 }));
 
@@ -186,13 +183,12 @@ for (const s of students) {
 fs.writeFileSync(path.join(root, 'raw_students.csv'), rawStudentsCsv, 'utf-8');
 console.log(`Saved raw_students.csv`);
 
-// 7. Generate questions.csv
-let questionsCsv = `Phần thi,Câu hỏi (đề gốc),Số HS đã làm,Số HS làm đúng,Số HS làm sai,Bước điểm phạt (trả lời sai hoặc không trả lời),Bước điểm thưởng,,,,\n`;
-questionsCsv += `,,,,,,Đúng 1 ý,Đúng 2 ý,Đúng 3 ý,Đúng,\n`;
+// 7. Generate questions.csv (b = Độ khó, a = Độ phân biệt — đúng theo tonghop.xlsx)
+let questionsCsv = `Phần thi,Câu hỏi (đề gốc),Số HS đã làm,Số HS làm đúng,Số HS làm sai,Độ khó (b),Độ phân biệt (a)\n`;
 for (const q of questions) {
   const correct = Math.round(totalCandidates * (q.pct / 100));
   const incorrect = totalCandidates - correct;
-  questionsCsv += `${q.subjectName},${q.qId},${totalCandidates},${correct},${incorrect},${q.b.toFixed(4)},,,,${q.a.toFixed(4)},\n`;
+  questionsCsv += `${q.subjectName},${q.qId},${totalCandidates},${correct},${incorrect},${q.b.toFixed(4)},${q.a.toFixed(4)},\n`;
 }
 fs.writeFileSync(path.join(root, 'questions.csv'), questionsCsv, 'utf-8');
 console.log(`Saved questions.csv`);

@@ -30,6 +30,59 @@ ALTER TABLE students ALTER COLUMN exam_type SET DEFAULT 'survey';
 ALTER TABLE questions ALTER COLUMN exam_type SET DEFAULT 'survey';
 ALTER TABLE student_responses ALTER COLUMN exam_type SET DEFAULT 'survey';
 
+-- ── 1b. Cột tham số IRT của bảng questions ──────────────────────────────────
+-- Bảng này trước đây có 5 cột penalty_score/bonus1/bonus2/bonus3/bonus_correct,
+-- nhưng questions.csv ghi sai nhãn: penalty_score thực chất là Độ khó (b) và
+-- bonus_correct thực chất là Độ phân biệt (a) theo sheet "Thông số câu hỏi" của
+-- tonghop.xlsx. Đổi tên đúng ý nghĩa, gộp còn 2 cột và bỏ 3 cột luôn rỗng.
+-- An toàn vì bảng questions hiện không chứa dòng dữ liệu; chạy lại được.
+DO $$
+BEGIN
+  -- difficulty: rename nếu chưa có, thêm nếu thiếu hẳn, xoá bản trùng.
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_name = 'questions' AND column_name = 'difficulty') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'questions' AND column_name = 'penalty_score') THEN
+      ALTER TABLE questions RENAME COLUMN penalty_score TO difficulty;
+    ELSE
+      ALTER TABLE questions ADD COLUMN difficulty FLOAT;
+    END IF;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'questions' AND column_name = 'penalty_score') THEN
+    ALTER TABLE questions DROP COLUMN penalty_score;
+  END IF;
+
+  -- discrimination: tương tự với bonus_correct.
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_name = 'questions' AND column_name = 'discrimination') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'questions' AND column_name = 'bonus_correct') THEN
+      ALTER TABLE questions RENAME COLUMN bonus_correct TO discrimination;
+    ELSE
+      ALTER TABLE questions ADD COLUMN discrimination FLOAT;
+    END IF;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'questions' AND column_name = 'bonus_correct') THEN
+    ALTER TABLE questions DROP COLUMN bonus_correct;
+  END IF;
+
+  -- 3 cột bonus luôn rỗng trong questions.csv → bỏ hẳn.
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'questions' AND column_name = 'bonus1') THEN
+    ALTER TABLE questions DROP COLUMN bonus1;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'questions' AND column_name = 'bonus2') THEN
+    ALTER TABLE questions DROP COLUMN bonus2;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name = 'questions' AND column_name = 'bonus3') THEN
+    ALTER TABLE questions DROP COLUMN bonus3;
+  END IF;
+END $$;
+
 -- ── 2. Gán loại kỳ thi cho dữ liệu đang có ──────────────────────────────────
 UPDATE students          SET exam_type = 'survey' WHERE exam_type IS NULL OR exam_type = '';
 UPDATE questions         SET exam_type = 'survey' WHERE exam_type IS NULL OR exam_type = '';

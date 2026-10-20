@@ -68,8 +68,8 @@
         margin: 0;
         padding: 0;
         min-height: 100%;
-        background-color: #0b0f24;
-        color: #ffffff;
+        background-color: #f8fafc;
+        color: #1e293b;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         -webkit-font-smoothing: antialiased;
         overflow-x: hidden;
@@ -82,20 +82,23 @@
         pointer-events: none;
         z-index: 0;
       }
-      .initial-bg-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      .initial-bg-scrim {
+      /* Nền tối giản: gradient lam nhạt + 2 quầng sáng mờ (khớp SkyBackground) */
+      .initial-bg-base {
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, rgba(9,12,32,0.55) 0%, rgba(9,12,32,0.18) 22%, rgba(9,12,32,0.10) 55%, rgba(9,12,32,0.45) 100%);
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2f9 45%, #e7ecf6 100%);
       }
-      .initial-bg-vignette {
+      .initial-bg-glow {
         position: absolute;
         inset: 0;
-        background: radial-gradient(120% 90% at 50% 45%, rgba(0,0,0,0) 45%, rgba(4,6,20,0.55) 100%);
+        background:
+          radial-gradient(70% 55% at 15% 0%, rgba(99,102,241,0.10) 0%, rgba(99,102,241,0) 70%),
+          radial-gradient(60% 50% at 95% 100%, rgba(14,165,233,0.09) 0%, rgba(14,165,233,0) 70%);
+      }
+      /* Khi React đã render: gỡ splash + lớp nền ban đầu */
+      body.app-ready .initial-bg-wrap,
+      body.app-ready .initial-splash {
+        display: none !important;
       }
       #root {
         position: relative;
@@ -221,9 +224,8 @@
   <body>
     <!-- Pre-React Background (Matches SkyBackground component seamlessly) -->
     <div class="initial-bg-wrap" aria-hidden="true">
-      <img src="./bg.jpg" class="initial-bg-img" alt="" />
-      <div class="initial-bg-scrim"></div>
-      <div class="initial-bg-vignette"></div>
+      <div class="initial-bg-base"></div>
+      <div class="initial-bg-glow"></div>
     </div>
 
     <!-- SEO Fallback Content for Crawlers & Non-JS Clients -->
@@ -264,6 +266,16 @@
       </div>
     </div>
 
+    <script>
+      // Gỡ splash/nền ban đầu ngay khi React render xong (xem main.tsx).
+      new MutationObserver(function (muts, obs) {
+        var root = document.getElementById('root');
+        if (root && root.getAttribute('data-ready') === '1') {
+          document.body.classList.add('app-ready');
+          obs.disconnect();
+        }
+      }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-ready'] });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       // Unregister any existing service workers to remove PWA cache
