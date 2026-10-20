@@ -237,7 +237,6 @@ export function ClassAnalytics({ students, questions, metric, onMetricChange }: 
   }, [ranking]);
 
   const topTen = useMemo(() => rankedList.slice(0, 10), [rankedList]);
-  const bottomTen = useMemo(() => rankedList.slice(-10), [rankedList]);
 
   // Questions stats
   const subjectOptions = useMemo(() => {
