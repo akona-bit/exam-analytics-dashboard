@@ -19,3 +19,23 @@ question_texts.json
 build-out.txt
 .wrangler/
 .monitor/
+
+# ===== DỮ LIỆU THI / PII — KHÔNG BAO GIỜ COMMIT =====
+# Vault thật nằm ngoài repo: D:\ExamDataVault
+# Các đuôi *.csv, *.xlsx, *.pdf, response.json, public/data/ đã bị chặn ở trên.
+*.xls
+*.xlsm
+*.tsv
+*.parquet
+*.sqlite
+*.sqlite3
+*.db
+*.zip
+*.7z
+*.aes
+raw_*
+data/
+dist/data/
+exam-data/
+vault/
+restored-data-*/

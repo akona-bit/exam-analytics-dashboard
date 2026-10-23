@@ -1,0 +1,4 @@
+#!/bin/sh
+# Block exam data from being committed. Install: git config core.hooksPath .githooks
+set -e
+node scripts/check-no-exam-data.mjs --staged

@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Guard against exam data in Git
+        run: node scripts/check-no-exam-data.mjs
       - run: npm ci
       - run: npm run lint
       - run: npm run build:static
